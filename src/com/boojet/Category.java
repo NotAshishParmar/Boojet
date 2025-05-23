@@ -1,5 +1,5 @@
 package com.boojet;
 
-public class Category {
-    
+public enum Category {
+    FOOD, RENT, TRANSPORT, ENTERTAINMENT, UTILITIES, HEALTH, OTHER
 }
