@@ -10,7 +10,7 @@ public class Transaction{
     private Category category;
     private boolean isIncome;
 
-    public Transaction(String description, double amount, LocaDate date, Category category, boolean isIncome){
+    public Transaction(String description, double amount, LocalDate date, Category category, boolean isIncome){
         this.description = description;
         this.amount = amount;
         this.date = date;
