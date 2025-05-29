@@ -3,8 +3,6 @@ package com.boojet;
 import java.time.LocalDate;
 import java.util.Scanner;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.SystemMenuBar;
-
 public class BoojetApp{
     public static void main(String[] args){
         TransactionManager manager = new TransactionManager();
@@ -12,6 +10,7 @@ public class BoojetApp{
         boolean running = true;
 
         while(running){
+            
             System.out.println("\n--- Boojet Budget Tracker ---");
             System.out.println("1. Add Income");
             System.out.println("2. Add Expense");
@@ -45,6 +44,6 @@ public class BoojetApp{
         }
 
         System.out.println("Goodbye!");
-        scanner.clsoe();
+        scanner.close();
     }
 }
