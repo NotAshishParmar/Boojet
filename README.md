@@ -9,6 +9,7 @@
 - Add income and expenses
 - Categorize each transaction (e.g., Food, Rent, Travel)
 - View total income, expenses, and balance
+- Data persistence (JSON, local file)
 - Breakdown by category (optional pie chart or table later)
 
 ---
@@ -29,7 +30,7 @@
 ## ✨ Future Improvements
 
 - Monthly budgeting & limits
-- Data persistence (JSON, local file, then DB)
+- ~~Data persistence (JSON, local file, then DB)~~
 - Graphical UI
 - Login system for multiple users
 - Cloud-hosted version
