@@ -1,0 +1,1 @@
+[{"description":"First Check","amount":1500.0,"date":[2025,6,2],"category":"INCOME","isIncome":true},{"description":"Rent","amount":400.0,"date":[2025,6,2],"category":"RENT","isIncome":false},{"description":"Groceries","amount":300.0,"date":[2025,6,2],"category":"FOOD","isIncome":false}]

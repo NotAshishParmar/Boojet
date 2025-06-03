@@ -1,14 +1,18 @@
 package com.boojet;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TransactionManager{
 
-    private List<Transaction> transactions = new ArrayList<>();
+    private List<Transaction> transactions;
+
+    public TransactionManager(){
+        transactions = FileStorage.loadTransactions();
+    }
 
     public void addTransaction(Transaction t){
         transactions.add(t);
+        FileStorage.saveTransactions(transactions); //update file on every change
     }
 
     public void listTransactions(){

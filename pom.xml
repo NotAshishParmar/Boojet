@@ -24,6 +24,13 @@
             <version>2.17.0</version>
         </dependency>
 
+        <!-- Support for LocalDate -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
         <!-- SQLite driver (future DB phase) -->
         <dependency>
             <groupId>org.xerial</groupId>
