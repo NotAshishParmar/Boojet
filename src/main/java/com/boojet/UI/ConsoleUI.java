@@ -5,6 +5,7 @@ import com.boojet.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.List;
 import java.time.LocalDate;
 import java.util.Scanner;
 
@@ -28,10 +29,12 @@ public class ConsoleUI {
             switch (option) {
                 case 1 -> handleAdd(true);
                 case 2 -> handleAdd(false);
-                case 3 -> manager.listTransactions();
+                case 3 -> listWithIndexes();          // view
                 case 4 -> showBalance();
-                case 5 -> running = !confirmQuit();
-                default -> System.out.println("Invalid Option. Try 1-5.");
+                case 5 -> handleEdit();               //edit
+                case 6 -> handleDelete();             //delete
+                case 7 -> running = !confirmQuit(); 
+                default -> System.out.println("Invalid Option. Try 1-7.");
             }
         }
 
@@ -46,7 +49,9 @@ public class ConsoleUI {
         System.out.println("2. Add Expense");
         System.out.println("3. View Transactions");
         System.out.println("4. View Balance");
-        System.out.println("5. Exit");
+        System.out.println("5. Edit Transaction");
+        System.out.println("6. Delete Transaction");
+        System.out.println("7. Exit");
     }
 
     private void handleAdd(boolean isIncome){
@@ -58,6 +63,70 @@ public class ConsoleUI {
         System.out.println("Transaction added!");
     }
 
+    private void listWithIndexes(){
+        List<Transaction> list = manager.getTransactions();
+
+        if(list.isEmpty()){
+            System.out.println("No transaction recorded.");
+            return;
+        }
+
+        for(int i = 0; i < list.size(); i++){
+            System.out.printf("%3d) %s%n", i + 1, list.get(i));
+        }
+    }
+
+    private void handleEdit(){
+        listWithIndexes();
+
+        if(manager.getTransactions().isEmpty()){
+            System.out.println("There are no Transactions recorded!");
+            return;
+        }
+
+        int choice = readInt("Choose which transaction number to edit: ") - 1;
+        Transaction old = manager.getTransactions().get(choice);
+
+        String desc = readLine("Description [" + old.getDescription()+ "]: ");
+        
+        if(desc.isBlank()){
+            desc = old.getDescription();
+        }
+
+        BigDecimal amount = optionalMoney("Amount [" + old.getAmount() + "]: ", old.getAmount());
+        Category cat = optionalCategory("Category [" + old.getCategory() + "]: ", old.getCategory());
+
+        //Ask the user if the transaction is income or expense.
+        //Show the current value as the default (I or E) based on old.isIncome().
+        //If the user enters "I", it's income → isIncome = true
+        //If the user enters anything else (or presses Enter), keep the old value
+        boolean isIncome = readLine("Type (I)ncome / (E)xpense [" +
+                                    (old.isIncome() ? "I" : "E") + "]: ").strip()
+                                    .equalsIgnoreCase("I") ? true : old.isIncome();
+
+        Transaction updated = new Transaction(desc, amount, old.getDate(), cat, isIncome);
+        manager.updateTransaction(choice, updated);
+        System.out.println(" Transaction Updated.");
+        
+    }
+
+    private void handleDelete(){
+        listWithIndexes();
+
+        if(manager.getTransactions().isEmpty()){
+            System.out.println("There are no Transactions recorded!");
+            return;
+        }
+
+        int choice = readInt("Choose which transaction number to delete: ") - 1;
+        String confirm = readLine("Are you sure you want to delete this? (y/n): ");
+        
+        if(confirm.toLowerCase().startsWith("y")){
+            manager.deleteTransaction(choice);
+            System.out.println("DELETED!");
+        }
+    }
+
     private void showBalance(){
         BigDecimal balance = manager.getBalance();
         System.out.println("Current Balance: " + currencyFmt.format(balance));
@@ -67,6 +136,17 @@ public class ConsoleUI {
         String ans = readLine("Are you sure you want to Quit? (y/n): ").toLowerCase();
         return ans.startsWith("y");
     }
+
+    private BigDecimal optionalMoney(String prompt, BigDecimal fallback){
+        String s = readLine(prompt);
+        return s.isBlank() ? fallback : new BigDecimal(s).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private Category optionalCategory(String prompt, Category fallback){
+        String s = readLine(prompt);
+        return s.isBlank() ? fallback : Category.valueOf(s.toUpperCase());
+    }
+
 
      // ───── low-level input utilities ─────
 

@@ -1,15 +1,15 @@
 package com.boojet;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 public class TransactionManager{
 
-    private List<Transaction> transactions;
+    private List<Transaction> transactions = FileStorage.loadTransactions();
 
-    public TransactionManager(){
-        transactions = FileStorage.loadTransactions();
-    }
+    
+    public TransactionManager(){}
 
     public void addTransaction(Transaction t){
         transactions.add(t);
@@ -35,5 +35,25 @@ public class TransactionManager{
 
         return balance.setScale(2);
     }
+
+    //read-only list for UI to display Transaction Index to user
+    public List<Transaction> getTransactions(){
+        return Collections.unmodifiableList(transactions);
+    }
+
+    //replace the transaction at "index"
+    public void updateTransaction(int index, Transaction replacement){
+        if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
+        transactions.set(index, replacement);
+        FileStorage.saveTransactions(transactions);
+    }
+
+    //delete transaction at "index"
+    public void deleteTransaction(int index){
+        if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
+        transactions.remove(index);
+        FileStorage.saveTransactions(transactions);
+    }
+
 
 }
