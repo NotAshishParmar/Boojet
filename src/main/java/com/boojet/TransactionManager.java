@@ -1,5 +1,6 @@
 package com.boojet;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class TransactionManager{
@@ -21,14 +22,18 @@ public class TransactionManager{
         }
     }
 
-    public double getBalance(){
-        double balance = 0;
+    public BigDecimal getBalance(){
+        BigDecimal balance = BigDecimal.ZERO;
 
+        //if income then add the amount
+        //if not income then subtract the amount using negate
         for(Transaction t : transactions){
-            balance += t.isIncome() ? t.getAmount() : -t.getAmount();
+            balance = balance.add(t.isIncome()
+                    ? t.getAmount()
+                    : t.getAmount().negate());
         }
 
-        return balance;
+        return balance.setScale(2);
     }
 
 }

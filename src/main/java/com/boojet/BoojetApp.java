@@ -1,5 +1,8 @@
 package com.boojet;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.Scanner;
 
@@ -26,8 +29,9 @@ public class BoojetApp{
                     System.out.println("Description: ");
                     String desc = scanner.nextLine();
                     System.out.println("Amount: ");
-                    double amount = scanner.nextDouble();
-                    scanner.nextLine();
+                    String amountStr = scanner.nextLine().trim();
+                    BigDecimal amount = new BigDecimal(amountStr).setScale(2, RoundingMode.HALF_UP);
+                    //scanner.nextLine();
                     System.out.println("Category (FOOD, RENT, etc.): ");
                     Category cat = Category.valueOf(scanner.nextLine().toUpperCase());
 
@@ -37,7 +41,7 @@ public class BoojetApp{
                     System.out.println("Transaction added.");
                 }
                 case 3 -> manager.listTransactions();
-                case 4 -> System.out.println("Balance: $" + manager.getBalance());
+                case 4 -> System.out.println("Balance: " + NumberFormat.getCurrencyInstance().format(manager.getBalance()));
                 case 5 -> running = false;
                 default -> System.out.println("Invalid option.");
             }

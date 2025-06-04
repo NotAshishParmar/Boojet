@@ -3,13 +3,14 @@ package com.boojet;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 public class Transaction{
 
     @JsonProperty
     private String description;
     @JsonProperty
-    private double amount;
+    private BigDecimal amount;
     @JsonProperty
     private LocalDate date;
     @JsonProperty
@@ -20,9 +21,9 @@ public class Transaction{
     //required default constructor for Jackson
     public Transaction() {}
 
-    public Transaction(String description, double amount, LocalDate date, Category category, boolean isIncome){
+    public Transaction(String description, BigDecimal amount, LocalDate date, Category category, boolean isIncome){
         this.description = description;
-        this.amount = amount;
+        this.amount = amount.setScale(2);
         this.date = date;
         this.category = category;
         this.isIncome = isIncome;
@@ -30,7 +31,7 @@ public class Transaction{
 
     //Getters
     public String getDescription(){ return description; }
-    public double getAmount(){ return amount; }
+    public BigDecimal getAmount(){ return amount; }
     public LocalDate getDate(){ return date; }
     public Category getCategory() { return category; }
     @JsonProperty("isIncome")
@@ -40,6 +41,10 @@ public class Transaction{
     @Override
     public String toString(){
         String type = isIncome ? "Income" : "Expense";
-        return "[" + date + "] " + type + ": $" + amount + " | " + category + " | " + description;
+        return "[" + date + "] " + type + ": " + formatCurrency(amount) + " | " + category + " | " + description;
+    }
+
+    private static String formatCurrency(BigDecimal value){
+        return java.text.NumberFormat.getCurrencyInstance().format(value);
     }
 }
