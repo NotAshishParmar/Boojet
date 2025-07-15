@@ -9,7 +9,8 @@
 - Add income and expenses
 - Categorize each transaction (e.g., Food, Rent, Travel)
 - View total income, expenses, and balance
-- Data persistence (JSON, local file)
+- Data persistence (JSON, local file, Manual/Auto Save)
+- View, Edit and Delete Transactions
 
 
 ---
@@ -36,6 +37,15 @@
 - Graphical UI
 - Login system for multiple users
 - Cloud-hosted version
+
+
+| Feature         | “Good Enough”      | Upgrade Later              |
+| --------------- | ------------------ | -------------------------- |
+| **Persistence** | JSON file per user | SQLite → Postgres          |
+| **Auth**        | none (single-user) | Spring Security / JWT      |
+| **UI**          | CLI                | JavaFX → React             |
+| **Hosting**     | Local              | Docker → AWS ECS/Lightsail |
+
 
 ---
 

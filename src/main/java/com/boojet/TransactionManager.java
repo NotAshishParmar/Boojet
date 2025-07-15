@@ -7,13 +7,33 @@ import java.util.List;
 public class TransactionManager{
 
     private List<Transaction> transactions = FileStorage.loadTransactions();
-
+    private final SaveMode saveMode;
+    private boolean dirty = false;       //tracks unsaved edits
     
-    public TransactionManager(){}
+    public TransactionManager(SaveMode saveMode){
+        this.saveMode = saveMode;
+        this.transactions = FileStorage.loadTransactions();
+    }
 
     public void addTransaction(Transaction t){
         transactions.add(t);
-        FileStorage.saveTransactions(transactions); //update file on every change
+        //FileStorage.saveTransactions(transactions); //update file on every change
+        markDirty();
+    }
+
+    public void updateTransaction(int index, Transaction repl){
+        transactions.set(index, repl);
+        markDirty();
+    }
+
+    public void deleteTransaction(int index) {
+        transactions.remove(index);
+        markDirty();
+    }
+
+    //read-only list for UI to display Transaction Index to user
+    public List<Transaction> getTransactions(){
+        return Collections.unmodifiableList(transactions);
     }
 
     public void listTransactions(){
@@ -36,24 +56,36 @@ public class TransactionManager{
         return balance.setScale(2);
     }
 
-    //read-only list for UI to display Transaction Index to user
-    public List<Transaction> getTransactions(){
-        return Collections.unmodifiableList(transactions);
+     /* ───── persistence helpers ───── */
+
+    public void save(){
+        FileStorage.saveTransactions(transactions);
+        dirty = false;
     }
 
-    //replace the transaction at "index"
-    public void updateTransaction(int index, Transaction replacement){
-        if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
-        transactions.set(index, replacement);
-        FileStorage.saveTransactions(transactions);
+    public boolean hasUnsavedChanges(){
+        return dirty;
     }
 
-    //delete transaction at "index"
-    public void deleteTransaction(int index){
-        if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
-        transactions.remove(index);
-        FileStorage.saveTransactions(transactions);
+    public void markDirty(){
+        dirty = true;
+        if(saveMode == SaveMode.AUTO)
+            save();
     }
+
+    // //replace the transaction at "index"
+    // public void updateTransaction(int index, Transaction replacement){
+    //     if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
+    //     transactions.set(index, replacement);
+    //     FileStorage.saveTransactions(transactions);
+    // }
+
+    // //delete transaction at "index"
+    // public void deleteTransaction(int index){
+    //     if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
+    //     transactions.remove(index);
+    //     FileStorage.saveTransactions(transactions);
+    // }
 
 
 }

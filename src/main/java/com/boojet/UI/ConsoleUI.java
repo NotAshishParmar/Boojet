@@ -29,11 +29,12 @@ public class ConsoleUI {
             switch (option) {
                 case 1 -> handleAdd(true);
                 case 2 -> handleAdd(false);
-                case 3 -> listWithIndexes();          // view
+                case 3 -> listWithIndexes();                            // view
                 case 4 -> showBalance();
-                case 5 -> handleEdit();               //edit
-                case 6 -> handleDelete();             //delete
-                case 7 -> running = !confirmQuit(); 
+                case 5 -> handleEdit();                                 //edit
+                case 6 -> handleDelete();                               //delete
+                case 7 -> { manager.save(); running = false; }          // Save & Exit
+                case 8 -> running = !confirmExit();                      // possibly discard 
                 default -> System.out.println("Invalid Option. Try 1-7.");
             }
         }
@@ -51,7 +52,8 @@ public class ConsoleUI {
         System.out.println("4. View Balance");
         System.out.println("5. Edit Transaction");
         System.out.println("6. Delete Transaction");
-        System.out.println("7. Exit");
+        System.out.println("7. Save & Exit");
+        System.out.println("8. Exit (discard)");
     }
 
     private void handleAdd(boolean isIncome){
@@ -147,10 +149,19 @@ public class ConsoleUI {
         return s.isBlank() ? fallback : Category.valueOf(s.toUpperCase());
     }
 
+    // ─────Exit Confirmation Helper ─────
 
-     // ───── low-level input utilities ─────
+    private boolean confirmExit(){
+        if(manager.hasUnsavedChanges()){
+            String ans = readLine("Unsaved changes! Exit without saving? (y/n): ");
+            return ans.equalsIgnoreCase("y");
+        }
+        return true;
+    }
 
-     private String readLine(String prompt){
+    // ───── low-level input utilities ─────
+
+    private String readLine(String prompt){
         System.out.print(prompt);
         return scanner.nextLine().trim();
     }
