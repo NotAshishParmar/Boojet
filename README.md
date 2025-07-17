@@ -11,6 +11,8 @@
 - View total income, expenses, and balance
 - Data persistence (JSON, local file, Manual/Auto Save)
 - View, Edit and Delete Transactions
+- Filter by Category
+- Monthly Summary
 
 
 ---
@@ -31,7 +33,7 @@
 ## ✨ Future Improvements
 
 - Monthly budgeting & limits
-- Breakdown by category (optional pie chart or table later)
+- ~~Breakdown by category~~ (optional pie chart or table later)
 - ~~Data persistence (JSON, local file)~~
 - Data persistence with DB
 - Graphical UI

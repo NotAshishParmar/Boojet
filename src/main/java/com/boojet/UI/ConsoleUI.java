@@ -6,7 +6,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.Map;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Scanner;
 
 
@@ -33,8 +35,10 @@ public class ConsoleUI {
                 case 4 -> showBalance();
                 case 5 -> handleEdit();                                 //edit
                 case 6 -> handleDelete();                               //delete
-                case 7 -> { manager.save(); running = false; }          // Save & Exit
-                case 8 -> running = !confirmExit();                      // possibly discard 
+                case 7 -> handleCategoryView();
+                case 8 -> handleMonthySummary();
+                case 9 -> { manager.save(); running = false; }          // Save & Exit
+                case 0 -> running = !confirmExit();                      // possibly discard 
                 default -> System.out.println("Invalid Option. Try 1-7.");
             }
         }
@@ -52,8 +56,10 @@ public class ConsoleUI {
         System.out.println("4. View Balance");
         System.out.println("5. Edit Transaction");
         System.out.println("6. Delete Transaction");
-        System.out.println("7. Save & Exit");
-        System.out.println("8. Exit (discard)");
+        System.out.println("7. Show by Category");
+        System.out.println("8. Monthly Summary");
+        System.out.println("9. Save & Exit");
+        System.out.println("0. Exit (discard)");
     }
 
     private void handleAdd(boolean isIncome){
@@ -127,6 +133,110 @@ public class ConsoleUI {
             manager.deleteTransaction(choice);
             System.out.println("DELETED!");
         }
+    }
+
+    private void handleCategoryView(){
+        Category cat = readCategory("Which category? ");
+        List<Transaction> list = manager.inCategory(cat);
+        if(list.isEmpty()){
+            System.out.println("No transaction of type " + cat);
+            return;
+        }
+
+        list.forEach(System.out::println);
+        BigDecimal total = list.stream()
+                                .map( t-> t.isIncome()? t.getAmount() : t.getAmount().negate())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        System.out.println("Net value for " + cat + ": " + currencyFmt.format(total));
+
+
+
+        //--------------------------------More readable format-----------------------------
+        // Category cat = readCategory("Which category? ");
+    
+        // List<Transaction> list = manager.inCategory(cat);
+
+        // if (list.isEmpty()) {
+        //     System.out.println("No transactions in " + cat);
+        //     return;
+        // }
+
+        // for (Transaction t : list) {
+        //     System.out.println(t);
+        // }
+
+        // BigDecimal total = BigDecimal.ZERO;
+        // for (Transaction t : list) {
+        //     if (t.isIncome()) {
+        //         total = total.add(t.getAmount());
+        //     } else {
+        //         total = total.subtract(t.getAmount());
+        //     }
+        // }
+
+        // System.out.println("Net total for " + cat + ": " + currencyFmt.format(total));
+        //---------------------------------------------------------------------------------
+
+    }
+
+
+    private void handleMonthySummary(){
+
+        int y = readInt("Year (e.g. 2025): ");
+        int m = readInt("Month (1-12): ");
+        YearMonth ym = YearMonth.of(y,m);           //convert to format
+
+        var subset = manager.inMonth(ym);
+        if(subset.isEmpty()){
+            System.out.println("There were no transaction made in " + ym);
+            return;
+        }
+
+        Map<Category, BigDecimal> map = manager.summariseByCategory(subset);
+        BigDecimal monthNet = subset.stream()
+                                        .map(t -> t.isIncome()? t.getAmount() : t.getAmount().negate())
+                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        System.out.println("\n-------- " + ym + " ---------");
+        map.forEach((cat, val) -> System.out.printf("%-12s %s%n", cat, currencyFmt.format(val)));
+        System.out.println("--------------------------");
+        System.out.println(" Net balance:    "+ currencyFmt.format(monthNet));
+
+
+        //------------------------------More readable format--------------------------------
+        // Map<Category, BigDecimal> map = new HashMap<>();
+        // BigDecimal monthNet = BigDecimal.ZERO;
+
+        // for (Transaction t : subset) {
+        //     Category cat = t.getCategory();
+        //     BigDecimal amount = t.getAmount();
+
+        //     // Add or subtract based on income/expense
+        //     if (t.isIncome()) {
+        //         monthNet = monthNet.add(amount);
+        //     } else {
+        //         amount = amount.negate();
+        //         monthNet = monthNet.add(amount);
+        //     }
+
+        //     // Update category total
+        //     BigDecimal current = map.getOrDefault(cat, BigDecimal.ZERO);
+        //     map.put(cat, current.add(amount));
+        // }
+
+        // // Print summary
+        // System.out.println("\n " + ym);
+        // for (Map.Entry<Category, BigDecimal> entry : map.entrySet()) {
+        //     Category cat = entry.getKey();
+        //     BigDecimal total = entry.getValue();
+        //     System.out.printf("  %-12s %s%n", cat, currencyFmt.format(total));
+        // }
+
+        // System.out.println("-------------------------------");
+        // System.out.println("  Net balance     " + currencyFmt.format(monthNet));
+        //----------------------------------------------------------------------------------
+
+
     }
 
     private void showBalance(){

@@ -2,7 +2,11 @@ package com.boojet;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.time.YearMonth;
 
 public class TransactionManager{
 
@@ -56,7 +60,49 @@ public class TransactionManager{
         return balance.setScale(2);
     }
 
-     /* ───── persistence helpers ───── */
+    /* ───── Filtering and Summary ───── */
+
+    //return the transactions in that month
+    public List<Transaction> inMonth(YearMonth ym){
+        return transactions.stream()
+                            .filter(t -> YearMonth.from(t.getDate()).equals(ym))
+                            .toList();
+    }
+
+    //return all transactions for that category
+    public List<Transaction> inCategory(Category cat){
+        return transactions.stream()
+                            .filter(t -> t.getCategory() == cat)
+                            .toList();
+    }
+
+    //summary??
+    public Map<Category, BigDecimal> summariseByCategory(List<Transaction> list){
+        return list.stream().collect(
+            Collectors.groupingBy(Transaction::getCategory,
+                                    Collectors.mapping(Transaction::getAmount,
+                                        Collectors.reducing(BigDecimal.ZERO, (a,b)-> a.add(b)))));
+
+        //make list into stream -> collect data in a map -> group transactions by category -> instead of getting whole transaction object just get the amounts
+        //-> add all amounts up/reduce to total (starts at zero) 
+
+
+        // -------------------A more readable version---------------------
+        // Map<Category, BigDecimal> summary = new HashMap<>();
+
+        // for (Transaction t : list) {
+        //     Category cat = t.getCategory();
+        //     BigDecimal amt = t.getAmount();
+
+        //     summary.put(cat, summary.getOrDefault(cat, BigDecimal.ZERO).add(amt));
+        // }
+
+        // return summary;
+        // ---------------------------------------------------------------
+    
+    }
+
+    /* ───── persistence helpers ───── */
 
     public void save(){
         FileStorage.saveTransactions(transactions);
