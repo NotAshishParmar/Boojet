@@ -1,6 +1,7 @@
 package com.boojet;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,11 @@ public class TransactionManager{
     
     public TransactionManager(SaveMode saveMode){
         this.saveMode = saveMode;
-        this.transactions = FileStorage.loadTransactions();
+
+        if (saveMode == SaveMode.AUTO || saveMode == SaveMode.MANUAL)
+            this.transactions = FileStorage.loadTransactions();
+        else
+            this.transactions = new ArrayList<>();
     }
 
     public void addTransaction(Transaction t){
@@ -118,20 +123,4 @@ public class TransactionManager{
         if(saveMode == SaveMode.AUTO)
             save();
     }
-
-    // //replace the transaction at "index"
-    // public void updateTransaction(int index, Transaction replacement){
-    //     if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
-    //     transactions.set(index, replacement);
-    //     FileStorage.saveTransactions(transactions);
-    // }
-
-    // //delete transaction at "index"
-    // public void deleteTransaction(int index){
-    //     if(index < 0 || index >= transactions.size()) throw new IndexOutOfBoundsException();
-    //     transactions.remove(index);
-    //     FileStorage.saveTransactions(transactions);
-    // }
-
-
 }
