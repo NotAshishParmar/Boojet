@@ -250,13 +250,35 @@ public class ConsoleUI {
     }
 
     private BigDecimal optionalMoney(String prompt, BigDecimal fallback){
-        String s = readLine(prompt);
-        return s.isBlank() ? fallback : new BigDecimal(s).setScale(2, RoundingMode.HALF_UP);
+
+        while(true){
+            String s = readLine(prompt);
+
+            if(s.isBlank())
+                return fallback;
+
+            if(s.matches("\\d+(\\.\\d{1,2})?")){
+                return new BigDecimal(s).setScale(2, RoundingMode.HALF_UP);
+            }
+            System.out.println("Enter a positive amount with up to two decimals.");
+        }
     }
 
     private Category optionalCategory(String prompt, Category fallback){
-        String s = readLine(prompt);
-        return s.isBlank() ? fallback : Category.valueOf(s.toUpperCase());
+
+        while(true){
+            try{
+                String s = readLine(prompt);
+
+                if(s.isBlank()){
+                    return fallback;
+                }
+                return Category.valueOf(s.toUpperCase());
+            } 
+            catch(IllegalArgumentException e){
+                System.out.println("Unknown category. Try again.");
+            }
+        }
     }
 
     // ─────Exit Confirmation Helper ─────
