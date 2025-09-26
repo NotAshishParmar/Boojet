@@ -1,6 +1,6 @@
-package com.boojet;
+package com.boojet.boot_api;
 
-import com.boojet.UI.ConsoleUI;
+import com.boojet.boot_api.UI.ConsoleUI;
 
 public class BoojetApp{
     public static void main(String[] args){

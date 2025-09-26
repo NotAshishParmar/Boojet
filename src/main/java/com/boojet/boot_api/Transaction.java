@@ -1,4 +1,4 @@
-package com.boojet;
+package com.boojet.boot_api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

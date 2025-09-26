@@ -1,4 +1,4 @@
-package com.boojet;
+package com.boojet.boot_api;
 
 public enum SaveMode {
     AUTO,       //write file after every change

@@ -1,4 +1,4 @@
-package com.boojet;
+package com.boojet.boot_api;
 
 // imports for JSON processing, file handling and data structures
 import com.fasterxml.jackson.core.type.TypeReference;

@@ -1,12 +1,14 @@
-package com.boojet;
+package com.boojet.boot_api;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,8 +19,8 @@ public class TransactionManagerTest {
     private final Transaction salary = tx("Salary1", "1000.00", "2025-07-01", Category.INCOME, true);
     private final Transaction salary2 = tx("Salary2", "2000.00", "2025-07-02", Category.INCOME, true);
     private final Transaction rent = tx("Rent", "400.00", "2025-07-03", Category.OTHER, false);
-    private final Transaction food = tx("Pizza", "1000.00", "2025-07-04", Category.FOOD, false);
-    private final Transaction food2 = tx("Hotdog", "2000.00", "2025-07-05", Category.FOOD, false);
+    private final Transaction food = tx("Pizza", "1000.00", "2025-08-04", Category.FOOD, false);
+    private final Transaction food2 = tx("Hotdog", "2000.00", "2025-08-05", Category.FOOD, false);
 
 
     @BeforeEach
@@ -132,6 +134,74 @@ public class TransactionManagerTest {
     void noTransactions(){
 
         assertEquals(new BigDecimal("0.00"), manager.getBalance(), "Balance should be zero?");
+    }
+
+
+    //----------inMonth---------------
+    @Test
+    void checkTransactionsInMonth(){
+        manager.addTransaction(salary);
+        manager.addTransaction(rent);
+        manager.addTransaction(food);
+
+        List<Transaction> list = manager.inMonth(YearMonth.of(2025, 7));
+
+        assertEquals(2, list.size(), "There should only be 2 transactions in that month");
+
+        Transaction t1 = list.get(0);
+        Transaction t2 = list.get(1);
+
+        assertEquals(LocalDate.parse("2025-07-01"), t1.getDate(), "Transaction should be from 07-2025");
+        assertEquals(LocalDate.parse("2025-07-03"), t2.getDate(), "Transaction should be from 07-2025");
+
+    }
+
+    @Test
+    void noTransactionsInMonth(){
+        List<Transaction> list = manager.inMonth(YearMonth.of(2025, 8));
+
+        assertEquals(0, list.size(), "List of transactions in that month should be empty");
+    }
+    
+    //----------inCategory---------------
+    @Test
+    void checkTransactionOfCategory(){
+        manager.addTransaction(salary);
+        manager.addTransaction(rent);
+        manager.addTransaction(salary2);
+
+        List<Transaction> list = manager.inCategory(Category.INCOME);
+
+        assertEquals(2, list.size());
+
+        Transaction t1 = list.get(0);
+        Transaction t2 = list.get(1);
+
+        assertEquals(Category.INCOME, t1.getCategory(), "Category should be INCOME");
+        assertEquals(Category.INCOME, t2.getCategory(), "Category should be INCOME");
+    }
+
+    @Test
+    void noTransactionsOfCategory(){
+        List<Transaction> list = manager.inCategory(Category.RENT);
+
+        assertEquals(0, list.size(), "There should be no transactions for that Category");
+    }
+
+    //----------summarizeByCategory---------------
+    @Test
+    void correctSumPerMonth(){
+
+        manager.addTransaction(salary);
+        manager.addTransaction(food);
+        manager.addTransaction(food2);
+
+        //List<Transaction> subset = manager.inMonth(YearMonth.of(2025, 8));
+
+        Map<Category, BigDecimal> map = manager.summariseByCategory(manager.getTransactions());
+
+        assertEquals(new BigDecimal("3000.00"), map.get(Category.FOOD), "Food total should be 3000.00");
+        assertEquals(new BigDecimal("1000.00"), map.get(Category.INCOME), "Income total should be 1000.00");
     }
 
 
