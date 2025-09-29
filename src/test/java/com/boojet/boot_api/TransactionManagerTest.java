@@ -198,7 +198,7 @@ public class TransactionManagerTest {
 
         //List<Transaction> subset = manager.inMonth(YearMonth.of(2025, 8));
 
-        Map<Category, BigDecimal> map = manager.summariseByCategory(manager.getTransactions());
+        Map<Category, Money> map = manager.summariseByCategory(manager.getTransactions());
 
         assertEquals(new BigDecimal("3000.00"), map.get(Category.FOOD), "Food total should be 3000.00");
         assertEquals(new BigDecimal("1000.00"), map.get(Category.INCOME), "Income total should be 1000.00");
@@ -208,7 +208,7 @@ public class TransactionManagerTest {
 
     //helper
     private Transaction tx (String disc, String amount, String date, Category cat, boolean isIncome){
-        return new Transaction(disc, new BigDecimal(amount), LocalDate.parse(date), cat, isIncome);
+        return new Transaction(disc, Money.of(amount), LocalDate.parse(date), cat, isIncome);
     }
 
 

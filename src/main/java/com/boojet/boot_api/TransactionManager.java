@@ -1,6 +1,5 @@
 package com.boojet.boot_api;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,8 +49,8 @@ public class TransactionManager{
         }
     }
 
-    public BigDecimal getBalance(){
-        BigDecimal balance = BigDecimal.ZERO;
+    public Money getBalance(){
+        Money balance = Money.zero();
 
         //if income then add the amount
         //if not income then subtract the amount using negate
@@ -61,7 +60,7 @@ public class TransactionManager{
                     : t.getAmount().negate());
         }
 
-        return balance.setScale(2);
+        return balance;
     }
 
     /* ───── Filtering and Summary ───── */
@@ -81,11 +80,11 @@ public class TransactionManager{
     }
 
     //summary??
-    public Map<Category, BigDecimal> summariseByCategory(List<Transaction> list){
+    public Map<Category, Money> summariseByCategory(List<Transaction> list){
         return list.stream().collect(
             Collectors.groupingBy(Transaction::getCategory,
                                     Collectors.mapping(Transaction::getAmount,
-                                        Collectors.reducing(BigDecimal.ZERO, (a,b)-> a.add(b)))));
+                                        Collectors.reducing(Money.zero(), (a,b)-> a.add(b)))));
 
         //make list into stream -> collect data in a map -> group transactions by category -> instead of getting whole transaction object just get the amounts
         //-> add all amounts up/reduce to total (starts at zero) 

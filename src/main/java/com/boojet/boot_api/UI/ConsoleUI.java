@@ -5,9 +5,7 @@ import com.boojet.boot_api.*;
 // import com.boojet.boot_api.Transaction;
 // import com.boojet.boot_api.TransactionManager;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
+
 import java.util.List;
 import java.util.Map;
 import java.time.LocalDate;
@@ -18,7 +16,7 @@ import java.util.Scanner;
 public class ConsoleUI {
     private final TransactionManager manager;
     private final Scanner scanner = new Scanner(System.in);
-    private final NumberFormat currencyFmt = NumberFormat.getCurrencyInstance();
+
 
     public ConsoleUI(TransactionManager manager){
         this.manager = manager;
@@ -67,7 +65,7 @@ public class ConsoleUI {
 
     private void handleAdd(boolean isIncome){
         String desc = readLine("Description: ");
-        BigDecimal amount = readMoney("Amount: ");
+        Money amount = readMoney("Amount: ");
         Category cat = readCategory("Catergory (FOOD, RENT, etc.): ");
         Transaction t = new Transaction(desc, amount, LocalDate.now(), cat, isIncome);
         manager.addTransaction(t);
@@ -104,7 +102,7 @@ public class ConsoleUI {
             desc = old.getDescription();
         }
 
-        BigDecimal amount = optionalMoney("Amount [" + old.getAmount() + "]: ", old.getAmount());
+        Money amount = optionalMoney("Amount [" + old.getAmount() + "]: ", old.getAmount());
         Category cat = optionalCategory("Category [" + old.getCategory() + "]: ", old.getCategory());
 
         //Ask the user if the transaction is income or expense.
@@ -147,10 +145,10 @@ public class ConsoleUI {
         }
 
         list.forEach(System.out::println);
-        BigDecimal total = list.stream()
+        Money total = list.stream()
                                 .map( t-> t.isIncome()? t.getAmount() : t.getAmount().negate())
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        System.out.println("Net value for " + cat + ": " + currencyFmt.format(total));
+                                .reduce(Money.zero(), Money::add);
+        System.out.println("Net value for " + cat + ": " + total);
 
 
 
@@ -195,15 +193,15 @@ public class ConsoleUI {
             return;
         }
 
-        Map<Category, BigDecimal> map = manager.summariseByCategory(subset);
-        BigDecimal monthNet = subset.stream()
+        Map<Category, Money> map = manager.summariseByCategory(subset);
+        Money monthNet = subset.stream()
                                         .map(t -> t.isIncome()? t.getAmount() : t.getAmount().negate())
-                                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                        .reduce(Money.zero(), Money::add);
 
         System.out.println("\n-------- " + ym + " ---------");
-        map.forEach((cat, val) -> System.out.printf("%-12s %s%n", cat, currencyFmt.format(val)));
+        map.forEach((cat, val) -> System.out.printf("%-12s %s%n", cat, val));
         System.out.println("--------------------------");
-        System.out.println(" Net balance:    "+ currencyFmt.format(monthNet));
+        System.out.println(" Net balance:    "+ monthNet);
 
 
         //------------------------------More readable format--------------------------------
@@ -243,8 +241,8 @@ public class ConsoleUI {
     }
 
     private void showBalance(){
-        BigDecimal balance = manager.getBalance();
-        System.out.println("Current Balance: " + currencyFmt.format(balance));
+        Money balance = manager.getBalance();
+        System.out.println("Current Balance: " + balance);
     }
 
     private boolean confirmQuit(){
@@ -252,7 +250,7 @@ public class ConsoleUI {
         return ans.startsWith("y");
     }
 
-    private BigDecimal optionalMoney(String prompt, BigDecimal fallback){
+    private Money optionalMoney(String prompt, Money fallback){
 
         while(true){
             String s = readLine(prompt);
@@ -261,7 +259,7 @@ public class ConsoleUI {
                 return fallback;
 
             if(s.matches("\\d+(\\.\\d{1,2})?")){
-                return new BigDecimal(s).setScale(2, RoundingMode.HALF_UP);
+                return Money.of(s);
             }
             System.out.println("Enter a positive amount with up to two decimals.");
         }
@@ -311,11 +309,11 @@ public class ConsoleUI {
         }
     }
 
-    private BigDecimal readMoney(String prompt){
+    private Money readMoney(String prompt){
         while(true){
             String s = readLine(prompt);
             if(s.matches("\\d+(\\.\\d{1,2})?")){
-                return new BigDecimal(s).setScale(2, RoundingMode.HALF_UP);
+                return Money.of(s);
             }
             System.out.println("Enter a positive amount with up to two decimals.");
         }

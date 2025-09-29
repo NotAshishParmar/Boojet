@@ -10,7 +10,7 @@ public class Transaction{
     @JsonProperty
     private String description;
     @JsonProperty
-    private BigDecimal amount;
+    private Money amount;
     @JsonProperty
     private LocalDate date;
     @JsonProperty
@@ -21,9 +21,9 @@ public class Transaction{
     //required default constructor for Jackson
     public Transaction() {}
 
-    public Transaction(String description, BigDecimal amount, LocalDate date, Category category, boolean isIncome){
+    public Transaction(String description, Money amount, LocalDate date, Category category, boolean isIncome){
         this.description = description;
-        this.amount = amount.setScale(2);
+        this.amount = amount;
         this.date = date;
         this.category = category;
         this.isIncome = isIncome;
@@ -31,7 +31,7 @@ public class Transaction{
 
     //Getters
     public String getDescription(){ return description; }
-    public BigDecimal getAmount(){ return amount; }
+    public Money getAmount(){ return amount; }
     public LocalDate getDate(){ return date; }
     public Category getCategory() { return category; }
     @JsonProperty("isIncome")
@@ -41,7 +41,7 @@ public class Transaction{
     @Override
     public String toString(){
         String type = isIncome ? "Income" : "Expense";
-        return "[" + date + "] " + type + ": " + formatCurrency(amount) + " | " + category + " | " + description;
+        return "[" + date + "] " + type + ": " + amount + " | " + category + " | " + description;
     }
 
     private static String formatCurrency(BigDecimal value){
