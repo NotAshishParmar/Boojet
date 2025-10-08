@@ -40,6 +40,10 @@
 - Login system for multiple users
 - Cloud-hosted version
 
+## Working on
+
+- Using database instead of json files for storage
+
 
 | Feature         | “Good Enough”      | Upgrade Later              |
 | --------------- | ------------------ | -------------------------- |
