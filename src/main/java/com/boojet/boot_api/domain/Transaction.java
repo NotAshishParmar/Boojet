@@ -1,11 +1,32 @@
-package com.boojet.boot_api;
+package com.boojet.boot_api.domain;
 
+import com.boojet.boot_api.Category;
+import com.boojet.boot_api.Money;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDate;
-import java.math.BigDecimal;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "transactions")
 public class Transaction{
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_id_seq")
+    private Long id;
 
     @JsonProperty
     private String description;
@@ -16,10 +37,7 @@ public class Transaction{
     @JsonProperty
     private Category category;
     @JsonProperty
-    private boolean isIncome;
-
-    //required default constructor for Jackson
-    public Transaction() {}
+    private Boolean isIncome;
 
     public Transaction(String description, Money amount, LocalDate date, Category category, boolean isIncome){
         this.description = description;
@@ -29,11 +47,7 @@ public class Transaction{
         this.isIncome = isIncome;
     }
 
-    //Getters
-    public String getDescription(){ return description; }
-    public Money getAmount(){ return amount; }
-    public LocalDate getDate(){ return date; }
-    public Category getCategory() { return category; }
+    //for Jackson
     @JsonProperty("isIncome")
     public boolean isIncome() { return isIncome; }
 
@@ -44,7 +58,4 @@ public class Transaction{
         return "[" + date + "] " + type + ": " + amount + " | " + category + " | " + description;
     }
 
-    private static String formatCurrency(BigDecimal value){
-        return java.text.NumberFormat.getCurrencyInstance().format(value);
-    }
 }

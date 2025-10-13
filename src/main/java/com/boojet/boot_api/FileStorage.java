@@ -1,5 +1,6 @@
 package com.boojet.boot_api;
 
+import com.boojet.boot_api.domain.Transaction;
 // imports for JSON processing, file handling and data structures
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

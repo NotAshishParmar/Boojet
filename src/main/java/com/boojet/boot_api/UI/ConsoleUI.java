@@ -4,7 +4,7 @@ import com.boojet.boot_api.*;
 // import com.boojet.boot_api.Category;
 // import com.boojet.boot_api.Transaction;
 // import com.boojet.boot_api.TransactionManager;
-
+import com.boojet.boot_api.domain.Transaction;
 
 import java.util.List;
 import java.util.Map;

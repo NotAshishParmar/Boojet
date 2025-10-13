@@ -3,6 +3,9 @@ package com.boojet.boot_api;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.boojet.boot_api.domain.Transaction;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Year;
