@@ -1,6 +1,8 @@
 package com.boojet.boot_api.UI;
 
 import com.boojet.boot_api.*;
+import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.Money;
 // import com.boojet.boot_api.Category;
 // import com.boojet.boot_api.Transaction;
 // import com.boojet.boot_api.TransactionManager;

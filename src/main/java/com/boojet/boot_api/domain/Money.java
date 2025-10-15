@@ -1,8 +1,11 @@
-package com.boojet.boot_api;
+package com.boojet.boot_api.domain;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public class Money implements Comparable<Money>{
     
@@ -50,6 +53,18 @@ public class Money implements Comparable<Money>{
 
     public String format(){
         return NumberFormat.getCurrencyInstance().format(amount);
+    }
+
+    //serialize as a plain number
+    @JsonValue
+    public BigDecimal toJson(){
+        return amount;
+    }
+
+    //deserialize from a plain number
+    @JsonCreator
+    public static Money fromJson(BigDecimal value){
+        return Money.of(value);
     }
 
 

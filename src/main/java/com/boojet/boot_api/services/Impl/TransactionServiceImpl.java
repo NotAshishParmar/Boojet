@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.boojet.boot_api.Category;
-import com.boojet.boot_api.Money;
+import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.services.TransactionService;
@@ -57,7 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
             Optional.ofNullable(transaction.getAmount()).ifPresent(existingTransaction::setAmount);
             Optional.ofNullable(transaction.getDate()).ifPresent(existingTransaction::setDate);
             Optional.ofNullable(transaction.getCategory()).ifPresent(existingTransaction::setCategory);
-            Optional.ofNullable(transaction.getIsIncome()).ifPresent(existingTransaction::setIsIncome);
+            Optional.ofNullable(transaction.isIncome()).ifPresent(existingTransaction::setIncome);
             return transactionRepository.save(existingTransaction);
         }).orElseThrow(() -> new RuntimeException ("Transaction not found with id " + id));
     }

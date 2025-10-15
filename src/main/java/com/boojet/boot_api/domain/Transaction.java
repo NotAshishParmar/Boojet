@@ -1,9 +1,9 @@
 package com.boojet.boot_api.domain;
 
-import com.boojet.boot_api.Category;
-import com.boojet.boot_api.Money;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,30 +31,32 @@ public class Transaction{
     @JsonProperty
     private String description;
     @JsonProperty
+    @Convert(converter = MoneyConverter.class)
     private Money amount;
     @JsonProperty
     private LocalDate date;
     @JsonProperty
     private Category category;
-    @JsonProperty
-    private Boolean isIncome;
+    @JsonProperty("income")
+    @Column(name = "is_income", nullable = false)  // DB uses "is_income"
+    private boolean income;
 
-    public Transaction(String description, Money amount, LocalDate date, Category category, boolean isIncome){
+    public Transaction(String description, Money amount, LocalDate date, Category category, boolean income){
         this.description = description;
         this.amount = amount;
         this.date = date;
         this.category = category;
-        this.isIncome = isIncome;
+        this.income = income;
     }
 
-    //for Jackson
-    @JsonProperty("isIncome")
-    public boolean isIncome() { return isIncome; }
+    // //for Jackson
+    // @JsonProperty("isIncome")
+    // public boolean isIncome() { return isIncome; }
 
 
     @Override
     public String toString(){
-        String type = isIncome ? "Income" : "Expense";
+        String type = income ? "Income" : "Expense";
         return "[" + date + "] " + type + ": " + amount + " | " + category + " | " + description;
     }
 

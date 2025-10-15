@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.boojet.boot_api.Category;
-import com.boojet.boot_api.Money;
+import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 
 public interface TransactionService {

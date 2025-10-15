@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 
 import java.math.BigDecimal;
