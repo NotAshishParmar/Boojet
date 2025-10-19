@@ -1,28 +1,33 @@
 package com.boojet.boot_api;
 
+import javax.sql.DataSource;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
 
-import com.boojet.boot_api.UI.ConsoleUI;
+import lombok.extern.java.Log;
 
+@Log
 @SpringBootApplication
-public class BootApiApplication {
+public class BootApiApplication implements CommandLineRunner {
+	private final DataSource dataSource;
+
+	public BootApiApplication(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(BootApiApplication.class, args);
 	}
 
-	// Optional: run your existing Console UI when you use the 'cli' profile
-	@Bean @Profile("cli")
-	CommandLineRunner runCli() {
-		return args -> {
-		var manager = new TransactionManager(SaveMode.MANUAL);
-		var ui = new ConsoleUI(manager); // matches your package com.boojet.UI
-		ui.run();
-		System.exit(0); // exit after CLI finishes so Boot doesn't keep the server alive
-		};
+	@Override
+	public void run(String... args){
+		log.info("DataSource: " + dataSource.toString());
+		final JdbcTemplate restTemplate = new JdbcTemplate(dataSource);
+		restTemplate.execute("SELECT 1");
 	}
 }

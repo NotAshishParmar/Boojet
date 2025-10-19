@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.boojet.boot_api.controllers.dto.TransactionDto;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.mappers.Mapper;
 import com.boojet.boot_api.services.TransactionService;
 
 
@@ -27,45 +29,59 @@ import com.boojet.boot_api.services.TransactionService;
 public class TransactionController {
     
     private TransactionService transactionService;
+    private Mapper<Transaction, TransactionDto> transactionMapper;
 
-    public TransactionController(TransactionService transactionService){
+
+    public TransactionController(TransactionService transactionService, Mapper<Transaction, TransactionDto> transactionMapper){
         this.transactionService = transactionService;
+        this.transactionMapper = transactionMapper;
     }
 
 
     @PostMapping
-    public Transaction createTransaction(@RequestBody Transaction transaction) {
-        return transactionService.addTransaction(transaction);
+    public TransactionDto createTransaction(@RequestBody TransactionDto transactionDto) {
+
+        Transaction transaction = transactionMapper.mapFrom(transactionDto);
+        Transaction savedTransaction = transactionService.addTransaction(transaction);
+        return transactionMapper.mapTo(savedTransaction);
     }
 
     @GetMapping
-    public List<Transaction> getAllTransactions() {
-        return transactionService.findAllTransactions();
+    public List<TransactionDto> getAllTransactions() {
+        List<Transaction> transactions = transactionService.findAllTransactions();
+        return transactions.stream()
+                .map(transaction -> transactionMapper.mapTo(transaction))
+                .toList();
     }
+
     @GetMapping("/{id}")
-    public Transaction getOne(@PathVariable Long id) {
-        return transactionService.findTransaction(id)
+    public TransactionDto getOne(@PathVariable Long id) {
+
+        Transaction transaction = transactionService.findTransaction(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with ID " + id + " not found."));
+        return transactionMapper.mapTo(transaction);
     }
 
     @PutMapping("/{id}")
-    public Transaction updateTransaction(@PathVariable Long id, @RequestBody Transaction transaction) {
+    public TransactionDto updateTransaction(@PathVariable Long id, @RequestBody TransactionDto transactionDto) {
 
         if(!transactionService.isExists(id)){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with ID " + id + " not found.");
         }
 
-        return transactionService.updateTransaction(id, transaction);
+        Transaction updatedTransaction = transactionService.updateTransaction(id, transactionMapper.mapFrom(transactionDto));
+        return transactionMapper.mapTo(updatedTransaction);
     }
 
     @PatchMapping("/{id}")
-    public Transaction patchTransaction(@PathVariable Long id, @RequestBody Transaction transaction) {
+    public TransactionDto patchTransaction(@PathVariable Long id, @RequestBody TransactionDto transactionDto) {
 
         if(!transactionService.isExists(id)){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with ID " + id + " not found.");
         }
 
-        return transactionService.updateTransaction(id, transaction);
+        Transaction patchedTransaction =  transactionService.updateTransaction(id, transactionMapper.mapFrom(transactionDto));
+        return transactionMapper.mapTo(patchedTransaction);
     }
 
     @DeleteMapping("/{id}")
@@ -80,16 +96,26 @@ public class TransactionController {
     //--------------------------------Filters / Reports---------------------------------------------
 
     @GetMapping("/category/{cat}")
-    public List<Transaction> byCategory(@PathVariable Category cat){
-        return transactionService.findTransactionsByCategory(cat);
+    public List<TransactionDto> byCategory(@PathVariable Category cat){
+
+        List<Transaction> transactions = transactionService.findTransactionsByCategory(cat);
+
+        return transactions.stream()
+            .map(transaction -> transactionMapper.mapTo(transaction))
+            .toList();
+
     }
 
     @GetMapping("/month/{year}/{month}")
-    public List<Transaction> byMonth(@PathVariable int year, @PathVariable int month){
-        return transactionService.findTransactionsByMonth(YearMonth.of(year, month));
+    public List<TransactionDto> byMonth(@PathVariable int year, @PathVariable int month){
+
+        List<Transaction> transactions = transactionService.findTransactionsByMonth(YearMonth.of(year, month));
+
+        return transactions.stream()
+            .map(transaction -> transactionMapper.mapTo(transaction))
+            .toList();
     }
 
-    //Controller should have no knowledge of Money
     @GetMapping("/balance")
     public Money balance(){
         return transactionService.calculateTotalBalance();
