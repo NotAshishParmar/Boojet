@@ -1,41 +1,46 @@
-# Boojet - Personal Budgeting Application\
-Boojet is a simple personal budgeting application built with Java and Spring Boot. It provides a REST API for managing financial transactions, along with a minimal web UI for basic interaction. Additionally, it includes a console-based CLI prototype for offline use.
+# Boojet — Personal Budgeting API
+
+Simple budgeting backend built with Java and Spring Boot. It exposes a REST API to track transactions and a minimal static web page for quick interaction. A small console prototype is also included for offline experimentation.
 
 
 ## Features
 
-- REST API for budgeting
-  - CRUD transactions at `/transactions` (create, list, get by id, update PUT/PATCH, delete)
-  - Reports and filters: by category, by year/month, monthly summary, overall balance
-- Minimal web UI
-  - `src/main/resources/static/boojet.html` for add/edit/delete/filter and live balance
-- Rich domain model
-  - `Transaction` entity, `Category` enum, and `Money` value object persisted via a JPA `AttributeConverter`
-- CLI prototype (offline)
-  - Console UI with save modes (AUTO/MANUAL/NONE), JSON persistence to `transactions.json`
+- Transactions API
+  - CRUD at `/transactions`
+  - Filters and reports: by category, by month, monthly summary, overall balance
+- Income Planning
+  - Create income plans at `/plan`
+  - Expected monthly income and net report per month
+- Minimal Web UI
+  - Static page at `src/main/resources/static/boojet.html` (served at `/boojet.html`)
+- Clean Domain Model
+  - `Transaction`, `Category`, `Money` (with JPA `AttributeConverter`)
 
 
 ## Tech Stack
 
 - Java 17, Maven
-- Spring Boot 3.5.x: Web, Data JPA, Validation
-- PostgreSQL (via Docker Compose for local dev)
-- Jackson (with Java Time module), ModelMapper, Lombok
+- Spring Boot 3.5.x (Web, Data JPA, Validation)
+- PostgreSQL (Docker Compose for local dev)
+- ModelMapper, Lombok, Jackson
 - JUnit 5
-- Static HTML/JavaScript for a lightweight UI
 
 
-## How to run
+## How To Run
 
-API (recommended):
+Prerequisites:
 
-1) Start PostgreSQL
+- Java 17+
+- Maven 3.9+
+- Docker (optional, for local PostgreSQL)
+
+1) Start PostgreSQL (optional but recommended)
 
 ```
 docker compose up -d
 ```
 
-Database config (`src/main/resources/application.properties`):
+The default configuration (`src/main/resources/application.properties`):
 
 - `spring.datasource.url=jdbc:postgresql://localhost:5432/postgres`
 - `spring.datasource.username=postgres`
@@ -48,36 +53,48 @@ Database config (`src/main/resources/application.properties`):
 mvn spring-boot:run
 ```
 
-3) Use the minimal UI
+3) Open the simple UI
 
 ```
 http://localhost:8080/boojet.html
 ```
 
-Or call endpoints directly (base path `/transactions`).
+API quick peek:
 
+- Transactions base path: `/transactions`
+- Income plan base path: `/plan`
 
-CLI prototype (manual compile from project root):
+Example create transaction:
+
+```
+curl -X POST http://localhost:8080/transactions \
+  -H "Content-Type: application/json" \
+  -d '{
+        "amount": { "currency": "USD", "amount": 25.50 },
+        "category": "FOOD",
+        "description": "Lunch"
+      }'
+```
+
+CLI prototype (optional, from project root):
 
 ```
 javac -cp src/main/java BoojetApp.java ConsoleUI.java TransactionManager.java FileStorage.java SaveMode.java
 java  -cp .;src/main/java com.boojet.boot_api.BoojetApp
 ```
 
-Notes:
-
-- CLI files currently live at the project root and reference domain classes under `src/main/java`.
-- Data is saved to `transactions.json` in the project root.
-
 
 ## Future Improvements
 
-- API ergonomics: pagination/sorting, query param filters on list endpoints
-- Documentation and ops: OpenAPI/Swagger, Actuator health/info
-- Validation and errors: bean validation annotations + centralized error handling
-- Data layer: aggregate queries in repository instead of in-memory reductions
-- Migrations: manage schema with Flyway/Liquibase rather than `ddl-auto`
-- Security: Spring Security and CORS configuration
-- Frontend: richer UI, charts, budgets/targets (extend `BudgetPeriod`)
-- Build/testing: fold CLI into Maven (module/profile); add controller/service tests and re-enable CLI tests
+- API ergonomics: pagination/sorting; query params for filters
+- Documentation/ops: OpenAPI/Swagger; Actuator health/info
+- Validation/errors: bean validation + centralized error handling
+- Data layer: more aggregate queries in repositories
+- Migrations: Flyway/Liquibase (avoid `ddl-auto` in prod)
+- Security: Spring Security and CORS tuning
+- Frontend: richer UI and charts; budgets/targets
+- Build/testing: fold CLI into Maven; add controller/service tests
 
+
+## 🧠 Why I Built This
+I wanted to build something useful for myself—track my spending, understand where my money goes, and take control of my finances. This is part of my personal journey back into software development.
