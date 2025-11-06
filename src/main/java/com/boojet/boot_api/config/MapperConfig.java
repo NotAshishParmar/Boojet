@@ -5,7 +5,6 @@ import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import ch.qos.logback.core.model.Model;
 
 @Configuration
 public class MapperConfig {

@@ -2,7 +2,6 @@ package com.boojet.boot_api.domain;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import com.boojet.boot_api.domain.Money;
 
 import java.math.BigDecimal;
 
