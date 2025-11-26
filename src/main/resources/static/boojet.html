@@ -50,6 +50,30 @@
 <div class="container">
   <h1>Boojet</h1>
 
+  <!-- ================= Accounts ================= -->
+  <h2>Accounts</h2>
+  <form id="acctForm">
+    <label>Name <input id="aname" required></label>
+    <label>Type
+      <select id="atype">
+        <option>CHEQUING</option><option>SAVINGS</option>
+        <option>CREDIT_CARD</option><option>CASH</option><option>OTHER</option>
+      </select>
+    </label>
+    <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
+    <div class="actions">
+      <button type="submit">Add Account</button>
+      <button type="button" id="aclear" class="muted">Clear</button>
+    </div>
+  </form>
+
+  <table id="atbl">
+    <thead>
+      <tr><th>Name</th><th>Type</th><th class="right">Balance</th><th>Actions</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
   <!-- ================= Transactions ================= -->
   <h2>Transactions</h2>
   <form id="f">
@@ -65,6 +89,9 @@
     <label>Type
       <select id="income"><option value="true">INCOME</option><option value="false">EXPENSE</option></select>
     </label>
+    <label>Account
+      <select id="account"></select>
+    </label>
     <div class="actions">
       <input type="hidden" id="editId">
       <button type="submit">Add</button>
@@ -73,8 +100,11 @@
   </form>
 
   <div class="row" style="margin:8px 0 12px">
-    <div class="muted">Balance:</div><div id="balance" style="font-weight:600">$0.00</div>
+    <div class="muted">Balance (all tx):</div><div id="balance" style="font-weight:600">$0.00</div>
     <div style="flex:1"></div>
+    <label class="row muted" style="gap:6px">Account
+      <select id="faccount"><option value="">(All)</option></select>
+    </label>
     <label class="row muted" style="gap:6px">Cat
       <select id="fcat">
         <option value="">(All)</option>
@@ -90,7 +120,15 @@
 
   <table id="tbl">
     <thead>
-      <tr><th style="width:120px">Date</th><th>Description</th><th style="width:140px">Category</th><th style="width:110px">Type</th><th class="right" style="width:140px">Amount</th><th style="width:140px">Actions</th></tr>
+      <tr>
+        <th style="width:120px">Date</th>
+        <th>Description</th>
+        <th style="width:140px">Category</th>
+        <th style="width:130px">Account</th>
+        <th style="width:110px">Type</th>
+        <th class="right" style="width:140px">Amount</th>
+        <th style="width:140px">Actions</th>
+      </tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -138,19 +176,65 @@
 /* ------------ helpers ------------ */
 const API = '/transactions';
 const PLAN = '/plan';
+const ACCOUNT = '/account';
 const $ = s => document.querySelector(s);
 
 function money(n){
-  // supports plain number or {amount: number}
   const v = (typeof n === 'number') ? n : (n?.amount ?? 0);
   return new Intl.NumberFormat(undefined,{style:'currency',currency:'CAD'}).format(v);
 }
 function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-async function j(url, opts={}){
-  const r = await fetch(url, Object.assign({headers:{'Content-Type':'application/json'}}, opts));
-  if(!r.ok) throw new Error(await r.text());
-  return r.status===204?null:r.json();
+async function j(url, opts={}){ const r = await fetch(url, Object.assign({headers:{'Content-Type':'application/json'}}, opts)); if(!r.ok) throw new Error(await r.text()); return r.status===204?null:r.json(); }
+
+/* ------------ Accounts ------------ */
+async function loadAccounts(){
+  const list = await j(ACCOUNT);
+  // fill selects
+  const txSel = $('#account'); const fSel = $('#faccount');
+  txSel.innerHTML = ''; fSel.innerHTML = '<option value="">(All)</option>';
+  list.forEach(a=>{
+    txSel.insertAdjacentHTML('beforeend', `<option value="${a.id}">${esc(a.name)} (${a.type})</option>`);
+    fSel.insertAdjacentHTML('beforeend', `<option value="${a.id}">${esc(a.name)}</option>`);
+  });
+  // render table with balances
+  renderAccounts(list);
 }
+
+async function renderAccounts(list){
+  const tb = $('#atbl tbody'); tb.innerHTML='';
+  for (const a of list){
+    let bal = 0;
+    try { bal = await j(`${ACCOUNT}/balance/${a.id}`); } catch {}
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${esc(a.name)}</td>
+      <td>${a.type}</td>
+      <td class="right">${money(bal)}</td>
+      <td>
+        <button onclick="viewAccount(${a.id})">View Tx</button>
+      </td>`;
+    tb.appendChild(tr);
+  }
+}
+window.viewAccount = async function(id){
+  $('#faccount').value = String(id);
+  await applyFilters();
+}
+
+$('#acctForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const payload = {
+    // If your service assigns default user, this can be omitted; otherwise include the next line:
+    user: { id: 1 },
+    name: $('#aname').value.trim(),
+    type: $('#atype').value,
+    openingBalance: parseFloat($('#aopen').value || 0)
+  };
+  await j(ACCOUNT, { method:'POST', body: JSON.stringify(payload) });
+  $('#acctForm').reset();
+  await loadAccounts(); // refresh selects & table
+});
+$('#aclear').addEventListener('click', ()=>$('#acctForm').reset());
 
 /* ------------ Transactions ------------ */
 async function loadAll(){
@@ -164,10 +248,12 @@ function renderTx(list){
   const tb = $('#tbl tbody'); tb.innerHTML='';
   list.forEach(t=>{
     const tr = document.createElement('tr');
+    const acctName = t.account?.name ?? (t.accountId ?? '');
     tr.innerHTML = `
       <td>${t.date}</td>
       <td>${esc(t.description)}</td>
       <td>${t.category}</td>
+      <td>${esc(acctName)}</td>
       <td>${t.income?'INCOME':'EXPENSE'}</td>
       <td class="right">${money(t.amount)}</td>
       <td>
@@ -186,29 +272,31 @@ window.editTx = async function(id){
   $('#date').value = t.date;
   $('#cat').value = t.category;
   $('#income').value = t.income ? 'true' : 'false';
+  if (t.account?.id) $('#account').value = String(t.account.id);
   document.querySelector('#f button[type="submit"]').textContent='Update';
   $('#cancel').style.display='inline-block';
 }
 window.delTx = async function(id){
   if(!confirm('Delete this transaction?')) return;
   await fetch(`${API}/${id}`, {method:'DELETE'});
-  await loadAll(); await loadNet(); // keep net in sync
+  await loadAll(); await loadNet(); await loadAccounts(); // balances may change
 }
 
 $('#f').addEventListener('submit', async e=>{
   e.preventDefault();
   const payload = {
     description: $('#desc').value.trim(),
-    amount: parseFloat($('#amount').value),   // Money as number (your backend supports this)
+    amount: parseFloat($('#amount').value),
     date: $('#date').value,
     category: $('#cat').value,
-    income: $('#income').value === 'true'
+    income: $('#income').value === 'true',
+    account: { id: parseInt($('#account').value, 10) }   // associate tx with account
   };
   const id = $('#editId').value;
   if(id) await j(`${API}/${id}`, {method:'PUT', body: JSON.stringify(payload)});
   else   await j(API, {method:'POST', body: JSON.stringify(payload)});
   resetTxForm();
-  await loadAll(); await loadNet();
+  await loadAll(); await loadNet(); await loadAccounts(); // update balances/cards
 });
 $('#cancel').addEventListener('click', resetTxForm);
 function resetTxForm(){
@@ -218,23 +306,35 @@ function resetTxForm(){
   $('#date').value = new Date().toISOString().slice(0,10);
 }
 
-/* Filters affect both table and monthly net */
-$('#apply').addEventListener('click', async e=>{
-  e.preventDefault();
-  const cat = $('#fcat').value, yr = $('#fyr').value, mo = $('#fmo').value;
+/* Filters: account → controller /account/{id}/transactions (if implemented),
+   otherwise falls back to /transactions filters */
+async function applyFilters(){
+  const acc = $('#faccount').value, cat = $('#fcat').value, yr = $('#fyr').value, mo = $('#fmo').value;
   let list = [];
-  if (yr && mo) list = await j(`${API}/month/${yr}/${mo}`);
-  else if (cat) list = await j(`${API}/category/${cat}`);
-  else list = await j(API);
+  try{
+    if (acc) {
+      // Your AccountController endpoint suggestion
+      list = await j(`${ACCOUNT}/${acc}/transactions`);
+    } else if (yr && mo) {
+      list = await j(`${API}/month/${yr}/${mo}`);
+    } else if (cat) {
+      list = await j(`${API}/category/${cat}`);
+    } else {
+      list = await j(API);
+    }
+  } catch {
+    // if /account/{id}/transactions isn't available yet, fallback to all
+    list = await j(API);
+  }
   renderTx(list);
-  await loadNet();
-});
+}
+$('#apply').addEventListener('click', async e=>{ e.preventDefault(); await applyFilters(); await loadNet(); });
 $('#reset').addEventListener('click', async ()=>{
-  $('#fcat').value=''; $('#fyr').value=''; $('#fmo').value='';
+  $('#faccount').value=''; $('#fcat').value=''; $('#fyr').value=''; $('#fmo').value='';
   await loadAll(); await loadNet();
 });
 
-/* ------------ Income Plans ------------ */
+/* ------------ Income Plans (uses sourceName) ------------ */
 function toggleHours(){
   const hourly = $('#ppaytype').value === 'HOURLY';
   $('#phoursWrap').style.opacity = hourly ? 1 : 0.5;
@@ -245,9 +345,10 @@ $('#ppaytype').addEventListener('change', toggleHours);
 $('#pform').addEventListener('submit', async e=>{
   e.preventDefault();
   const payload = {
-    source: $('#psource').value.trim(),
+    // user set server-side (Option B). If needed: user:{id:1}
+    sourceName: $('#psource').value.trim(),                 // <-- sourceName
     payType: $('#ppaytype').value,
-    amount: parseFloat($('#pamount').value),         // Money as number
+    amount: parseFloat($('#pamount').value),                // Money as number
     hoursPerWeek: $('#phours').disabled ? null : parseFloat($('#phours').value || 0),
     effectiveFrom: $('#pfrom').value,
     effectiveTo: $('#pto').value || null
@@ -269,7 +370,7 @@ async function loadPlans(){
   list.forEach(p=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${esc(p.source)}</td>
+      <td>${esc(p.sourceName ?? '')}</td>
       <td>${p.payType}</td>
       <td class="right">${money(p.amount)}</td>
       <td>${p.hoursPerWeek ?? ''}</td>
@@ -288,35 +389,22 @@ window.delPlan = async function(id){
 /* ------------ Monthly Net ------------ */
 async function loadNet(){
   const yr = $('#fyr').value, mo = $('#fmo').value;
-  if(!(yr && mo)){
-    // no month selected → clear but keep labels
-    setNet({expectedIncome:0, actualIncome:0, expenses:0, netExpected:0, netActual:0});
-    return;
-  }
-  try{
-    const r = await j(`${PLAN}/net/${yr}/${mo}`);
-    setNet(r);
-  }catch(e){
-    // if the endpoint isn't ready, just clear values
-    setNet({expectedIncome:0, actualIncome:0, expenses:0, netExpected:0, netActual:0});
-  }
+  if(!(yr && mo)){ setNet({expectedIncome:0, actualIncome:0, expenses:0, netExpected:0, netActual:0}); return; }
+  try{ const r = await j(`${PLAN}/net/${yr}/${mo}`); setNet(r); }
+  catch{ setNet({expectedIncome:0, actualIncome:0, expenses:0, netExpected:0, netActual:0}); }
 }
 function setNet(r){
   $('#n_exp').textContent = money(r.expectedIncome);
   $('#n_act').textContent = money(r.actualIncome);
   $('#n_expenses').textContent = money(r.expenses);
-
   $('#n_netexp').textContent = money(r.netExpected);
   $('#n_netact').textContent = money(r.netActual);
-
-  // colorize net values
   colorize($('#n_netexp'), r.netExpected);
   colorize($('#n_netact'), r.netActual);
 }
 function colorize(el, v){
   const num = (typeof v === 'number') ? v : (v?.amount ?? 0);
-  el.classList.remove('ok','bad');
-  el.classList.add(num >= 0 ? 'ok' : 'bad');
+  el.classList.remove('ok','bad'); el.classList.add(num >= 0 ? 'ok' : 'bad');
 }
 $('#refreshNet').addEventListener('click', loadNet);
 
@@ -327,6 +415,7 @@ function bootDefaults(){
   toggleHours();
 }
 bootDefaults();
+loadAccounts();
 loadAll();
 loadPlans();
 loadNet();

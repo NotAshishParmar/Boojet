@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
@@ -143,5 +142,26 @@ public class TransactionServiceImpl implements TransactionService {
                                     Collectors.mapping(Transaction::getAmount,
                                         Collectors.reducing(Money.zero(), (a,b)-> a.add(b)))));
     }
+
+    // @Override
+    // public List<Transaction> findTransactionsByAccount(Account account) {
+    //     return transactionRepository.findAll().stream()
+    //                                 .filter(t -> t.getAccount() == account)
+    //                                 .toList();
+    // }
+
+    // @Override
+    // public Money calculateAccountBalance(Account account) {
+    //     List<Transaction> transactions = findTransactionsByAccount(account);
+    //     Money balance = Money.zero();
+
+    //     for(Transaction t : transactions){
+    //         balance = balance.add(t.isIncome()
+    //                 ? t.getAmount()
+    //                 : t.getAmount().negate());
+    //     }
+
+    //     return balance;
+    // }
 
 }
