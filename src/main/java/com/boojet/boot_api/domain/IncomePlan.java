@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 
 import jakarta.persistence.Column;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

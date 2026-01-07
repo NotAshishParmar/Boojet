@@ -1,20 +1,27 @@
 # Boojet — Personal Budgeting API
 
-Simple budgeting backend built with Java and Spring Boot. It exposes a REST API to track transactions and a minimal static web page for quick interaction. A small console prototype is also included for offline experimentation.
+Budgeting API built with Java and Spring Boot. It exposes a REST API to track transactions and a minimal static web page for quick interaction. A small console prototype is also included for offline experimentation.
 
 
 ## Features
 
 - Transactions API
-  - CRUD at `/transactions`
-  - Filters and reports: by category, by month, monthly summary, overall balance
+  - CRUD operations at `/transactions`
+  - Filter by date range, category, income/expense
+  - Pagination support
+- Accounts: 
+    - Group transactions under different accounts
+    - List transactions per account at `/accounts/{id}/transactions`
+- Categories
+  - Predefined set of categories (FOOD, RENT, UTILITIES, etc.)
+  - Assign categories to transactions
 - Income Planning
-  - Create income plans at `/plan`
-  - Expected monthly income and net report per month
-- Minimal Web UI
-  - Static page at `src/main/resources/static/boojet.html` (served at `/boojet.html`)
-- Clean Domain Model
-  - `Transaction`, `Category`, `Money` (with JPA `AttributeConverter`)
+  - Define monthly income plans at `/plan`
+  - Compare actual income vs planned
+- Simple Static UI
+  - Basic HTML/JS page at `/boojet.html` for quick interaction
+- Data Persistence
+  - PostgreSQL database (Docker Compose for local dev)
 
 
 ## Tech Stack
@@ -24,7 +31,6 @@ Simple budgeting backend built with Java and Spring Boot. It exposes a REST API 
 - PostgreSQL (Docker Compose for local dev)
 - ModelMapper, Lombok, Jackson
 - JUnit 5
-
 
 ## How To Run
 
@@ -59,29 +65,22 @@ mvn spring-boot:run
 http://localhost:8080/boojet.html
 ```
 
-API quick peek:
+## Screenshots
 
-- Transactions base path: `/transactions`
-- Income plan base path: `/plan`
+- **Transactions and Accounts View:**
+![Boojet UI Screenshot](docs/res/boojet-ui-tx&acc.png)
 
-Example create transaction:
+- **Income Planning View:**
+![Boojet UI Screenshot](docs/res/boojet-ui-ip&net.png)
 
-```
-curl -X POST http://localhost:8080/transactions \
-  -H "Content-Type: application/json" \
-  -d '{
-        "amount": { "currency": "USD", "amount": 25.50 },
-        "category": "FOOD",
-        "description": "Lunch"
-      }'
-```
 
-CLI prototype (optional, from project root):
+## Docs
 
-```
-javac -cp src/main/java BoojetApp.java ConsoleUI.java TransactionManager.java FileStorage.java SaveMode.java
-java  -cp .;src/main/java com.boojet.boot_api.BoojetApp
-```
+- Architecture Overview: [Architecture Diagram](docs/architecture.md)
+- API Docs: [API Documentation](docs/api-docs.md)
+- Data Model: [Data Model Diagram](docs/data-model.png)
+- Design Decisions: [Design Decisions](docs/design-decisions.md)
+- Testing Strategy: [Testing Strategy](docs/testing-strategy.md)
 
 
 ## Future Improvements
@@ -96,5 +95,5 @@ java  -cp .;src/main/java com.boojet.boot_api.BoojetApp
 - Build/testing: fold CLI into Maven; add controller/service tests
 
 
-## 🧠 Why I Built This
-I wanted to build something useful for myself—track my spending, understand where my money goes, and take control of my finances. This is part of my personal journey back into software development.
+## Why I Built This
+I wanted to build something useful for myself. Boojet helps me track my spending, understand where my money goes, and take control of my finances. This is part of my personal journey back into software development.

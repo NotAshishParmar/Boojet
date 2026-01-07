@@ -1,7 +1,5 @@
 package com.boojet.boot_api.controllers;
 
-import java.time.LocalDate;
-import java.time.Year;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +25,7 @@ import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.mappers.Mapper;
-import com.boojet.boot_api.repositories.TransactionRepository;
+
 import com.boojet.boot_api.services.TransactionService;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -35,17 +33,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
-
-    private final TransactionRepository transactionRepository;
     
     private TransactionService transactionService;
     private Mapper<Transaction, TransactionDto> transactionMapper;
 
 
-    public TransactionController(TransactionService transactionService, Mapper<Transaction, TransactionDto> transactionMapper, TransactionRepository transactionRepository){
+    public TransactionController(TransactionService transactionService, Mapper<Transaction, TransactionDto> transactionMapper){
         this.transactionService = transactionService;
         this.transactionMapper = transactionMapper;
-        this.transactionRepository = transactionRepository;
     }
 
 
