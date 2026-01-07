@@ -34,7 +34,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         this.userRepo = userRepo;
     }
 
-    //-----------------CRUD----------------------
+    //----------------------------------------CRUD---------------------------------------------------
     @Override
     public IncomePlan createPlan(IncomePlan plan){
         if(plan.getUser() == null){
@@ -77,7 +77,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         incomePlanRepo.deleteById(id);
     }
 
-    //---------------------------------------------
+    //------------------------------------------------------------------------------------------------
 
     @Override
     public boolean isExists(Long id){

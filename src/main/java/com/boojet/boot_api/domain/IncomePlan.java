@@ -29,14 +29,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "income_plans")
 public class IncomePlan {
     
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @ManyToOne(optional = false)
     @JsonIgnore // client does not need user, avoid lazy-proxy serialization issues
     private User user;
 
-    @JsonProperty("source")
     private String sourceName;
 
     @Enumerated(EnumType.STRING)                // Store enum as string in DB for readability

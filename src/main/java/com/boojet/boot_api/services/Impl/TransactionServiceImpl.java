@@ -29,6 +29,7 @@ public class TransactionServiceImpl implements TransactionService {
     //add a new transaction and return the saved entity
     @Override
     public Transaction addTransaction(Transaction transaction) {
+        if (transaction == null) throw new IllegalArgumentException("Transaction must not be null");
         return transactionRepository.save(transaction);
     }
 
@@ -80,7 +81,7 @@ public class TransactionServiceImpl implements TransactionService {
     public Money calculateTotalBalance() {
 
         //TIP: could be optimized with a custom query in the repository to calculate the sum directly in the database
-        //but for simplicity, we'll do it in memory here
+        //but for simplicity, we do it in memory here
         List<Transaction> transactions = transactionRepository.findAll();
         Money balance = Money.zero();
 
