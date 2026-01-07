@@ -1,52 +1,75 @@
 package com.boojet.boot_api.services.Impl;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.services.TransactionService;
-
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
 
+    //private final AccountServiceImpl accountServiceImpl;
+
     // Dependency injection of the repository
     private TransactionRepository transactionRepository;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository){
+    private AccountRepository accountRepository;
+
+    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
+        this.accountRepository = accountRepository;
     }
 
     // ----------------------------CRUD operations----------------------------------
 
-    //add a new transaction and return the saved entity
+    // add a new transaction and return the saved entity
     @Override
     public Transaction addTransaction(Transaction transaction) {
-        if (transaction == null) throw new IllegalArgumentException("Transaction must not be null");
+        if (transaction == null)
+            throw new IllegalArgumentException("Transaction must not be null");
         return transactionRepository.save(transaction);
     }
 
-    //return a list of all transactions
-    @Override
+    // return a list of all transactions
+    @Deprecated
     public List<Transaction> findAllTransactions() {
         return transactionRepository.findAll();
-        
+
     }
 
-    //return a transaction by its ID
+    // search transactions with optional filters and pagination
+    // functions as findAll if no filters are provided (CRUD Read)
+    @Override
+    public Page<Transaction> search(Long accountId, Category category, YearMonth ym, Pageable pageable) {
+        if (accountId != null && !accountRepository.existsById(accountId)) {
+            throw new IllegalArgumentException("Account " + accountId + " not found!");
+        }
+
+        LocalDate from = (ym != null) ? ym.atDay(1) : LocalDate.of(1, 1, 1);
+        LocalDate to = (ym != null) ? ym.atEndOfMonth() : LocalDate.of(9999, 12, 31);
+
+        return transactionRepository.search(accountId, category, from, to, pageable);
+    }
+
+    // return a transaction by its ID
     @Override
     public Optional<Transaction> findTransaction(Long id) {
         return transactionRepository.findById(id);
     }
 
-    //update an existing transaction by its ID and return the updated entity
+    // update an existing transaction by its ID and return the updated entity
     @Override
     public Transaction updateTransaction(Long id, Transaction transaction) {
         // Ensure the transaction to update has the correct ID
@@ -59,33 +82,34 @@ public class TransactionServiceImpl implements TransactionService {
             Optional.ofNullable(transaction.getCategory()).ifPresent(existingTransaction::setCategory);
             Optional.ofNullable(transaction.isIncome()).ifPresent(existingTransaction::setIncome);
             return transactionRepository.save(existingTransaction);
-        }).orElseThrow(() -> new RuntimeException ("Transaction not found with id " + id));
+        }).orElseThrow(() -> new RuntimeException("Transaction not found with id " + id));
     }
 
-    //delete a transaction by its ID
+    // delete a transaction by its ID
     @Override
     public void delete(Long id) {
         transactionRepository.deleteById(id);
     }
-    
+
     // -----------------------------------------------------------------------------
 
-    //check if a transaction exists by its ID
+    // check if a transaction exists by its ID
     @Override
     public boolean isExists(Long id) {
         return transactionRepository.existsById(id);
     }
 
-    //calculate the total balance from all transactions
+    // calculate the total balance from all transactions
     @Override
     public Money calculateTotalBalance() {
 
-        //TIP: could be optimized with a custom query in the repository to calculate the sum directly in the database
-        //but for simplicity, we do it in memory here
+        // TIP: could be optimized with a custom query in the repository to calculate
+        // the sum directly in the database
+        // but for simplicity, we do it in memory here
         List<Transaction> transactions = transactionRepository.findAll();
         Money balance = Money.zero();
 
-        for(Transaction t : transactions){
+        for (Transaction t : transactions) {
             balance = balance.add(t.isIncome()
                     ? t.getAmount()
                     : t.getAmount().negate());
@@ -97,8 +121,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<Transaction> findTransactionsByMonth(YearMonth ym) {
         return transactionRepository.findAll().stream()
-                                    .filter(t -> YearMonth.from(t.getDate()).equals(ym))
-                                    .toList();
+                .filter(t -> YearMonth.from(t.getDate()).equals(ym))
+                .toList();
     }
 
     @Override
@@ -106,7 +130,7 @@ public class TransactionServiceImpl implements TransactionService {
         List<Transaction> transactions = findTransactionsByMonth(ym);
         Money balance = Money.zero();
 
-        for(Transaction t : transactions){
+        for (Transaction t : transactions) {
             balance = balance.add(t.isIncome()
                     ? t.getAmount()
                     : t.getAmount().negate());
@@ -117,9 +141,9 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<Transaction> findTransactionsByCategory(Category category) {
         return transactionRepository.findAll().stream()
-                                    .filter(t -> t.getCategory() == category)
-                                    .toList();
-        
+                .filter(t -> t.getCategory() == category)
+                .toList();
+
     }
 
     @Override
@@ -127,7 +151,7 @@ public class TransactionServiceImpl implements TransactionService {
         List<Transaction> transactions = findTransactionsByCategory(category);
         Money balance = Money.zero();
 
-        for(Transaction t : transactions){
+        for (Transaction t : transactions) {
             balance = balance.add(t.isIncome()
                     ? t.getAmount()
                     : t.getAmount().negate());
@@ -139,30 +163,30 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public Map<Category, Money> summariseByCategory(List<Transaction> transactions) {
         return transactions.stream().collect(
-            Collectors.groupingBy(Transaction::getCategory,
-                                    Collectors.mapping(Transaction::getAmount,
-                                        Collectors.reducing(Money.zero(), (a,b)-> a.add(b)))));
+                Collectors.groupingBy(Transaction::getCategory,
+                        Collectors.mapping(Transaction::getAmount,
+                                Collectors.reducing(Money.zero(), (a, b) -> a.add(b)))));
     }
 
     // @Override
     // public List<Transaction> findTransactionsByAccount(Account account) {
-    //     return transactionRepository.findAll().stream()
-    //                                 .filter(t -> t.getAccount() == account)
-    //                                 .toList();
+    // return transactionRepository.findAll().stream()
+    // .filter(t -> t.getAccount() == account)
+    // .toList();
     // }
 
     // @Override
     // public Money calculateAccountBalance(Account account) {
-    //     List<Transaction> transactions = findTransactionsByAccount(account);
-    //     Money balance = Money.zero();
+    // List<Transaction> transactions = findTransactionsByAccount(account);
+    // Money balance = Money.zero();
 
-    //     for(Transaction t : transactions){
-    //         balance = balance.add(t.isIncome()
-    //                 ? t.getAmount()
-    //                 : t.getAmount().negate());
-    //     }
+    // for(Transaction t : transactions){
+    // balance = balance.add(t.isIncome()
+    // ? t.getAmount()
+    // : t.getAmount().negate());
+    // }
 
-    //     return balance;
+    // return balance;
     // }
 
 }

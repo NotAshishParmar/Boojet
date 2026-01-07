@@ -92,50 +92,50 @@ public class TransactionServiceTest {
         verifyNoInteractions(transactionRepo);
     }
 
-    @Test
-    @DisplayName("Test that finding all transactions works correctly")
-    void testFindAllTransactions(){
+    // @Test
+    // @DisplayName("Test that finding all transactions works correctly")
+    // void testFindAllTransactions(){
 
-        // mock the repository's findAll method to return a list with transactionA
-        when(transactionRepo.findAll()).thenReturn(transactionsList);
+    //     // mock the repository's findAll method to return a list with transactionA
+    //     when(transactionRepo.findAll()).thenReturn(transactionsList);
 
-        List<Transaction> transactions = transactionService.findAllTransactions();
+    //     List<Transaction> transactions = transactionService.findAllTransactions();
 
-        //assert that the repository's findAll method was called
-        verify(transactionRepo).findAll();
+    //     //assert that the repository's findAll method was called
+    //     verify(transactionRepo).findAll();
 
         
-        //assert that the size of the returned list is correct
-        assertThat(transactions).hasSize(transactionsList.size());
+    //     //assert that the size of the returned list is correct
+    //     assertThat(transactions).hasSize(transactionsList.size());
 
-        //assert that the first transaction in the list is transactionA
-        assertThat(transactions.get(0)).usingRecursiveComparison()
-                                       .isEqualTo(transactionsList.get(0));
+    //     //assert that the first transaction in the list is transactionA
+    //     assertThat(transactions.get(0)).usingRecursiveComparison()
+    //                                    .isEqualTo(transactionsList.get(0));
 
-        //assert that the second transaction in the list is transactionB
-        assertThat(transactions.get(1)).usingRecursiveComparison()
-                                       .isEqualTo(transactionsList.get(1));
+    //     //assert that the second transaction in the list is transactionB
+    //     assertThat(transactions.get(1)).usingRecursiveComparison()
+    //                                    .isEqualTo(transactionsList.get(1));
 
-        //assert that the third transaction in the list is transactionC
-        assertThat(transactions.get(2)).usingRecursiveComparison()
-                                       .isEqualTo(transactionsList.get(2));
-    }
+    //     //assert that the third transaction in the list is transactionC
+    //     assertThat(transactions.get(2)).usingRecursiveComparison()
+    //                                    .isEqualTo(transactionsList.get(2));
+    // }
 
-    @Test
-    @DisplayName("Test that finding all transactions returns empty list when no transactions exist")
-    void testFindAllTransactionsReturnsEmptyListWhenNoneExist(){
+    // @Test
+    // @DisplayName("Test that finding all transactions returns empty list when no transactions exist")
+    // void testFindAllTransactionsReturnsEmptyListWhenNoneExist(){
 
-        // mock the repository's findAll method to return an empty list
-        when(transactionRepo.findAll()).thenReturn(List.of());
+    //     // mock the repository's findAll method to return an empty list
+    //     when(transactionRepo.findAll()).thenReturn(List.of());
 
-        List<Transaction> transactions = transactionService.findAllTransactions();
+    //     List<Transaction> transactions = transactionService.findAllTransactions();
 
-        //assert that the repository's findAll method was called
-        verify(transactionRepo).findAll();
+    //     //assert that the repository's findAll method was called
+    //     verify(transactionRepo).findAll();
 
-        //assert that the returned list is empty
-        assertThat(transactions).isEmpty();
-    }
+    //     //assert that the returned list is empty
+    //     assertThat(transactions).isEmpty();
+    // }
 
     @Test
     @DisplayName("Test that finding a transaction by ID works correctly")

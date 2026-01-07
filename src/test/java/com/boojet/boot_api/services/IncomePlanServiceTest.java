@@ -58,6 +58,4 @@ public class IncomePlanServiceTest {
         assertThat(exists).isTrue();
         assertThat(notExists).isFalse();
     }
-
-
 }

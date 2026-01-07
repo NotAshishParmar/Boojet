@@ -1,0 +1,40 @@
+:root { --gap:12px; --pad:8px; --radius:8px; --line:#e5e7eb; }
+*{ box-sizing:border-box }
+body{ font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,sans-serif; margin:24px }
+.container{ max-width:1100px; margin:auto }
+h2{ margin-top:24px }
+
+/* Forms & Controls */
+form{ display:grid; gap:12px; grid-template-columns:repeat(6,minmax(140px,1fr)); align-items:end; margin:12px 0 }
+form label{ display:flex; flex-direction:column; gap:6px; font-size:14px }
+input,select,button{ height:38px; padding:0 var(--pad); border:1px solid var(--line); border-radius:var(--radius); background:#fff }
+button{ cursor:pointer }
+.actions{ grid-column:span 2; display:flex; gap:var(--gap); align-items:center }
+.muted{ color:#666 }
+.row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+
+/* Table */
+table{ width:100%; border-collapse:collapse; margin-top:8px }
+thead th{ font-weight:600; border-bottom:2px solid var(--line); text-align:left; padding:10px var(--pad) }
+td{ border-bottom:1px solid var(--line); padding:10px var(--pad); vertical-align:middle }
+.right{ text-align:right }
+td button{ height:30px; padding:0 10px }
+
+/* Cards */
+.cards{ display:grid; grid-template-columns:repeat(5,minmax(140px,1fr)); gap:12px; margin:8px 0 4px }
+.card{ border:1px solid var(--line); border-radius:12px; padding:12px }
+.card .label{ font-size:12px; color:#666 }
+.card .value{ font-weight:700; font-size:18px; margin-top:4px }
+.ok{ color:#0a7f42 } .bad{ color:#b00020 }
+
+/* Responsive */
+@media (max-width: 900px){
+  form{ grid-template-columns:repeat(2,minmax(140px,1fr)) }
+  .actions{ grid-column:span 2 }
+  .cards{ grid-template-columns:repeat(2,minmax(140px,1fr)) }
+}
+@media (max-width: 520px){
+  form{ grid-template-columns:1fr }
+  .actions{ grid-column:1/-1 }
+  .cards{ grid-template-columns:1fr }
+}

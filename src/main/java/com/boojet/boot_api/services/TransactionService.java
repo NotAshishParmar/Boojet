@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
@@ -14,7 +16,8 @@ public interface TransactionService {
     
     // CRUD operations
     Transaction addTransaction(Transaction transaction);
-    List<Transaction> findAllTransactions();
+    // List<Transaction> findAllTransactions();
+    Page<Transaction> search(Long accountId, Category category, YearMonth ym, Pageable pageable);
     Optional<Transaction> findTransaction(Long id);
     Transaction updateTransaction(Long id, Transaction transaction);
     void delete(Long id);

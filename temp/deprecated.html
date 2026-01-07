@@ -1,0 +1,656 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Boojet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --gap: 12px;
+      --pad: 8px;
+      --radius: 8px;
+      --line: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
+      margin: 24px
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto
+    }
+
+    h2 {
+      margin-top: 24px
+    }
+
+    /* --- Forms & Controls --- */
+    form {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(6, minmax(140px, 1fr));
+      align-items: end;
+      margin: 12px 0
+    }
+
+    form label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px
+    }
+
+    input,
+    select,
+    button {
+      height: 38px;
+      padding: 0 var(--pad);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff
+    }
+
+    button {
+      cursor: pointer
+    }
+
+    .actions {
+      grid-column: span 2;
+      display: flex;
+      gap: var(--gap);
+      align-items: center
+    }
+
+    .muted {
+      color: #666
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    /* --- Table --- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px
+    }
+
+    thead th {
+      font-weight: 600;
+      border-bottom: 2px solid var(--line);
+      text-align: left;
+      padding: 10px var(--pad)
+    }
+
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px var(--pad);
+      vertical-align: middle
+    }
+
+    .right {
+      text-align: right
+    }
+
+    td button {
+      height: 30px;
+      padding: 0 10px
+    }
+
+    /* --- Cards --- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 8px 0 4px
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px
+    }
+
+    .card .label {
+      font-size: 12px;
+      color: #666
+    }
+
+    .card .value {
+      font-weight: 700;
+      font-size: 18px;
+      margin-top: 4px
+    }
+
+    .ok {
+      color: #0a7f42
+    }
+
+    .bad {
+      color: #b00020
+    }
+
+    @media (max-width: 900px) {
+      form {
+        grid-template-columns: repeat(2, minmax(140px, 1fr))
+      }
+
+      .actions {
+        grid-column: span 2
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, minmax(140px, 1fr))
+      }
+    }
+
+    @media (max-width: 520px) {
+      form {
+        grid-template-columns: 1fr
+      }
+
+      .actions {
+        grid-column: 1/-1
+      }
+
+      .cards {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Boojet</h1>
+
+    <!-- ================= Accounts ================= -->
+    <h2>Accounts</h2>
+    <form id="acctForm">
+      <label>Name <input id="aname" required></label>
+      <label>Type
+        <select id="atype">
+          <option>CHEQUING</option>
+          <option>SAVINGS</option>
+          <option>CREDIT_CARD</option>
+          <option>CASH</option>
+          <option>OTHER</option>
+        </select>
+      </label>
+      <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
+      <div class="actions">
+        <button type="submit">Add Account</button>
+        <button type="button" id="aclear" class="muted">Clear</button>
+      </div>
+    </form>
+
+    <table id="atbl">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th class="right">Balance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- ================= Transactions ================= -->
+    <h2>Transactions</h2>
+    <form id="f">
+      <label>Description <input id="desc" required></label>
+      <label>Amount <input id="amount" type="number" step="0.01" min="0" required></label>
+      <label>Date <input id="date" type="date" required></label>
+      <label>Category
+        <select id="cat">
+          <option>FOOD</option>
+          <option>RENT</option>
+          <option>TRANSPORT</option>
+          <option>ENTERTAINMENT</option>
+          <option>UTILITIES</option>
+          <option>HEALTH</option>
+          <option>OTHER</option>
+        </select>
+      </label>
+      <label>Type
+        <select id="income">
+          <option value="true">INCOME</option>
+          <option value="false">EXPENSE</option>
+        </select>
+      </label>
+      <label>Account
+        <select id="account"></select>
+      </label>
+      <div class="actions">
+        <input type="hidden" id="editId">
+        <button type="submit">Add</button>
+        <button type="button" id="cancel" class="muted" style="display:none">Cancel</button>
+      </div>
+    </form>
+
+    <div class="row" style="margin:8px 0 12px">
+      <div class="muted">Balance (all tx):</div>
+      <div id="balance" style="font-weight:600">$0.00</div>
+      <div style="flex:1"></div>
+      <label class="row muted" style="gap:6px">Account
+        <select id="faccount">
+          <option value="">(All)</option>
+        </select>
+      </label>
+      <label class="row muted" style="gap:6px">Cat
+        <select id="fcat">
+          <option value="">(All)</option>
+          <option>FOOD</option>
+          <option>RENT</option>
+          <option>TRANSPORT</option>
+          <option>ENTERTAINMENT</option>
+          <option>UTILITIES</option>
+          <option>HEALTH</option>
+          <option>OTHER</option>
+        </select>
+      </label>
+      <label class="row muted" style="gap:6px">Year <input id="fyr" type="number" min="2000" max="2100"
+          style="width:100px"></label>
+      <label class="row muted" style="gap:6px">Mon <input id="fmo" type="number" min="1" max="12"
+          style="width:70px"></label>
+      <button id="apply">Apply</button>
+      <button id="reset" type="button">Reset</button>
+    </div>
+
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th style="width:120px">Date</th>
+          <th>Description</th>
+          <th style="width:140px">Category</th>
+          <th style="width:130px">Account</th>
+          <th style="width:110px">Type</th>
+          <th class="right" style="width:140px">Amount</th>
+          <th style="width:140px">Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- ================= Pager ================= -->
+    <div class="row" id="pager" style="justify-content:flex-end; gap: 8px; margin-top: 8px">
+      <button id="prev">Prev</button>
+      <span id="pages" class="muted">Page 1 of 1</span>
+      <button id="next">Next</button>
+      <label class="row muted" style="gap:6px">Size
+        <select id="psize">
+          <option>10</option>
+          <option selected>20</option>
+          <option>50</option>
+          <option>100</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- ================= Income Plans ================= -->
+    <h2>Income Plans</h2>
+    <form id="pform">
+      <label>Source <input id="psource" placeholder="Company / Side gig" required></label>
+      <label>Pay Type
+        <select id="ppaytype">
+          <option>HOURLY</option>
+          <option>WEEKLY</option>
+          <option>BIWEEKLY</option>
+          <option>MONTHLY</option>
+          <option>ANNUAL</option>
+        </select>
+      </label>
+      <label>Amount <input id="pamount" type="number" step="0.01" min="0" required></label>
+      <label id="phoursWrap">Hours/Week <input id="phours" type="number" step="0.25" min="0"></label>
+      <label>From <input id="pfrom" type="date" required></label>
+      <label>To <input id="pto" type="date" placeholder="(optional)"></label>
+      <div class="actions">
+        <button type="submit">Add Plan</button>
+        <button type="button" id="pclear" class="muted">Clear</button>
+      </div>
+    </form>
+
+    <table id="ptbl">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Type</th>
+          <th class="right">Amount</th>
+          <th>Hours/Wk</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- ================= Monthly Net ================= -->
+    <h2>Monthly Net</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="label">Expected income</div>
+        <div id="n_exp" class="value">$0.00</div>
+      </div>
+      <div class="card">
+        <div class="label">Actual income</div>
+        <div id="n_act" class="value">$0.00</div>
+      </div>
+      <div class="card">
+        <div class="label">Expenses</div>
+        <div id="n_expenses" class="value">$0.00</div>
+      </div>
+      <div class="card">
+        <div class="label">Net (expected)</div>
+        <div id="n_netexp" class="value">$0.00</div>
+      </div>
+      <div class="card">
+        <div class="label">Net (actual)</div>
+        <div id="n_netact" class="value">$0.00</div>
+      </div>
+    </div>
+    <div class="row"><button id="refreshNet">Refresh month</button><span class="muted">Uses the Year/Mon above</span>
+    </div>
+  </div>
+
+  <script>
+
+    /* ------------ helpers ------------ */
+    const API = '/transactions';
+    const PLAN = '/plan';
+    const ACCOUNT = '/account';
+    const state = { page: 0, size: 20, acc: '', cat: '', yr: '', mo: '' };
+    const $ = s => document.querySelector(s);
+
+
+    function buildQuery(pageOverride) {
+      const p = new URLSearchParams();
+      p.set('page', pageOverride ?? state.page);
+      p.set('size', state.size);
+      if (state.acc) p.set('accountId', state.acc);
+      if (state.cat) p.set('category', state.cat);
+      if (state.yr && state.mo) { p.set('year', state.yr); p.set('month', state.mo); }
+      return p.toString();
+    }
+
+    async function fetchPage(page = 0) {
+      state.page = page;
+      const data = await j(`${API}?${buildQuery(page)}`);
+      renderTx(data.content);
+      updatePager(data);
+      // optional: still update overall balance
+      try { $('#balance').textContent = money(await j(`${API}/balance`)); } catch { }
+      return data;
+    }
+
+    function updatePager(p) {
+      $('#pages').textContent = `Page ${p.number + 1} of ${Math.max(1, p.totalPages)}`;
+      $('#prev').disabled = p.first;
+      $('#next').disabled = p.last;
+    }
+
+    function money(n) {
+      const v = (typeof n === 'number') ? n : (n?.amount ?? 0);
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'CAD' }).format(v);
+    }
+    function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    async function j(url, opts = {}) { const r = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts)); if (!r.ok) throw new Error(await r.text()); return r.status === 204 ? null : r.json(); }
+
+    function ensureDefaultAccount(){
+  const sel = $('#account');
+  if (sel && sel.options.length > 0 && !sel.value) {
+    sel.value = sel.options[0].value;
+  }
+}
+
+    /* ------------ Accounts ------------ */
+    async function loadAccounts(){
+  const list = await j(ACCOUNT);
+  const txSel = $('#account'); const fSel = $('#faccount');
+  txSel.innerHTML = ''; fSel.innerHTML = '<option value="">(All)</option>';
+  list.forEach(a => {
+    txSel.insertAdjacentHTML('beforeend', `<option value="${a.id}">${esc(a.name)} (${a.type})</option>`);
+    fSel.insertAdjacentHTML('beforeend', `<option value="${a.id}">${esc(a.name)}</option>`);
+  });
+  ensureDefaultAccount();
+  renderAccounts(list);
+}
+
+    async function renderAccounts(list) {
+      const tb = $('#atbl tbody'); tb.innerHTML = '';
+      for (const a of list) {
+        let bal = 0;
+        try { bal = await j(`${ACCOUNT}/balance/${a.id}`); } catch { }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+      <td>${esc(a.name)}</td>
+      <td>${a.type}</td>
+      <td class="right">${money(bal)}</td>
+      <td>
+        <button onclick="viewAccount(${a.id})">View Tx</button>
+      </td>`;
+        tb.appendChild(tr);
+      }
+    }
+    window.viewAccount = async function (id) {
+      $('#faccount').value = String(id);
+      await applyFilters();
+    }
+
+    $('#acctForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        // If your service assigns default user, this can be omitted; otherwise include the next line:
+        user: { id: 1 },
+        name: $('#aname').value.trim(),
+        type: $('#atype').value,
+        openingBalance: parseFloat($('#aopen').value || 0)
+      };
+      await j(ACCOUNT, { method: 'POST', body: JSON.stringify(payload) });
+      $('#acctForm').reset();
+      await loadAccounts(); // refresh selects & table
+    });
+    $('#aclear').addEventListener('click', () => $('#acctForm').reset());
+
+    /* ------------ Transactions ------------ */
+
+    function renderTx(list) {
+      const tb = $('#tbl tbody'); tb.innerHTML = '';
+      list.forEach(t => {
+        const tr = document.createElement('tr');
+        const acctName = t.account?.name ?? (t.accountId ?? '');
+        tr.innerHTML = `
+      <td>${t.date}</td>
+      <td>${esc(t.description)}</td>
+      <td>${t.category}</td>
+      <td>${esc(acctName)}</td>
+      <td>${t.income ? 'INCOME' : 'EXPENSE'}</td>
+      <td class="right">${money(t.amount)}</td>
+      <td>
+        <button onclick="editTx(${t.id})">Edit</button>
+        <button onclick="delTx(${t.id})">Delete</button>
+      </td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    window.editTx = async function (id) {
+      const t = await j(`${API}/${id}`);
+      $('#editId').value = id;
+      $('#desc').value = t.description;
+      $('#amount').value = (typeof t.amount === 'number' ? t.amount : t.amount.amount);
+      $('#date').value = t.date;
+      $('#cat').value = t.category;
+      $('#income').value = t.income ? 'true' : 'false';
+      if (t.account?.id) $('#account').value = String(t.account.id);
+      document.querySelector('#f button[type="submit"]').textContent = 'Update';
+      $('#cancel').style.display = 'inline-block';
+    }
+    window.delTx = async function (id) {
+      if (!confirm('Delete this transaction?')) return;
+      await fetch(`${API}/${id}`, { method: 'DELETE' });
+      await fetchPage(state.page).catch(async () => {
+        // if we deleted the last item on the last page, step back one page
+        if (state.page > 0) await fetchPage(state.page - 1);
+      });
+      await loadNet(); await loadAccounts(); // balances may change
+    }
+
+    $('#f').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!$('#account').value) { alert('Please create/select an account first.'); return; }
+
+      const payload = {
+        description: $('#desc').value.trim(),
+        amount: parseFloat($('#amount').value),
+        date: $('#date').value,
+        category: $('#cat').value,
+        income: $('#income').value === 'true',
+        account: { id: parseInt($('#account').value, 10) }   // associate tx with account
+      };
+      const id = $('#editId').value;
+      if (id) await j(`${API}/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      else await j(API, { method: 'POST', body: JSON.stringify(payload) });
+      resetTxForm();
+      await fetchPage(state.page); await loadNet(); await loadAccounts(); // update balances/cards
+    });
+    $('#cancel').addEventListener('click', resetTxForm);
+    function resetTxForm() {
+      $('#f').reset(); $('#editId').value = '';
+      document.querySelector('#f button[type="submit"]').textContent = 'Add';
+      $('#cancel').style.display = 'none';
+      $('#date').value = new Date().toISOString().slice(0, 10);
+    }
+
+    async function applyFilters() {
+      state.acc = $('#faccount')?.value || '';
+      state.cat = $('#fcat').value || '';
+      state.yr = $('#fyr').value || '';
+      state.mo = $('#fmo').value || '';
+      await fetchPage(0);
+    }
+    $('#apply').addEventListener('click', async e => { e.preventDefault(); await applyFilters(); await loadNet(); });
+    $('#reset').addEventListener('click', async () => {
+      state.acc = state.cat = state.yr = state.mo = '';
+      if ($('#faccount')) $('#faccount').value = '';
+      $('#fcat').value = ''; $('#fyr').value = ''; $('#fmo').value = '';
+      await fetchPage(0); await loadNet();
+    });
+
+
+    $('#prev').addEventListener('click', async () => {
+      if (state.page > 0) await fetchPage(state.page - 1);
+    });
+    $('#next').addEventListener('click', async () => {
+      await fetchPage(state.page + 1);
+    });
+    $('#psize').addEventListener('change', async () => {
+      state.size = parseInt($('#psize').value, 10) || 20;
+      await fetchPage(0);
+    });
+
+
+    /* ------------ Income Plans (uses sourceName) ------------ */
+    function toggleHours() {
+      const hourly = $('#ppaytype').value === 'HOURLY';
+      $('#phoursWrap').style.opacity = hourly ? 1 : 0.5;
+      $('#phours').disabled = !hourly;
+    }
+    $('#ppaytype').addEventListener('change', toggleHours);
+
+    $('#pform').addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        // user set server-side (Option B). If needed: user:{id:1}
+        sourceName: $('#psource').value.trim(),                 // <-- sourceName
+        payType: $('#ppaytype').value,
+        amount: parseFloat($('#pamount').value),                // Money as number
+        hoursPerWeek: $('#phours').disabled ? null : parseFloat($('#phours').value || 0),
+        effectiveFrom: $('#pfrom').value,
+        effectiveTo: $('#pto').value || null
+      };
+      await j(PLAN, { method: 'POST', body: JSON.stringify(payload) });
+      clearPlanForm(); await loadPlans(); await loadNet();
+    });
+
+    $('#pclear').addEventListener('click', clearPlanForm);
+    function clearPlanForm() {
+      $('#pform').reset();
+      $('#pfrom').value = new Date().toISOString().slice(0, 10);
+      toggleHours();
+    }
+
+    async function loadPlans() {
+      const list = await j(PLAN);
+      const tb = $('#ptbl tbody'); tb.innerHTML = '';
+      list.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+      <td>${esc(p.sourceName ?? '')}</td>
+      <td>${p.payType}</td>
+      <td class="right">${money(p.amount)}</td>
+      <td>${p.hoursPerWeek ?? ''}</td>
+      <td>${p.effectiveFrom ?? ''}</td>
+      <td>${p.effectiveTo ?? ''}</td>
+      <td><button onclick="delPlan(${p.id})">Delete</button></td>`;
+        tb.appendChild(tr);
+      });
+    }
+    window.delPlan = async function (id) {
+      if (!confirm('Delete this plan?')) return;
+      await fetch(`${PLAN}/${id}`, { method: 'DELETE' });
+      await loadPlans(); await loadNet();
+    }
+
+    /* ------------ Monthly Net ------------ */
+    async function loadNet() {
+      const yr = $('#fyr').value, mo = $('#fmo').value;
+      if (!(yr && mo)) { setNet({ expectedIncome: 0, actualIncome: 0, expenses: 0, netExpected: 0, netActual: 0 }); return; }
+      try { const r = await j(`${PLAN}/net/${yr}/${mo}`); setNet(r); }
+      catch { setNet({ expectedIncome: 0, actualIncome: 0, expenses: 0, netExpected: 0, netActual: 0 }); }
+    }
+    function setNet(r) {
+      $('#n_exp').textContent = money(r.expectedIncome);
+      $('#n_act').textContent = money(r.actualIncome);
+      $('#n_expenses').textContent = money(r.expenses);
+      $('#n_netexp').textContent = money(r.netExpected);
+      $('#n_netact').textContent = money(r.netActual);
+      colorize($('#n_netexp'), r.netExpected);
+      colorize($('#n_netact'), r.netActual);
+    }
+    function colorize(el, v) {
+      const num = (typeof v === 'number') ? v : (v?.amount ?? 0);
+      el.classList.remove('ok', 'bad'); el.classList.add(num >= 0 ? 'ok' : 'bad');
+    }
+    $('#refreshNet').addEventListener('click', loadNet);
+
+    /* ------------ boot ------------ */
+    function bootDefaults() {
+      $('#date').value = new Date().toISOString().slice(0, 10);
+      $('#pfrom').value = new Date().toISOString().slice(0, 10);
+      toggleHours();
+    }
+    
+    (async function boot(){
+    bootDefaults();
+    await loadAccounts();     // make sure selects are filled
+    await fetchPage(0);       // load first page
+    await loadPlans();
+    await loadNet();
+  })();
+  </script>
+</body>
+
+</html>

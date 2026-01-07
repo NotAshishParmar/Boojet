@@ -2,6 +2,10 @@ package com.boojet.boot_api.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +22,7 @@ import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.services.AccountService;
+import com.boojet.boot_api.services.TransactionService;
 
 
 
@@ -25,10 +30,12 @@ import com.boojet.boot_api.services.AccountService;
 @RequestMapping("/account")
 public class AccountController {
 
-    private final AccountService accountService;
+    private AccountService accountService;
+    private TransactionService transactionService;
 
-    public AccountController(AccountService accountService){
+    public AccountController(AccountService accountService, TransactionService transactionService){
         this.accountService = accountService;
+        this.transactionService = transactionService;
     }
 
     //CRUD
@@ -84,9 +91,11 @@ public class AccountController {
         return accountService.balance(id);
     }
 
-    @GetMapping("/{id}/transactions")
-    public List<Transaction> listTransactionsInAccount(@PathVariable Long id) {
-        return accountService.listAllTransactionsInAccount(id);
-    }
     
+    // Secondary Search, routes to 
+    @GetMapping("/{id}/transactions")
+    public Page<Transaction> byAccount(@PathVariable Long id, @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
+        return transactionService.search(id, null, null, pageable);
+    }
+
 }
