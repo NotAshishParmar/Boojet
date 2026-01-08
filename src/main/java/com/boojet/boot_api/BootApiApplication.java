@@ -9,8 +9,17 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 import lombok.extern.java.Log;
 
+@OpenAPIDefinition(
+	info = @Info(
+		title = "Boojet API",
+		version = "v1",
+		description = "Personel Budgeting API (accounts, transactions and income plans)"
+	)
+)
 @EnableSpringDataWebSupport(pageSerializationMode = PageSerializationMode.VIA_DTO)
 @Log
 @SpringBootApplication

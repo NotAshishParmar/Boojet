@@ -27,9 +27,14 @@ import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.mappers.Mapper;
 
 import com.boojet.boot_api.services.TransactionService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.web.bind.annotation.RequestParam;
 
 
+@Tag(name = "Transaction")
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
@@ -43,7 +48,7 @@ public class TransactionController {
         this.transactionMapper = transactionMapper;
     }
 
-
+    @Operation(summary = "Create a new transaction", description = "Creates a new transaction with the provided details.")
     @PostMapping
     public TransactionDto createTransaction(@RequestBody TransactionDto transactionDto) {
 
