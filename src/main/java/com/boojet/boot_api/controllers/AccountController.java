@@ -24,8 +24,11 @@ import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.services.AccountService;
 import com.boojet.boot_api.services.TransactionService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 
+@Tag(name = "Account")
 @RestController
 @RequestMapping("/account")
 public class AccountController {
@@ -38,17 +41,21 @@ public class AccountController {
         this.transactionService = transactionService;
     }
 
-    //CRUD
+    //-------------------------------------------------CRUD-------------------------------------------------------
+
+    @Operation(summary = "Create a new account", description = "Creates a new account with the provided details.")
     @PostMapping
     public Account createAccount(@RequestBody Account account) {          
         return accountService.createAccount(account);
     }
 
+    @Operation(summary = "Get all accounts", description = "Retrieve a list of all accounts.")
     @GetMapping
     public List<Account> getAllAccounts(){
         return accountService.findAllAccounts();
     }
 
+    @Operation(summary = "Get an account by ID", description = "Retrieve the details of an account by its ID.")
     @GetMapping("/{id}")
     public Account getOne(@PathVariable Long id){
         Account account = accountService.findAccount(id)
@@ -57,6 +64,7 @@ public class AccountController {
         return account;
     }
 
+    @Operation(summary = "Update an account by ID", description = "Update the details of an existing account by its ID.")
     @PutMapping("/{id}")
     public Account updateAccount(@PathVariable Long id, @RequestBody Account account){
         if(!accountService.isExists(id)){
@@ -67,6 +75,7 @@ public class AccountController {
         return updatedAccount;
     }
 
+    @Operation(summary = "Partially update an account by ID", description = "Partially update the details of an existing account by its ID.")
     @PatchMapping("/{id}")
     public Account patchAccount(@PathVariable Long id, @RequestBody Account account){
         if(!accountService.isExists(id)){
@@ -77,6 +86,7 @@ public class AccountController {
         return patchedAccount;
     }
 
+    @Operation(summary = "Delete an account by ID", description = "Delete an existing account by its ID.")
     @DeleteMapping("/{id}")
     public void deleteAccount(@PathVariable Long id){
         if(!accountService.isExists(id)){
@@ -86,13 +96,16 @@ public class AccountController {
         accountService.delete(id);
     }
 
+    //---------------------------------------------Reports / Calculations---------------------------------------------
+
+    @Operation(summary = "Get account balance by ID", description = "Calculate and retrieve the balance for a specific account by its ID.")
     @GetMapping("/balance/{id}")
     public Money balance(@PathVariable Long id) {
         return accountService.balance(id);
     }
 
-    
-    // Secondary Search, routes to 
+    // Secondary Search, uses the TransactionService to get page of transactions for the account
+    @Operation(summary = "Get transactions for an account by ID", description = "Retrieve a paginated list of transactions associated with a specific account by its ID.")
     @GetMapping("/{id}/transactions")
     public Page<Transaction> byAccount(@PathVariable Long id, @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
         return transactionService.search(id, null, null, pageable);

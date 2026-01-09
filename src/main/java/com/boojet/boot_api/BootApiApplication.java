@@ -17,7 +17,7 @@ import lombok.extern.java.Log;
 	info = @Info(
 		title = "Boojet API",
 		version = "v1",
-		description = "Personel Budgeting API (accounts, transactions and income plans)"
+		description = "Budgeting API built with Java and Spring Boot. It exposes a REST API to track and record transactions for multiple accounts and display statistics based on the input data. Allows the user to define plans based on their expected income. Also includes a minimal static web page for quick interaction. "
 	)
 )
 @EnableSpringDataWebSupport(pageSerializationMode = PageSerializationMode.VIA_DTO)

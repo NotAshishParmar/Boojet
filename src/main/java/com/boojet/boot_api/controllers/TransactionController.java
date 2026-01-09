@@ -4,6 +4,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -65,11 +66,13 @@ public class TransactionController {
     //             .toList();
     // }
 
+    @Operation(summary = "Search transactions", description = "Search for transactions based on optional filters such as account ID, category, year, and month. Supports pagination.")
     @GetMapping
     public PageResponse<TransactionDto> search(@RequestParam(required = false) Long accountId,
                                     @RequestParam(required = false) Category category,
                                     @RequestParam(required = false) Integer year,
                                     @RequestParam(required = false) Integer month,
+                                    @ParameterObject
                                     @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
         
         YearMonth ym = (year != null && month != null) ? YearMonth.of(year, month) : null;
@@ -80,7 +83,7 @@ public class TransactionController {
         
     }
     
-
+    @Operation(summary = "Get transaction by ID", description = "Retrieve a specific transaction by its ID.")
     @GetMapping("/{id}")
     public TransactionDto getOne(@PathVariable Long id) {
 
@@ -89,6 +92,7 @@ public class TransactionController {
         return transactionMapper.mapTo(transaction);
     }
 
+    @Operation(summary = "Update a transaction by ID", description = "Update the details of an existing transaction by its ID.")
     @PutMapping("/{id}")
     public TransactionDto updateTransaction(@PathVariable Long id, @RequestBody TransactionDto transactionDto) {
 
@@ -100,6 +104,7 @@ public class TransactionController {
         return transactionMapper.mapTo(updatedTransaction);
     }
 
+    @Operation(summary = "Partially update a transaction by ID", description = "Partially update the details of an existing transaction by its ID.")
     @PatchMapping("/{id}")
     public TransactionDto patchTransaction(@PathVariable Long id, @RequestBody TransactionDto transactionDto) {
 
@@ -111,6 +116,7 @@ public class TransactionController {
         return transactionMapper.mapTo(patchedTransaction);
     }
 
+    @Operation(summary = "Delete a transaction by ID", description = "Delete an existing transaction by its ID.")
     @DeleteMapping("/{id}")
     public void deleteTransaction(@PathVariable Long id) {
         if(!transactionService.isExists(id)){
@@ -122,6 +128,7 @@ public class TransactionController {
 
     //--------------------------------Filters / Reports---------------------------------------------
 
+    @Operation(summary = "Get transactions by category", description = "Retrieve a list of transactions filtered by the specified category.")
     @GetMapping("/category/{cat}")
     public List<TransactionDto> byCategory(@PathVariable Category cat){
 
@@ -133,6 +140,7 @@ public class TransactionController {
 
     }
 
+    @Operation(summary = "Get transactions by month", description = "Retrieve a list of transactions for the specified year and month.")
     @GetMapping("/month/{year}/{month}")
     public List<TransactionDto> byMonth(@PathVariable int year, @PathVariable int month){
 
@@ -143,11 +151,13 @@ public class TransactionController {
             .toList();
     }
 
+    @Operation(summary = "Get total balance", description = "Calculate and retrieve the total balance from all transactions.")
     @GetMapping("/balance")
     public Money balance(){
         return transactionService.calculateTotalBalance();
     }
 
+    @Operation(summary = "Get monthly summary by category", description = "Retrieve a summary of transactions for a specific month, grouped by category.")
     @GetMapping("summary/{year}/{month}")
     public Map<Category, Money> monthlySummary(@PathVariable int year, @PathVariable int month){
         List<Transaction> transactionsInMonth = transactionService.findTransactionsByMonth(YearMonth.of(year, month));

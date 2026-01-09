@@ -1,6 +1,6 @@
 # Boojet — Personal Budgeting API
 
-Budgeting API built with Java and Spring Boot. It exposes a REST API to track transactions and a minimal static web page for quick interaction. A small console prototype is also included for offline experimentation.
+Budgeting API built with Java and Spring Boot. It exposes a REST API to track and record transactions for multiple accounts and display statistics based on the input data. Allows the user to define plans based on their expected income. Also includes a minimal static web page for quick interaction. 
 
 
 ## Features
