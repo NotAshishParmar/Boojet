@@ -26,6 +26,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
+
 import java.util.Optional;
 
 import com.boojet.boot_api.domain.Account;
@@ -38,6 +40,7 @@ import com.boojet.boot_api.services.Impl.TransactionServiceImpl;
 // Import test data utility methods (static import because of usage frequency)
 import static com.boojet.boot_api.testutil.TestDataUtil.*;
 
+@ActiveProfiles("test") 
 @ExtendWith(MockitoExtension.class)
 public class TransactionServiceTest {
 

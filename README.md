@@ -78,9 +78,7 @@ http://localhost:8080/boojet.html
 
 - Architecture Overview: [Architecture Diagram](docs/architecture.md)
 - API Docs: [API Documentation](docs/api-docs.md)
-- Data Model: [Data Model Diagram](docs/data-model.png)
-- Design Decisions: [Design Decisions](docs/design-decisions.md)
-- Testing Strategy: [Testing Strategy](docs/testing-strategy.md)
+- Testing Strategy: [Testing Documentation](docs/testing.md)
 
 
 ## Future Improvements

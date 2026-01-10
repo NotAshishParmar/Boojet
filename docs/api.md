@@ -127,7 +127,6 @@ curl -X POST http://localhost:8080/account \
 - **AccountType:** `CHEQUING, SAVINGS, CREDIT_CARD, CASH, OTHER`
 - **PayType:** `HOURLY, WEEKLY, BIWEEKLY, MONTHLY, ANNUAL`
 
----
 
 ## Errors
 
