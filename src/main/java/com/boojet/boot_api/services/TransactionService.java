@@ -12,12 +12,46 @@ import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 
+/**
+ * Service contract for managing {@link Transaction} records.
+ * This service defines the business-level operations for creating and managing 
+ * transactions in Boojet. Implementations are responsible for validating input
+ * and persisting transactions through the repository layer.
+ * 
+ * <b>Notes:</b>
+ * <ul>
+ *  <li>Callers should provide a valid {@link Transaction} that meets the applications constraints. </li>
+ *  <li>Adding a transaction, updates the related account balance and total balance on the ledger</li>
+ * </ul>
+ */
 public interface TransactionService {
     
-    // CRUD operations
+    //--------------CRUD operations----------------
+
+    /**
+     * Pesists a new transaction.
+     * 
+     * The provided {@code transaction} must be valid (all required fields present).
+     * 
+     * @param transaction the transaction to add (must not be {@code null})
+     * @return the saved transaction with an assigned id
+     * @throws IllegalArgumentException if {@code transaction} is {@code null} or fails validation
+     */
     Transaction addTransaction(Transaction transaction);
     // List<Transaction> findAllTransactions();
-    Page<Transaction> search(Long accountId, Category category, YearMonth ym, Pageable pageable);
+    /**
+     * Searches the ledger for {@code Page(s)} of transactions that are associated 
+     * with the provided {@code accountId}, {@code category} or {@code yearMonth}. 
+     * Returns all transactions of none are provided (findAll)
+     * 
+     * @param accountId
+     * @param category
+     * @param yearMonth
+     * @param pageable
+     * @return {@code Page} of all transactions based on the input
+     * 
+     */
+    Page<Transaction> search(Long accountId, Category category, YearMonth yearMonth, Pageable pageable);
     Optional<Transaction> findTransaction(Long id);
     Transaction updateTransaction(Long id, Transaction transaction);
     void delete(Long id);

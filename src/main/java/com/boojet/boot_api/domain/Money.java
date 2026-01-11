@@ -51,6 +51,14 @@ public class Money implements Comparable<Money>{
         return new Money(amount.negate());
     }
 
+    public boolean isNegative(){
+        return amount.compareTo(BigDecimal.ZERO) < 0;
+    }
+
+    public boolean isZero(){
+        return amount.compareTo(BigDecimal.ZERO) == 0;
+    }
+
     public String format(){
         return NumberFormat.getCurrencyInstance().format(amount);
     }

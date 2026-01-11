@@ -7,12 +7,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.exceptions.AccountNotFoundException;
+import com.boojet.boot_api.exceptions.TransactionNotFoundException;
 import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.services.TransactionService;
@@ -25,7 +31,7 @@ public class TransactionServiceImpl implements TransactionService {
     // Dependency injection of the repository
     private TransactionRepository transactionRepository;
 
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
     public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
@@ -37,8 +43,40 @@ public class TransactionServiceImpl implements TransactionService {
     // add a new transaction and return the saved entity
     @Override
     public Transaction addTransaction(Transaction transaction) {
+
+        //null check
         if (transaction == null)
             throw new IllegalArgumentException("Transaction must not be null");
+
+        //validate required fields
+        if(transaction.getAccount() == null || transaction.getAccount().getId() == null){
+            throw new IllegalArgumentException("Transaction must be associated with a valid Account");
+        }
+
+        if(transaction.getAmount() == null){
+            throw new IllegalArgumentException("Transaction amount must not be null");
+        }
+
+        if(transaction.getDate() == null){
+            transaction.setDate(LocalDate.now());
+        }
+
+        if(transaction.getDescription() == null || transaction.getDescription().isBlank()){
+            transaction.setDescription("No description");
+        }
+
+        if(transaction.getCategory() == null){
+            throw new IllegalArgumentException("Transaction category must not be null");
+        }
+
+        if(transaction.getAmount().isNegative() || transaction.getAmount().isZero()){
+            throw new IllegalArgumentException("Transaction amount must be positive");
+        }
+        
+        if(!accountRepository.existsById(transaction.getAccount().getId())){
+            throw new AccountNotFoundException(transaction.getAccount().getId());
+        }
+
         return transactionRepository.save(transaction);
     }
 
@@ -52,13 +90,13 @@ public class TransactionServiceImpl implements TransactionService {
     // search transactions with optional filters and pagination
     // functions as findAll if no filters are provided (CRUD Read)
     @Override
-    public Page<Transaction> search(Long accountId, Category category, YearMonth ym, Pageable pageable) {
+    public Page<Transaction> search(Long accountId, Category category, YearMonth yearMonth, Pageable pageable) {
         if (accountId != null && !accountRepository.existsById(accountId)) {
-            throw new IllegalArgumentException("Account " + accountId + " not found!");
+            throw new AccountNotFoundException(accountId);
         }
 
-        LocalDate from = (ym != null) ? ym.atDay(1) : LocalDate.of(1, 1, 1);
-        LocalDate to = (ym != null) ? ym.atEndOfMonth() : LocalDate.of(9999, 12, 31);
+        LocalDate from = (yearMonth != null) ? yearMonth.atDay(1) : LocalDate.of(1, 1, 1);
+        LocalDate to = (yearMonth != null) ? yearMonth.atEndOfMonth() : LocalDate.of(9999, 12, 31);
 
         return transactionRepository.search(accountId, category, from, to, pageable);
     }

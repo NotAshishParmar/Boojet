@@ -125,6 +125,18 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.11.3</version>
+				<configuration>
+					<outputDirectory>${project.build.directory}/site</outputDirectory>
+					<destDir>apidocs</destDir>
+					<source>17</source>
+					<failOnError>false</failOnError>
+				</configuration>
+			</plugin>
+
 			<!-- Run JUnit 5 -->
 			<plugin>
 			<groupId>org.apache.maven.plugins</groupId>
