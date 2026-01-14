@@ -75,6 +75,7 @@ public class TransactionController {
                                     @ParameterObject
                                     @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
         
+
         YearMonth ym = (year != null && month != null) ? YearMonth.of(year, month) : null;
 
         Page<TransactionDto> page = transactionService.search(accountId, category, ym, pageable).map(transactionMapper::mapTo);
@@ -87,8 +88,7 @@ public class TransactionController {
     @GetMapping("/{id}")
     public TransactionDto getOne(@PathVariable Long id) {
 
-        Transaction transaction = transactionService.findTransaction(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with ID " + id + " not found."));
+        Transaction transaction = transactionService.findTransaction(id);
         return transactionMapper.mapTo(transaction);
     }
 
@@ -96,21 +96,13 @@ public class TransactionController {
     @PutMapping("/{id}")
     public TransactionDto updateTransaction(@PathVariable Long id, @RequestBody TransactionDto transactionDto) {
 
-        if(!transactionService.isExists(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with ID " + id + " not found.");
-        }
-
-        Transaction updatedTransaction = transactionService.updateTransaction(id, transactionMapper.mapFrom(transactionDto));
+        Transaction updatedTransaction = transactionService.updateTransactionComplete(id, transactionMapper.mapFrom(transactionDto));
         return transactionMapper.mapTo(updatedTransaction);
     }
 
     @Operation(summary = "Partially update a transaction by ID", description = "Partially update the details of an existing transaction by its ID.")
     @PatchMapping("/{id}")
     public TransactionDto patchTransaction(@PathVariable Long id, @RequestBody TransactionDto transactionDto) {
-
-        if(!transactionService.isExists(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with ID " + id + " not found.");
-        }
 
         Transaction patchedTransaction =  transactionService.updateTransaction(id, transactionMapper.mapFrom(transactionDto));
         return transactionMapper.mapTo(patchedTransaction);

@@ -3,7 +3,7 @@ package com.boojet.boot_api.services;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,59 +11,198 @@ import org.springframework.data.domain.Pageable;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.exceptions.AccountNotFoundException;
+import com.boojet.boot_api.exceptions.TransactionNotFoundException;
+import com.boojet.boot_api.exceptions.BadRequestException;
 
 /**
  * Service contract for managing {@link Transaction} records.
- * This service defines the business-level operations for creating and managing 
+ * This service defines the business-level operations for creating and managing
  * transactions in Boojet. Implementations are responsible for validating input
  * and persisting transactions through the repository layer.
  * 
  * <b>Notes:</b>
  * <ul>
- *  <li>Callers should provide a valid {@link Transaction} that meets the applications constraints. </li>
- *  <li>Adding a transaction, updates the related account balance and total balance on the ledger</li>
+ * <li>Callers should provide a valid {@link Transaction} that meets the
+ * applications constraints.</li>
+ * <li>Adding a transaction, updates the related account balance and total
+ * balance on the ledger</li>
  * </ul>
  */
 public interface TransactionService {
-    
-    //--------------CRUD operations----------------
+
+    // --------------CRUD operations----------------
 
     /**
-     * Pesists a new transaction.
+     * Creates and persists a new {@link Transaction}.
      * 
-     * The provided {@code transaction} must be valid (all required fields present).
+     * <ul>
+     *  <li>{@code transaction} must not be {@code null}.</li>
+     *  <li>{@code transaction.account.id} is required (the account must exist in DB).</li>
+     *  <li>{@code transaction.amount} must be positive.</li>
+     *  <li>{@code transaction.category} is required.</li>
+     *  <li>If {@code transaction.date} is {@code null}, it is set to
+     *  {@code LocalDate.now()}.</li>
+     *  <li>If {@code transaction.description} is {@code null} or blank, it is set to
+     *  {@code "No description"}.</li>
+     * </ul>
      * 
-     * @param transaction the transaction to add (must not be {@code null})
-     * @return the saved transaction with an assigned id
-     * @throws IllegalArgumentException if {@code transaction} is {@code null} or fails validation
+     * 
+     * Runs within a transactional context to ensure data integrity. On any runtime
+     * exception, the transaction is rolled back (no partial writes).
+     * 
+     * @param transaction the candidate transaction to add
+     * @return the saved transaction with generated ID and any defaults applied
+     * @throws IllegalArgumentException if input is {@code null} or fails validation
+     * @throws AccountNotFoundException if the associated account does not exist
      */
     Transaction addTransaction(Transaction transaction);
+
     // List<Transaction> findAllTransactions();
+
     /**
-     * Searches the ledger for {@code Page(s)} of transactions that are associated 
-     * with the provided {@code accountId}, {@code category} or {@code yearMonth}. 
-     * Returns all transactions of none are provided (findAll)
+     * Searches the ledger for {@code Page(s)} of transactions that are associated
+     * with the provided {@code accountId}, {@code category} or {@code yearMonth}.
+     * Returns all transactions if none are provided (findAll)
      * 
-     * @param accountId
-     * @param category
-     * @param yearMonth
-     * @param pageable
-     * @return {@code Page} of all transactions based on the input
+     * Use {@link org.springframework.data.domain.Pageable} to control pagination and sorting. If no sort is supplied,
+     * then defaults to sorting by {@code date} descending.
      * 
+     * @param accountId Optional account ID to filter by; may be {@code null}
+     * @param category Optional category to filter by; may be {@code null}
+     * @param yearMonth Optional year and month to filter by; may be {@code null}
+     * @param pageable Pagination information
+     * @return A {@code Page} of transactions matching the provided filters
+     * @throws AccountNotFoundException if the provided accountId does not exist
      */
     Page<Transaction> search(Long accountId, Category category, YearMonth yearMonth, Pageable pageable);
-    Optional<Transaction> findTransaction(Long id);
+
+    /**
+     * Finds a {@link Transaction} by its unique ID.
+     * 
+     * @param id the ID of the transaction to find
+     * @return the found transaction
+     * @throws TransactionNotFoundException if no transaction with the given ID exists
+     * @throws BadRequestException if the provided ID is not positive or is {@code null}
+     */
+    Transaction findTransaction(Long id);
+
+    /**
+     * Updates an existing {@link Transaction} by replacing all fields with those
+     * from the provided {@code transaction}.
+     * 
+     * <ul>
+     * <li>All fields in {@code transaction} are used to update the existing
+     * record.</li>
+     * <li>The {@code id} field in {@code transaction} is ignored; the provided
+     * {@code id} parameter is used to locate the existing record.</li>
+     * <li>If no existing record is found with the given {@code id}, a
+     * {@link TransactionNotFoundException} is thrown.</li>
+     * </ul>
+     * 
+     * @param id the ID of the transaction to update
+     * @param transaction the transaction data to update with (all fields used)
+     * @return the updated transaction
+     * @throws TransactionNotFoundException if no transaction with the given ID exists
+     * @throws BadRequestException if input is {@code null} or fails validation
+     */
+    Transaction updateTransactionComplete(Long id, Transaction transaction);
+
+    /**
+     * Partially updates an existing {@link Transaction} with the non-null fields
+     * from the provided {@code transaction}.
+     * 
+     * <ul>
+     * <li>Only non-null fields in {@code transaction} are used to update the
+     * existing record.</li>
+     * <li>The {@code id} field in {@code transaction} is ignored; the provided
+     * {@code id} parameter is used to locate the existing record.</li>
+     * <li>If no existing record is found with the given {@code id}, a
+     * {@link TransactionNotFoundException} is thrown.</li>
+     * </ul>
+     * @param id the ID of the transaction to update
+     * @param transaction the transaction data to update with (only non-null fields used)
+     * @return the updated transaction
+     * @throws TransactionNotFoundException if no transaction with the given ID exists
+     * @throws BadRequestException if input fails validation
+     */
     Transaction updateTransaction(Long id, Transaction transaction);
+
+    /**
+     * Deletes the {@link Transaction} with the given ID.
+     * 
+     * @param id the ID of the transaction to delete
+     * @throws TransactionNotFoundException if no transaction with the given ID exists
+     * @throws BadRequestException if the provided ID is not positive or is {@code null}
+     */
     void delete(Long id);
 
-    //helpers
+    /**
+     * Check if a {@link Transaction} exists by its ID.
+     * 
+     * 
+     * @param id the ID of the transaction to check
+     * @return {@code true} if a transaction with the given ID exists, {@code false} otherwise. Invalid IDs return false.
+     * 
+     */
     boolean isExists(Long id);
 
-    //business logic
+    /**
+     * Calculates the total balance from all transactions in the ledger.
+     * 
+     * @return the total balance as a {@link Money} object
+     */
     Money calculateTotalBalance();
+
+    /**
+     * Finds all transactions that occurred in the specified month.
+     * 
+     * <ul>
+     * <li>If {@code ym} is {@code null}, all transactions are returned.</li>
+     * </ul>
+     * 
+     * @param ym the year and month to filter transactions by; may be {@code null}
+     * @return a list of transactions that occurred in the specified month
+     * @throws BadRequestException if the provided YearMonth is {@code null}
+     */
     List<Transaction> findTransactionsByMonth(YearMonth ym);
+
+    /**
+     * Calculates the net balance for the specified month.
+     * 
+     * <ul>
+     * <li>If {@code ym} is {@code null}, the net balance for all transactions is returned.</li>
+     * </ul>
+     * 
+     * @param ym the year and month to calculate the balance for; may be {@code null}
+     * @return the net balance as a {@link Money} object
+     * @throws BadRequestException if the provided YearMonth is {@code null}
+     */
     Money calculateMonthlyBalance(YearMonth ym);
+
+    /**
+     * Finds all transactions associated with the specified category.
+     * 
+     * @param category the category to filter transactions by
+     * @return a list of transactions in the specified category
+     * @throws BadRequestException if the provided category is {@code null}
+     */
     List<Transaction> findTransactionsByCategory(Category category);
+
+    /**
+     * Calculates the total amount for transactions in the specified category.
+     * 
+     * @param category the category to calculate the total for
+     * @return the total amount as a {@link Money} object
+     * @throws BadRequestException if the provided category is {@code null}
+     */
     Money calculateTotalByCategory(Category category);
+
+    /**
+     * Summarises the total amounts of the provided transactions grouped by their categories.
+     * 
+     * @param transactions the list of transactions to summarise
+     * @return a map where each key is a {@link Category} and the corresponding value is the total {@link Money} amount for that category
+     */
     Map<Category, Money> summariseByCategory(List<Transaction> transactions);
 }

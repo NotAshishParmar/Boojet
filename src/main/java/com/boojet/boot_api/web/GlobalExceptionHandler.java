@@ -2,6 +2,7 @@ package com.boojet.boot_api.web;
 
 import java.time.Instant;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,8 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException ex, HttpServletRequest req){
+    @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
+    public ResponseEntity<ApiError> handleBadRequest(RuntimeException ex, HttpServletRequest req){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             new ApiError(Instant.now(), 400, "Bad Request", ex.getMessage(), req.getRequestURI())
         );

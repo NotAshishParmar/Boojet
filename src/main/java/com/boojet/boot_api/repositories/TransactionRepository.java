@@ -1,5 +1,6 @@
 package com.boojet.boot_api.repositories;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -47,4 +48,35 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       @Param("fromDate") LocalDate fromDate,
       @Param("toDate") LocalDate toDate,
       Pageable pageable);
+
+  @Query("""
+        select coalesce(
+          sum(case when t.income = true then t.amount else -t.amount end), 0
+        )
+        from Transaction t
+    """)
+    BigDecimal sumNetAll();
+
+  List<Transaction> findByDateBetweenOrderByDateDesc(LocalDate start, LocalDate end);
+
+  @Query("""
+          select coalesce(
+            sum(case when t.income = true then t.amount else -t.amount end), 0
+          )
+          from Transaction t
+          where t.date >= :start and t.date <= :end
+      """)
+  BigDecimal sumNetBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+  List<Transaction> findByCategoryOrderByDateDesc(Category category);
+
+  @Query("""
+          select coalesce(
+              sum(case when t.income = true then t.amount else -t.amount end), 0
+          )
+          from Transaction t
+          where t.category = :category
+      """)
+  BigDecimal sumNetByCategory(@Param("category") Category category);
+
 }

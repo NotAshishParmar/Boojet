@@ -55,6 +55,10 @@ public class Money implements Comparable<Money>{
         return amount.compareTo(BigDecimal.ZERO) < 0;
     }
 
+    public boolean isPositive(){
+        return amount.compareTo(BigDecimal.ZERO) > 0;
+    }
+
     public boolean isZero(){
         return amount.compareTo(BigDecimal.ZERO) == 0;
     }

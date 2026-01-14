@@ -147,14 +147,14 @@ public class TransactionServiceTest {
         // mock the repository's findById method to return transactionA when called with its ID
         when(transactionRepo.findById(transactionA.getId())).thenReturn(Optional.of(transactionA));
 
-        Optional<Transaction> foundOpt = transactionService.findTransaction(transactionA.getId());
+        Transaction foundOpt = transactionService.findTransaction(transactionA.getId());
 
         //assert that the repository's findById method was called with the correct ID
         verify(transactionRepo).findById(transactionA.getId());
 
         //assert that the returned Optional contains transactionA
-        assertThat(foundOpt).isPresent();
-        assertThat(foundOpt.get()).usingRecursiveComparison()
+        assertThat(foundOpt).isNotNull();
+        assertThat(foundOpt).usingRecursiveComparison()
                                   .isEqualTo(transactionA);
         
     }
@@ -167,13 +167,13 @@ public class TransactionServiceTest {
         // mock the repository's findById method to return empty when called with a non-existent ID
         when(transactionRepo.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        Optional<Transaction> foundOpt = transactionService.findTransaction(nonExistentId);
+        Transaction foundOpt = transactionService.findTransaction(nonExistentId);
 
         //assert that the repository's findById method was called with the correct ID
         verify(transactionRepo).findById(nonExistentId);
 
         //assert that the returned Optional is empty
-        assertThat(foundOpt).isNotPresent();
+        assertThat(foundOpt).isNull();
 
     }
 

@@ -1,23 +1,26 @@
 package com.boojet.boot_api.services.Impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.domain.ValidationMode;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
+import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.TransactionNotFoundException;
 import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
@@ -42,42 +45,16 @@ public class TransactionServiceImpl implements TransactionService {
 
     // add a new transaction and return the saved entity
     @Override
+    @Transactional                                            //this annotation allows Spring to rollback and avoid partial writes to DB in case of an early termination due to exceptions
     public Transaction addTransaction(Transaction transaction) {
 
-        //null check
-        if (transaction == null)
-            throw new IllegalArgumentException("Transaction must not be null");
+        //verify transaction data (all fields including Account) or throw
+        Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.CREATE);
 
-        //validate required fields
-        if(transaction.getAccount() == null || transaction.getAccount().getId() == null){
-            throw new IllegalArgumentException("Transaction must be associated with a valid Account");
-        }
+        applyCreateDefaults(verifiedTransaction);
 
-        if(transaction.getAmount() == null){
-            throw new IllegalArgumentException("Transaction amount must not be null");
-        }
 
-        if(transaction.getDate() == null){
-            transaction.setDate(LocalDate.now());
-        }
-
-        if(transaction.getDescription() == null || transaction.getDescription().isBlank()){
-            transaction.setDescription("No description");
-        }
-
-        if(transaction.getCategory() == null){
-            throw new IllegalArgumentException("Transaction category must not be null");
-        }
-
-        if(transaction.getAmount().isNegative() || transaction.getAmount().isZero()){
-            throw new IllegalArgumentException("Transaction amount must be positive");
-        }
-        
-        if(!accountRepository.existsById(transaction.getAccount().getId())){
-            throw new AccountNotFoundException(transaction.getAccount().getId());
-        }
-
-        return transactionRepository.save(transaction);
+        return transactionRepository.save(verifiedTransaction);
     }
 
     // return a list of all transactions
@@ -103,13 +80,43 @@ public class TransactionServiceImpl implements TransactionService {
 
     // return a transaction by its ID
     @Override
-    public Optional<Transaction> findTransaction(Long id) {
-        return transactionRepository.findById(id);
+    public Transaction findTransaction(Long id) {
+
+        validateTransactionId(id);
+
+        //findById returns an Optional<Transaction> so we unwrap it or throw it, which gives us Transaction
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+
+        return transaction;
     }
+
+    @Override
+    @Transactional
+    public Transaction updateTransactionComplete(Long id, Transaction transaction) {
+
+        Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.PUT_FULL);
+        verifiedTransaction.setId(id);
+        return updateTransaction(id, verifiedTransaction);
+    }
+
+
 
     // update an existing transaction by its ID and return the updated entity
     @Override
+    @Transactional
     public Transaction updateTransaction(Long id, Transaction transaction) {
+
+        //throws BadRequestException if id is null or not positive
+        validateTransactionId(id);
+
+        //attach verified account or throw
+        if(transaction.getAccount() != null && transaction.getAccount().getId() != null){
+            Account account = transaction.getAccount();
+            Account verifiedAccount = validateAccount(account.getId());
+            transaction.setAccount(verifiedAccount);
+        }
+
         // Ensure the transaction to update has the correct ID
         transaction.setId(id);
 
@@ -120,12 +127,21 @@ public class TransactionServiceImpl implements TransactionService {
             Optional.ofNullable(transaction.getCategory()).ifPresent(existingTransaction::setCategory);
             Optional.ofNullable(transaction.isIncome()).ifPresent(existingTransaction::setIncome);
             return transactionRepository.save(existingTransaction);
-        }).orElseThrow(() -> new RuntimeException("Transaction not found with id " + id));
+        }).orElseThrow(() -> new TransactionNotFoundException(id));
     }
 
     // delete a transaction by its ID
     @Override
     public void delete(Long id) {
+
+        //throws BadRequestException if id is null or not positive
+        validateTransactionId(id);
+
+        //throw if not found
+        if(!transactionRepository.existsById(id)){
+            throw new TransactionNotFoundException(id);
+        }
+
         transactionRepository.deleteById(id);
     }
 
@@ -133,77 +149,123 @@ public class TransactionServiceImpl implements TransactionService {
 
     // check if a transaction exists by its ID
     @Override
+    @Transactional(readOnly = true)
     public boolean isExists(Long id) {
-        return transactionRepository.existsById(id);
+        return id != null && id > 0 && transactionRepository.existsById(id);
     }
 
     // calculate the total balance from all transactions
     @Override
+    @Transactional(readOnly = true)
     public Money calculateTotalBalance() {
-
-        // TIP: could be optimized with a custom query in the repository to calculate
-        // the sum directly in the database
-        // but for simplicity, we do it in memory here
-        List<Transaction> transactions = transactionRepository.findAll();
-        Money balance = Money.zero();
-
-        for (Transaction t : transactions) {
-            balance = balance.add(t.isIncome()
-                    ? t.getAmount()
-                    : t.getAmount().negate());
-        }
-
-        return balance;
+        BigDecimal net = transactionRepository.sumNetAll(); // never null due to COALESCE
+        return Money.of(net);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Transaction> findTransactionsByMonth(YearMonth ym) {
-        return transactionRepository.findAll().stream()
-                .filter(t -> YearMonth.from(t.getDate()).equals(ym))
-                .toList();
+        if (ym == null) throw new BadRequestException("YearMonth must not be null");
+        LocalDate start = ym.atDay(1);
+        LocalDate end   = ym.atEndOfMonth();
+        return transactionRepository.findByDateBetweenOrderByDateDesc(start, end);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Money calculateMonthlyBalance(YearMonth ym) {
-        List<Transaction> transactions = findTransactionsByMonth(ym);
-        Money balance = Money.zero();
-
-        for (Transaction t : transactions) {
-            balance = balance.add(t.isIncome()
-                    ? t.getAmount()
-                    : t.getAmount().negate());
-        }
-        return balance;
+        if (ym == null) throw new BadRequestException("YearMonth must not be null");
+        LocalDate start = ym.atDay(1);
+        LocalDate end   = ym.atEndOfMonth();
+        BigDecimal net = transactionRepository.sumNetBetween(start, end);
+        return Money.of(net);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Transaction> findTransactionsByCategory(Category category) {
-        return transactionRepository.findAll().stream()
-                .filter(t -> t.getCategory() == category)
-                .toList();
-
+        if (category == null) throw new BadRequestException("Category must not be null");
+        return transactionRepository.findByCategoryOrderByDateDesc(category);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Money calculateTotalByCategory(Category category) {
-        List<Transaction> transactions = findTransactionsByCategory(category);
-        Money balance = Money.zero();
-
-        for (Transaction t : transactions) {
-            balance = balance.add(t.isIncome()
-                    ? t.getAmount()
-                    : t.getAmount().negate());
-        }
-
-        return balance;
+        if (category == null) throw new BadRequestException("Category must not be null");
+        BigDecimal net = transactionRepository.sumNetByCategory(category);
+        return Money.of(net);
     }
 
     @Override
     public Map<Category, Money> summariseByCategory(List<Transaction> transactions) {
         return transactions.stream().collect(
-                Collectors.groupingBy(Transaction::getCategory,
-                        Collectors.mapping(Transaction::getAmount,
-                                Collectors.reducing(Money.zero(), (a, b) -> a.add(b)))));
+            Collectors.groupingBy(
+                Transaction::getCategory,
+                () -> new EnumMap<>(Category.class),
+                Collectors.mapping(
+                    t -> t.isIncome() ? t.getAmount() : t.getAmount().negate(), // sign!
+                    Collectors.reducing(Money.zero(), Money::add)
+                )
+            )
+        );
+    }
+
+
+
+    //---------------------------------Helpers--------------------------------------
+
+    private void validateTransactionId(Long id) {
+        if(id == null || id <= 0){
+            throw new BadRequestException("Transaction ID must be a positive number");
+        }
+    }
+
+    private Transaction validateTransaction(Transaction transaction, ValidationMode mode) {
+
+        if (transaction == null) {
+            throw new BadRequestException("Transaction must not be null");
+        }
+
+        Money amount = transaction.getAmount();
+
+        //amount must be positive if provided, required for CREATE & PUT_FULL
+        if((mode != ValidationMode.PATCH_PARTIAL && amount == null) ||
+           (amount != null && !amount.isPositive())){
+            throw new BadRequestException("Transaction amount must be provided and be a positive value");
+        }
+
+        if(mode != ValidationMode.PATCH_PARTIAL && transaction.getCategory() == null){
+            throw new BadRequestException("Transaction category must be provided");
+        }
+
+        if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getAccount() == null || transaction.getAccount().getId() == null)){
+            throw new BadRequestException("Transaction must be associated with an existing account");
+        }
+
+        // if client provides an account with an id in any mode, verify it exists and attach verified account OR throw
+        if(transaction.getAccount() != null && transaction.getAccount().getId() != null){
+            transaction.setAccount(validateAccount(transaction.getAccount().getId()));
+        }
+
+
+        return transaction;
+    }
+
+    private Transaction applyCreateDefaults(Transaction transaction) {
+        if (transaction.getDate() == null) {
+            transaction.setDate(LocalDate.now());
+        }
+
+        if (transaction.getDescription() == null || transaction.getDescription().isBlank()) {
+            transaction.setDescription("No description");
+        }
+
+        return transaction;
+    }
+
+    private Account validateAccount(Long accountId) {
+        return accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
     }
 
     // @Override
