@@ -13,11 +13,10 @@ import org.springframework.stereotype.Repository;
 
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-
-  List<Transaction> findByAccountIdOrderByDateDesc(Long accountId);
 
   @Query("""
         select t from Transaction t
@@ -57,7 +56,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     """)
     BigDecimal sumNetAll();
 
-  List<Transaction> findByDateBetweenOrderByDateDesc(LocalDate start, LocalDate end);
 
   @Query("""
           select coalesce(
@@ -68,7 +66,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       """)
   BigDecimal sumNetBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
-  List<Transaction> findByCategoryOrderByDateDesc(Category category);
 
   @Query("""
           select coalesce(
@@ -78,5 +75,45 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
           where t.category = :category
       """)
   BigDecimal sumNetByCategory(@Param("category") Category category);
+
+  
+  @Query("""
+          select coalesce (
+              sum(case when t.income = true then t.amount else -t.amount end), 0
+          )
+          from Transaction t
+          where t.account.id = :accountId
+          """)
+  BigDecimal sumNetForAccount(@Param("accountId") Long accountId);
+
+
+  @Query("""
+    select coalesce(sum(t.amount), 0)
+    from Transaction t
+    where t.income = true
+      and t.date >= :start and t.date <= :end
+  """)
+  BigDecimal sumIncomeBetween(@Param("start") LocalDate start,
+                              @Param("end")   LocalDate end);
+
+  @Query("""
+    select coalesce(sum(t.amount), 0)
+    from Transaction t
+    where t.income = false
+      and t.date >= :start and t.date <= :end
+  """)
+  BigDecimal sumExpensesBetween(@Param("start") LocalDate start,
+                              @Param("end")   LocalDate end);
+
+
+  @Query("""
+  select t.category as category,
+          coalesce(sum(case when t.income = true then t.amount else -t.amount end), 0) as total
+    from Transaction t
+    where t.date >= :start and t.date <= :end
+    group by t.category
+  """)
+  List<CategoryTotalView> sumNetByCategoryBetween(@Param("start") LocalDate start,
+                                                  @Param("end")   LocalDate end);
 
 }

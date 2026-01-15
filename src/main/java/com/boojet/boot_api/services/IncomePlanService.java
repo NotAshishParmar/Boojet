@@ -21,7 +21,7 @@ public interface IncomePlanService {
 
     public Money getExpectedMonthlyIncome(YearMonth ym);
     public Money getActualMonthlyIncome(YearMonth ym);
-    public Money expenses(YearMonth ym);
+    public Money getActualMonthlyExpenses(YearMonth ym);
     public com.boojet.boot_api.services.Impl.IncomePlanServiceImpl.NetReport netReport(YearMonth ym);
 
 

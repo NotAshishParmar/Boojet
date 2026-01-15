@@ -58,9 +58,7 @@ public class AccountController {
     @Operation(summary = "Get an account by ID", description = "Retrieve the details of an account by its ID.")
     @GetMapping("/{id}")
     public Account getOne(@PathVariable Long id){
-        Account account = accountService.findAccount(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account with ID " + id + " not found"));
-
+        Account account = accountService.findAccount(id);
         return account;
     }
 

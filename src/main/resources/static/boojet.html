@@ -27,8 +27,8 @@
       </div>
     </form>
 
-    <table id="atbl">
-      <thead><tr><th>Name</th><th>Type</th><th class="right">Balance</th><th>Actions</th></tr></thead>
+    <table id="atbl" class = "table-compact sticky">
+      <thead><tr><th>Name</th><th>Type</th><th class="right num">Balance</th><th>Actions</th></tr></thead>
       <tbody></tbody>
     </table>
 
@@ -79,12 +79,12 @@
       <button id="reset" type="button">Reset</button>
     </div>
 
-    <table id="tbl">
+    <table id="tbl" class = "table-compact sticky">
       <thead>
         <tr>
           <th style="width:120px">Date</th><th>Description</th>
           <th style="width:140px">Category</th><th style="width:130px">Account</th>
-          <th style="width:110px">Type</th><th class="right" style="width:140px">Amount</th>
+          <th style="width:110px">Type</th><th class="right num" style="width:140px">Amount</th>
           <th style="width:140px">Actions</th>
         </tr>
       </thead>
@@ -123,23 +123,53 @@
       </div>
     </form>
 
-    <table id="ptbl">
+    <table id="ptbl" class = "table-compact sticky">
       <thead>
-        <tr><th>Source</th><th>Type</th><th class="right">Amount</th><th>Hours/Wk</th><th>From</th><th>To</th><th>Actions</th></tr>
+        <tr><th>Source</th><th>Type</th><th class="right num">Amount</th><th>Hours/Wk</th><th>From</th><th>To</th><th>Actions</th></tr>
       </thead>
       <tbody></tbody>
     </table>
 
-    <!-- ================= Monthly Net ================= -->
-    <h2>Monthly Net</h2>
-    <div class="cards">
-      <div class="card"><div class="label">Expected income</div><div id="n_exp" class="value">$0.00</div></div>
-      <div class="card"><div class="label">Actual income</div><div id="n_act" class="value">$0.00</div></div>
-      <div class="card"><div class="label">Expenses</div><div id="n_expenses" class="value">$0.00</div></div>
-      <div class="card"><div class="label">Net (expected)</div><div id="n_netexp" class="value">$0.00</div></div>
-      <div class="card"><div class="label">Net (actual)</div><div id="n_netact" class="value">$0.00</div></div>
+    <!-- ================= Monthly Net + Summary (side by side) ================= -->
+    <div class="grid-2 section">
+      <!-- Monthly Net -->
+      <div>
+        <h2>Monthly Net</h2>
+        <div class="cards">
+          <div class="card"><div class="label">Expected income</div><div id="n_exp" class="value">$0.00</div></div>
+          <div class="card"><div class="label">Actual income</div><div id="n_act" class="value">$0.00</div></div>
+          <div class="card"><div class="label">Expenses</div><div id="n_expenses" class="value">$0.00</div></div>
+          <div class="card"><div class="label">Net (expected)</div><div id="n_netexp" class="value">$0.00</div></div>
+          <div class="card"><div class="label">Net (actual)</div><div id="n_netact" class="value">$0.00</div></div>
+        </div>
+        <div class="row">
+          <button id="refreshNet">Refresh month</button>
+          <span class="muted">Uses the Year/Mon above</span>
+        </div>
+      </div>
+
+      <!-- Summary by Category -->
+      <div>
+        <h2>Summary by Category</h2>
+        <div class="row" style="margin:8px 0 12px">
+          <span class="muted">Uses the Year/Mon above</span>
+          <div style="flex:1"></div>
+          <button id="refreshCat">Refresh summary</button>
+        </div>
+
+        <table id="sumcat" class="table-compact sticky">
+          <thead>
+            <tr><th>Category</th><th class="right num">Total</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="muted" colspan="2">Select Year/Mon to see summary</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><th>Total</th><th id="sumcat_total" class="right num">$0.00</th></tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
-    <div class="row"><button id="refreshNet">Refresh month</button><span class="muted">Uses the Year/Mon above</span></div>
   </div>
 
   <!-- JS -->

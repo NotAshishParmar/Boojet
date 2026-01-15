@@ -160,12 +160,21 @@ async function applyFilters(){
   state.mo  = $('#fmo').value || '';
   await fetchPage(0);
 }
-$('#apply').addEventListener('click', async e=>{ e.preventDefault(); await applyFilters(); await loadNet(); });
+$('#apply').addEventListener('click', async e=>{ 
+  e.preventDefault(); 
+  await applyFilters(); 
+  await loadNet(); 
+  await loadCategorySummary();
+});
+
 $('#reset').addEventListener('click', async ()=>{
   state.acc = state.cat = state.yr = state.mo = '';
   if ($('#faccount')) $('#faccount').value = '';
   $('#fcat').value=''; $('#fyr').value=''; $('#fmo').value='';
-  await fetchPage(0); await loadNet();
+
+  await fetchPage(0); 
+  await loadNet();
+  await loadCategorySummary();
 });
 $('#prev').addEventListener('click', async ()=>{ if (state.page > 0) await fetchPage(state.page - 1); });
 $('#next').addEventListener('click', async ()=>{ await fetchPage(state.page + 1); });
@@ -246,12 +255,93 @@ function colorize(el, v){
   const num = (typeof v === 'number') ? v : (v?.amount ?? 0);
   el.classList.remove('ok','bad'); el.classList.add(num >= 0 ? 'ok' : 'bad');
 }
-$('#refreshNet').addEventListener('click', loadNet);
+
+$('#refreshNet').addEventListener('click', async() =>{
+  await loadNet();
+  await loadCategorySummary();
+});
+
+/* ------------ monthly category summary ------------ */
+async function loadCategorySummary() {
+  const yr = $('#fyr')?.value;
+  const mo = $('#fmo')?.value;
+  const tb = document.querySelector('#sumcat tbody');
+
+  if (!(yr && mo)) {
+    tb.innerHTML = `<tr><td class="muted" colspan="2">Select Year/Mon to see summary</td></tr>`;
+    $('#sumcat_total').textContent = money(0);
+    console.warn('Summary skipped: year/month missing', { yr, mo });
+    return;
+  }
+
+  const url = `/transactions/summary/${yr}/${mo}`;
+  console.log('Loading category summary:', url);
+
+  try {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const text = await res.text();              // <- read raw text first (works even if it's HTML/error)
+    console.log('Summary status:', res.status);
+    console.log('Summary raw response:', text);
+
+    if (!res.ok) {
+      tb.innerHTML = `<tr><td class="muted" colspan="2">Failed (${res.status}): ${esc(text)}</td></tr>`;
+      $('#sumcat_total').textContent = money(0);
+      return;
+    }
+
+    let rows;
+    try {
+      rows = JSON.parse(text);                  // <- now parse as JSON
+    } catch (e) {
+      tb.innerHTML = `<tr><td class="muted" colspan="2">Response was not JSON (see console)</td></tr>`;
+      $('#sumcat_total').textContent = money(0);
+      return;
+    }
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      tb.innerHTML = `<tr><td class="muted" colspan="2">No data for this month</td></tr>`;
+      $('#sumcat_total').textContent = money(0);
+      return;
+    }
+
+    tb.innerHTML = '';
+    let grand = 0;
+
+    rows.forEach(r => {
+      const amt =
+        (typeof r.total === 'number') ? r.total :
+        (typeof r.total === 'string') ? parseFloat(r.total) :
+        (r.total?.amount ?? r.total?.value ?? 0);
+
+      grand += (Number.isFinite(amt) ? amt : 0);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.category}</td><td class="right">${money(amt)}</td>`;
+      tr.classList.add(amt < 0 ? 'bad' : 'ok');
+      tb.appendChild(tr);
+    });
+
+    $('#sumcat_total').textContent = money(grand);
+
+  } catch (e) {
+    console.error('Summary exception:', e);
+    tb.innerHTML = `<tr><td class="muted" colspan="2">Exception: ${esc(String(e.message || e))}</td></tr>`;
+    $('#sumcat_total').textContent = money(0);
+  }
+}
+
+document.getElementById('refreshCat').addEventListener('click', e => { e.preventDefault(); loadCategorySummary(); });
+
 
 /* ------------ boot ------------ */
 function bootDefaults(){
   $('#date').value = new Date().toISOString().slice(0,10);
   $('#pfrom').value = new Date().toISOString().slice(0,10);
+
+  const d = new Date();
+  $('#fyr').value = d.getFullYear();
+  $('#fmo').value = d.getMonth() + 1;
+
   toggleHours();
 }
 (async function boot(){
@@ -260,4 +350,5 @@ function bootDefaults(){
   await fetchPage(0);
   await loadPlans();
   await loadNet();
+  await loadCategorySummary();
 })();

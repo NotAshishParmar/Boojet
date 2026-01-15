@@ -2,12 +2,12 @@ package com.boojet.boot_api.services;
 
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Map;
-
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
+import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
@@ -53,7 +53,7 @@ public interface TransactionService {
      * 
      * @param transaction the candidate transaction to add
      * @return the saved transaction with generated ID and any defaults applied
-     * @throws IllegalArgumentException if input is {@code null} or fails validation
+     * @throws BadRequestException if input is {@code null} or fails validation
      * @throws AccountNotFoundException if the associated account does not exist
      */
     Transaction addTransaction(Transaction transaction);
@@ -113,12 +113,12 @@ public interface TransactionService {
      * from the provided {@code transaction}.
      * 
      * <ul>
-     * <li>Only non-null fields in {@code transaction} are used to update the
-     * existing record.</li>
-     * <li>The {@code id} field in {@code transaction} is ignored; the provided
-     * {@code id} parameter is used to locate the existing record.</li>
-     * <li>If no existing record is found with the given {@code id}, a
-     * {@link TransactionNotFoundException} is thrown.</li>
+     *  <li>Only non-null fields in {@code transaction} are used to update the
+     *  existing record.</li>
+     *  <li>The {@code id} field in {@code transaction} is ignored; the provided
+     *  {@code id} parameter is used to locate the existing record.</li>
+     *  <li>If no existing record is found with the given {@code id}, a
+     *  {@link TransactionNotFoundException} is thrown.</li>
      * </ul>
      * @param id the ID of the transaction to update
      * @param transaction the transaction data to update with (only non-null fields used)
@@ -155,17 +155,14 @@ public interface TransactionService {
     Money calculateTotalBalance();
 
     /**
-     * Finds all transactions that occurred in the specified month.
+     * Finds and returns a {@code Page} of all transactions that occurred in the specified month.
      * 
-     * <ul>
-     * <li>If {@code ym} is {@code null}, all transactions are returned.</li>
-     * </ul>
-     * 
-     * @param ym the year and month to filter transactions by; may be {@code null}
-     * @return a list of transactions that occurred in the specified month
+     * @param ym the year and month to filter transactions by; must not be {@code null}
+     * @param pageable pagination information
+     * @return a page of transactions that occurred in the specified month
      * @throws BadRequestException if the provided YearMonth is {@code null}
      */
-    List<Transaction> findTransactionsByMonth(YearMonth ym);
+    Page<Transaction> findTransactionsByMonth(YearMonth ym, Pageable pageable);
 
     /**
      * Calculates the net balance for the specified month.
@@ -181,13 +178,14 @@ public interface TransactionService {
     Money calculateMonthlyBalance(YearMonth ym);
 
     /**
-     * Finds all transactions associated with the specified category.
+     * Finds and returns a {@code Page} of all transactions associated with the specified category.
      * 
      * @param category the category to filter transactions by
-     * @return a list of transactions in the specified category
+     * @param pageable pagination information
+     * @return a page of transactions in the specified category
      * @throws BadRequestException if the provided category is {@code null}
      */
-    List<Transaction> findTransactionsByCategory(Category category);
+    Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable);
 
     /**
      * Calculates the total amount for transactions in the specified category.
@@ -198,11 +196,22 @@ public interface TransactionService {
      */
     Money calculateTotalByCategory(Category category);
 
+
+    /**
+     * Calculates the total amount for transactions in the specified account.
+     * 
+     * @param account the account to calculate for
+     * @return the total amount as {@link Money} object
+     * @throws BadRequesException if the provided account is null or not valid
+     * @throws AccountNotFoundException if the provided account does not exist in the repository
+     */
+    Money calculateTotalByAccount(Account account);
+
     /**
      * Summarises the total amounts of the provided transactions grouped by their categories.
      * 
      * @param transactions the list of transactions to summarise
-     * @return a map where each key is a {@link Category} and the corresponding value is the total {@link Money} amount for that category
+     * @return a list where each key is a {@link Category} and the corresponding value is the total {@link Money} amount for that category
      */
-    Map<Category, Money> summariseByCategory(List<Transaction> transactions);
+    List<CategorySummaryDto> monthlySummaryByCategory(int year, int month);
 }

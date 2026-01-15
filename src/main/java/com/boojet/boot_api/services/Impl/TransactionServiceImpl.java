@@ -3,7 +3,7 @@ package com.boojet.boot_api.services.Impl;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.EnumMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
@@ -24,6 +25,7 @@ import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.TransactionNotFoundException;
 import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
+import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 import com.boojet.boot_api.services.TransactionService;
 
 @Service
@@ -48,11 +50,10 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional                                            //this annotation allows Spring to rollback and avoid partial writes to DB in case of an early termination due to exceptions
     public Transaction addTransaction(Transaction transaction) {
 
+        applyCreateDefaults(transaction);
+
         //verify transaction data (all fields including Account) or throw
         Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.CREATE);
-
-        applyCreateDefaults(verifiedTransaction);
-
 
         return transactionRepository.save(verifiedTransaction);
     }
@@ -96,7 +97,6 @@ public class TransactionServiceImpl implements TransactionService {
     public Transaction updateTransactionComplete(Long id, Transaction transaction) {
 
         Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.PUT_FULL);
-        verifiedTransaction.setId(id);
         return updateTransaction(id, verifiedTransaction);
     }
 
@@ -132,6 +132,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     // delete a transaction by its ID
     @Override
+    @Transactional
     public void delete(Long id) {
 
         //throws BadRequestException if id is null or not positive
@@ -164,11 +165,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> findTransactionsByMonth(YearMonth ym) {
+    public Page<Transaction> findTransactionsByMonth(YearMonth ym, Pageable pageable) {
         if (ym == null) throw new BadRequestException("YearMonth must not be null");
         LocalDate start = ym.atDay(1);
         LocalDate end   = ym.atEndOfMonth();
-        return transactionRepository.findByDateBetweenOrderByDateDesc(start, end);
+        return transactionRepository.search(null, null, start, end, pageable);
     }
 
     @Override
@@ -183,9 +184,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> findTransactionsByCategory(Category category) {
+    public Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable) {
         if (category == null) throw new BadRequestException("Category must not be null");
-        return transactionRepository.findByCategoryOrderByDateDesc(category);
+        return transactionRepository.search(null, category, 
+            LocalDate.of(1,1,1), LocalDate.of(9999,12,31), pageable);
     }
 
     @Override
@@ -197,17 +199,39 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Map<Category, Money> summariseByCategory(List<Transaction> transactions) {
-        return transactions.stream().collect(
-            Collectors.groupingBy(
-                Transaction::getCategory,
-                () -> new EnumMap<>(Category.class),
-                Collectors.mapping(
-                    t -> t.isIncome() ? t.getAmount() : t.getAmount().negate(), // sign!
-                    Collectors.reducing(Money.zero(), Money::add)
-                )
-            )
-        );
+    @Transactional(readOnly = true)
+    public Money calculateTotalByAccount(Account account){
+        if(account == null){
+            throw new BadRequestException("Account must not be null");
+        }
+
+        Account verifiedAccount = validateAccount(account.getId());
+
+        return Money.of(transactionRepository.sumNetForAccount(verifiedAccount.getId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategorySummaryDto> monthlySummaryByCategory(int year, int month) {
+        
+        YearMonth ym = buildYearMonthOrThrow(year, month);
+
+        List<CategoryTotalView> rows =  transactionRepository.sumNetByCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
+
+        Map<Category, BigDecimal> byCat = rows.stream()
+            .collect(Collectors.toMap(
+                CategoryTotalView::getCategory,
+                CategoryTotalView::getTotal
+            ));
+
+        ArrayList<CategorySummaryDto> result = new ArrayList<CategorySummaryDto>();
+
+        for(Category c: Category.values()){
+            BigDecimal total = byCat.getOrDefault(c, BigDecimal.ZERO);
+            result.add(new CategorySummaryDto(c, Money.of(total)));
+        }
+
+        return result;
     }
 
 
@@ -242,6 +266,14 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Transaction must be associated with an existing account");
         }
 
+        if(mode != ValidationMode.PATCH_PARTIAL && transaction.getDate() == null){
+            throw new BadRequestException("Date of transaction cannot be null");
+        }
+
+        if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getDescription() == null || transaction.getDescription().isBlank())){
+            throw new BadRequestException("Transaction description must be provided");
+        }
+
         // if client provides an account with an id in any mode, verify it exists and attach verified account OR throw
         if(transaction.getAccount() != null && transaction.getAccount().getId() != null){
             transaction.setAccount(validateAccount(transaction.getAccount().getId()));
@@ -264,8 +296,19 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private Account validateAccount(Long accountId) {
+        if(accountId == null || accountId <= 0){
+            throw new BadRequestException("Account must have a valid positive ID");
+        }
         return accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
+    }
+
+    private YearMonth buildYearMonthOrThrow(int year, int month){
+        try{
+            return YearMonth.of(year, month);
+        }catch(RuntimeException e){
+            throw new BadRequestException("Invalid Year/Month");
+        }
     }
 
     // @Override

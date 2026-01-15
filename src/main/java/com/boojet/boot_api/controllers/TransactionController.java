@@ -2,7 +2,6 @@ package com.boojet.boot_api.controllers;
 
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Map;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TransactionDto;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
@@ -122,25 +122,27 @@ public class TransactionController {
 
     @Operation(summary = "Get transactions by category", description = "Retrieve a list of transactions filtered by the specified category.")
     @GetMapping("/category/{cat}")
-    public List<TransactionDto> byCategory(@PathVariable Category cat){
+    public PageResponse<TransactionDto> byCategory(@PathVariable Category cat, 
+                                            @ParameterObject
+                                            @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable){
 
-        List<Transaction> transactions = transactionService.findTransactionsByCategory(cat);
+        Page<TransactionDto> transactions = transactionService.findTransactionsByCategory(cat, pageable).
+                                                map(transactionMapper::mapTo);
 
-        return transactions.stream()
-            .map(transaction -> transactionMapper.mapTo(transaction))
-            .toList();
+        return PageResponse.of(transactions);
 
     }
 
     @Operation(summary = "Get transactions by month", description = "Retrieve a list of transactions for the specified year and month.")
     @GetMapping("/month/{year}/{month}")
-    public List<TransactionDto> byMonth(@PathVariable int year, @PathVariable int month){
+    public PageResponse<TransactionDto> byMonth(@PathVariable int year, @PathVariable int month,
+                                    @ParameterObject
+                                    @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable){
 
-        List<Transaction> transactions = transactionService.findTransactionsByMonth(YearMonth.of(year, month));
+        Page<TransactionDto> transactions = transactionService.findTransactionsByMonth(YearMonth.of(year, month), pageable).
+                                        map(transactionMapper::mapTo);
 
-        return transactions.stream()
-            .map(transaction -> transactionMapper.mapTo(transaction))
-            .toList();
+        return PageResponse.of(transactions);
     }
 
     @Operation(summary = "Get total balance", description = "Calculate and retrieve the total balance from all transactions.")
@@ -150,12 +152,8 @@ public class TransactionController {
     }
 
     @Operation(summary = "Get monthly summary by category", description = "Retrieve a summary of transactions for a specific month, grouped by category.")
-    @GetMapping("summary/{year}/{month}")
-    public Map<Category, Money> monthlySummary(@PathVariable int year, @PathVariable int month){
-        List<Transaction> transactionsInMonth = transactionService.findTransactionsByMonth(YearMonth.of(year, month));
-        return transactionService.summariseByCategory(transactionsInMonth);
+    @GetMapping("/summary/{year}/{month}")
+    public List<CategorySummaryDto> monthlySummary(@PathVariable int year, @PathVariable int month){
+        return transactionService.monthlySummaryByCategory(year, month);
     }
-
-    
-
 }

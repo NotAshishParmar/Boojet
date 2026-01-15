@@ -4,6 +4,8 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.boojet.boot_api.domain.IncomePlan;
@@ -11,9 +13,11 @@ import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.repositories.IncomePlanRepository;
+import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.UserRepository;
 import com.boojet.boot_api.services.IncomePlanService;
 import com.boojet.boot_api.services.TransactionService;
+import com.boojet.boot_api.exceptions.BadRequestException;
 
 
 @Service
@@ -21,6 +25,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
     
     private final UserRepository userRepo;
     private final IncomePlanRepository incomePlanRepo;
+    private final TransactionRepository transactionRepo;
     private final TransactionService transactionService;                    //NOTE: IncomePLanServiceImpl depends on TransactionService
                                                                             //DO NOT CREATE CIRCULAR DEPENDENCY
 
@@ -28,8 +33,9 @@ public class IncomePlanServiceImpl implements IncomePlanService{
 
 
 
-    public IncomePlanServiceImpl(IncomePlanRepository incomePlanRepo, TransactionService transactionService, UserRepository userRepo){
+    public IncomePlanServiceImpl(IncomePlanRepository incomePlanRepo, TransactionRepository transactionRepo, TransactionService transactionService, UserRepository userRepo){
         this.incomePlanRepo = incomePlanRepo;
+        this.transactionRepo = transactionRepo;
         this.transactionService = transactionService;
         this.userRepo = userRepo;
     }
@@ -100,32 +106,25 @@ public class IncomePlanServiceImpl implements IncomePlanService{
 
     //actual income from transactions in the given month
     public Money getActualMonthlyIncome(YearMonth ym){
-        List<Transaction> transactions = transactionService.findTransactionsByMonth(ym);
-        Money total = Money.zero();
-        for(Transaction t : transactions){
-            if(t.isIncome()){
-                total = total.add(t.getAmount());
-            }
+        
+        if(ym == null){
+            throw new BadRequestException("YearMonth must not be null");
         }
-        return total;
+
+        return Money.of(transactionRepo.sumIncomeBetween(ym.atDay(1), ym.atEndOfMonth()));
     }
 
     //get total monthly expenses
-    public Money expenses(YearMonth ym){
-        List<Transaction> transactions = transactionService.findTransactionsByMonth(ym);
-        Money total = Money.zero();
-
-        for(Transaction t: transactions){
-            if(!t.isIncome()){
-                total = total.add(t.getAmount());
-            }
+    public Money getActualMonthlyExpenses(YearMonth ym){
+        
+        if(ym == null){
+            throw new BadRequestException("YearMonth must not be null");
         }
-
-        return total;
+        return Money.of(transactionRepo.sumExpensesBetween(ym.atDay(1), ym.atEndOfMonth()));
     }
 
     public NetReport netReport(YearMonth ym){
-        Money expenses = expenses(ym);
+        Money expenses = getActualMonthlyExpenses(ym);
         Money expectedIncome = getExpectedMonthlyIncome(ym);
         Money actualIncome = getActualMonthlyIncome(ym);
 
