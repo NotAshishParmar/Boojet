@@ -1,6 +1,5 @@
 package com.boojet.boot_api.services;
 
-import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -70,12 +69,13 @@ public interface TransactionService {
      * 
      * @param accountId Optional account ID to filter by; may be {@code null}
      * @param category Optional category to filter by; may be {@code null}
-     * @param yearMonth Optional year and month to filter by; may be {@code null}
+     * @param year Optional year to filter by; may be {@code null}
+     * @param month Optional month to filter by; may be {@code null}
      * @param pageable Pagination information
      * @return A {@code Page} of transactions matching the provided filters
      * @throws AccountNotFoundException if the provided accountId does not exist
      */
-    Page<Transaction> search(Long accountId, Category category, YearMonth yearMonth, Pageable pageable);
+    Page<Transaction> search(Long accountId, Category category, Integer year, Integer month, Pageable pageable);
 
     /**
      * Finds a {@link Transaction} by its unique ID.
@@ -157,25 +157,26 @@ public interface TransactionService {
     /**
      * Finds and returns a {@code Page} of all transactions that occurred in the specified month.
      * 
-     * @param ym the year and month to filter transactions by; must not be {@code null}
+     * @param year the year to filter transactions by; must not be {@code null}
+     * @param month the month to filter transactions by; must not be {@code null}
      * @param pageable pagination information
      * @return a page of transactions that occurred in the specified month
-     * @throws BadRequestException if the provided YearMonth is {@code null}
+     * @throws BadRequestException if the provided values of year or month are {@code null} or invalid
      */
-    Page<Transaction> findTransactionsByMonth(YearMonth ym, Pageable pageable);
+    Page<Transaction> findTransactionsByMonth(Integer year, Integer month, Pageable pageable);
 
     /**
      * Calculates the net balance for the specified month.
      * 
      * <ul>
-     * <li>If {@code ym} is {@code null}, the net balance for all transactions is returned.</li>
+     *  <li>If {@code ym} is {@code null}, the net balance for all transactions is returned.</li>
      * </ul>
      * 
      * @param ym the year and month to calculate the balance for; may be {@code null}
      * @return the net balance as a {@link Money} object
      * @throws BadRequestException if the provided YearMonth is {@code null}
      */
-    Money calculateMonthlyBalance(YearMonth ym);
+    Money calculateMonthlyBalance(Integer year, Integer month);
 
     /**
      * Finds and returns a {@code Page} of all transactions associated with the specified category.

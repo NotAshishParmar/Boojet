@@ -1,6 +1,5 @@
 package com.boojet.boot_api.controllers;
 
-import java.time.YearMonth;
 import java.util.List;
 
 import org.springdoc.core.annotations.ParameterObject;
@@ -75,10 +74,7 @@ public class TransactionController {
                                     @ParameterObject
                                     @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
         
-
-        YearMonth ym = (year != null && month != null) ? YearMonth.of(year, month) : null;
-
-        Page<TransactionDto> page = transactionService.search(accountId, category, ym, pageable).map(transactionMapper::mapTo);
+        Page<TransactionDto> page = transactionService.search(accountId, category, year, month, pageable).map(transactionMapper::mapTo);
 
         return PageResponse.of(page);
         
@@ -139,7 +135,7 @@ public class TransactionController {
                                     @ParameterObject
                                     @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable){
 
-        Page<TransactionDto> transactions = transactionService.findTransactionsByMonth(YearMonth.of(year, month), pageable).
+        Page<TransactionDto> transactions = transactionService.findTransactionsByMonth(year, month, pageable).
                                         map(transactionMapper::mapTo);
 
         return PageResponse.of(transactions);

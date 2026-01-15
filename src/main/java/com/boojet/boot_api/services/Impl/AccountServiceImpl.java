@@ -149,7 +149,7 @@ public class AccountServiceImpl implements AccountService{
         if (!accountRepo.existsById(id)) {
             throw new AccountNotFoundException(id);
         }
-        return transactionService.search(id, null, null, pageable);
+        return transactionService.search(id, null, null, null, pageable);
     }
 
     //-------------------------------------------------helpers------------------------------------------------------------

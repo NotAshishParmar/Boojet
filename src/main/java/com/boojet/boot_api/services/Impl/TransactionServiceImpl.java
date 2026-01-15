@@ -29,6 +29,7 @@ import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 import com.boojet.boot_api.services.TransactionService;
 
 @Service
+@Transactional(readOnly = true)
 public class TransactionServiceImpl implements TransactionService {
 
     //private final AccountServiceImpl accountServiceImpl;
@@ -68,10 +69,13 @@ public class TransactionServiceImpl implements TransactionService {
     // search transactions with optional filters and pagination
     // functions as findAll if no filters are provided (CRUD Read)
     @Override
-    public Page<Transaction> search(Long accountId, Category category, YearMonth yearMonth, Pageable pageable) {
+    public Page<Transaction> search(Long accountId, Category category, Integer year, Integer month, Pageable pageable) {
         if (accountId != null && !accountRepository.existsById(accountId)) {
             throw new AccountNotFoundException(accountId);
         }
+
+        //try to build yearMonth, throw if invalid input
+        YearMonth yearMonth = (year != null && month != null) ? buildYearMonthOrThrow(year, month) : null;
 
         LocalDate from = (yearMonth != null) ? yearMonth.atDay(1) : LocalDate.of(1, 1, 1);
         LocalDate to = (yearMonth != null) ? yearMonth.atEndOfMonth() : LocalDate.of(9999, 12, 31);
@@ -150,22 +154,26 @@ public class TransactionServiceImpl implements TransactionService {
 
     // check if a transaction exists by its ID
     @Override
-    @Transactional(readOnly = true)
     public boolean isExists(Long id) {
         return id != null && id > 0 && transactionRepository.existsById(id);
     }
 
     // calculate the total balance from all transactions
     @Override
-    @Transactional(readOnly = true)
     public Money calculateTotalBalance() {
         BigDecimal net = transactionRepository.sumNetAll(); // never null due to COALESCE
         return Money.of(net);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Page<Transaction> findTransactionsByMonth(YearMonth ym, Pageable pageable) {
+    public Page<Transaction> findTransactionsByMonth(Integer year, Integer month, Pageable pageable) {
+
+        if(year == null || month == null){
+            throw new BadRequestException("Year or month cannot be null");
+        }
+
+        YearMonth ym = buildYearMonthOrThrow(year, month);
+
         if (ym == null) throw new BadRequestException("YearMonth must not be null");
         LocalDate start = ym.atDay(1);
         LocalDate end   = ym.atEndOfMonth();
@@ -173,9 +181,13 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Money calculateMonthlyBalance(YearMonth ym) {
-        if (ym == null) throw new BadRequestException("YearMonth must not be null");
+    public Money calculateMonthlyBalance(Integer year, Integer month) {
+        if(year == null || month == null){
+            throw new BadRequestException("Year or month cannot be null");
+        }
+
+        YearMonth ym = buildYearMonthOrThrow(year, month);
+
         LocalDate start = ym.atDay(1);
         LocalDate end   = ym.atEndOfMonth();
         BigDecimal net = transactionRepository.sumNetBetween(start, end);
@@ -183,7 +195,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable) {
         if (category == null) throw new BadRequestException("Category must not be null");
         return transactionRepository.search(null, category, 
@@ -191,7 +202,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Money calculateTotalByCategory(Category category) {
         if (category == null) throw new BadRequestException("Category must not be null");
         BigDecimal net = transactionRepository.sumNetByCategory(category);
@@ -199,7 +209,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Money calculateTotalByAccount(Account account){
         if(account == null){
             throw new BadRequestException("Account must not be null");
@@ -211,7 +220,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<CategorySummaryDto> monthlySummaryByCategory(int year, int month) {
         
         YearMonth ym = buildYearMonthOrThrow(year, month);
@@ -311,7 +319,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
-    // @Override
+    // @Override 
     // public List<Transaction> findTransactionsByAccount(Account account) {
     // return transactionRepository.findAll().stream()
     // .filter(t -> t.getAccount() == account)

@@ -1,11 +1,13 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>Boojet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/assets/css/boojet.css">
 </head>
+
 <body>
   <div class="container">
     <h1>Boojet</h1>
@@ -16,8 +18,11 @@
       <label>Name <input id="aname" required></label>
       <label>Type
         <select id="atype">
-          <option>CHEQUING</option><option>SAVINGS</option>
-          <option>CREDIT_CARD</option><option>CASH</option><option>OTHER</option>
+          <option>CHEQUING</option>
+          <option>SAVINGS</option>
+          <option>CREDIT_CARD</option>
+          <option>CASH</option>
+          <option>OTHER</option>
         </select>
       </label>
       <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
@@ -27,8 +32,15 @@
       </div>
     </form>
 
-    <table id="atbl" class = "table-compact sticky">
-      <thead><tr><th>Name</th><th>Type</th><th class="right num">Balance</th><th>Actions</th></tr></thead>
+    <table id="atbl" class="table-compact sticky">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th class="right num">Balance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
       <tbody></tbody>
     </table>
 
@@ -40,13 +52,19 @@
       <label>Date <input id="date" type="date" required></label>
       <label>Category
         <select id="cat">
-          <option>FOOD</option><option>RENT</option><option>TRANSPORT</option>
-          <option>ENTERTAINMENT</option><option>UTILITIES</option><option>HEALTH</option><option>OTHER</option>
+          <option>FOOD</option>
+          <option>RENT</option>
+          <option>TRANSPORT</option>
+          <option>ENTERTAINMENT</option>
+          <option>UTILITIES</option>
+          <option>HEALTH</option>
+          <option>OTHER</option>
         </select>
       </label>
       <label>Type
         <select id="income">
-          <option value="true">INCOME</option><option value="false">EXPENSE</option>
+          <option value="true">INCOME</option>
+          <option value="false">EXPENSE</option>
         </select>
       </label>
       <label>Account
@@ -64,27 +82,39 @@
       <div id="balance" style="font-weight:600">$0.00</div>
       <div style="flex:1"></div>
       <label class="row muted" style="gap:6px">Account
-        <select id="faccount"><option value="">(All)</option></select>
+        <select id="faccount">
+          <option value="">(All)</option>
+        </select>
       </label>
       <label class="row muted" style="gap:6px">Cat
         <select id="fcat">
           <option value="">(All)</option>
-          <option>FOOD</option><option>RENT</option><option>TRANSPORT</option>
-          <option>ENTERTAINMENT</option><option>UTILITIES</option><option>HEALTH</option><option>OTHER</option>
+          <option>FOOD</option>
+          <option>RENT</option>
+          <option>TRANSPORT</option>
+          <option>ENTERTAINMENT</option>
+          <option>UTILITIES</option>
+          <option>HEALTH</option>
+          <option>OTHER</option>
         </select>
       </label>
-      <label class="row muted" style="gap:6px">Year <input id="fyr" type="number" min="2000" max="2100" style="width:100px"></label>
-      <label class="row muted" style="gap:6px">Mon <input id="fmo" type="number" min="1" max="12" style="width:70px"></label>
+      <label class="row muted" style="gap:6px">Year <input id="fyr" type="number" min="2000" max="2100"
+          style="width:100px"></label>
+      <label class="row muted" style="gap:6px">Mon <input id="fmo" type="number" min="1" max="12"
+          style="width:70px"></label>
       <button id="apply">Apply</button>
       <button id="reset" type="button">Reset</button>
     </div>
 
-    <table id="tbl" class = "table-compact sticky">
+    <table id="tbl" class="table-compact sticky">
       <thead>
         <tr>
-          <th style="width:120px">Date</th><th>Description</th>
-          <th style="width:140px">Category</th><th style="width:130px">Account</th>
-          <th style="width:110px">Type</th><th class="right num" style="width:140px">Amount</th>
+          <th style="width:120px">Date</th>
+          <th>Description</th>
+          <th style="width:140px">Category</th>
+          <th style="width:130px">Account</th>
+          <th style="width:110px">Type</th>
+          <th class="right num" style="width:140px">Amount</th>
           <th style="width:140px">Actions</th>
         </tr>
       </thead>
@@ -98,7 +128,10 @@
       <button id="next">Next</button>
       <label class="row muted" style="gap:6px">Size
         <select id="psize">
-          <option>10</option><option selected>20</option><option>50</option><option>100</option>
+          <option>10</option>
+          <option selected>20</option>
+          <option>50</option>
+          <option>100</option>
         </select>
       </label>
     </div>
@@ -109,8 +142,11 @@
       <label>Source <input id="psource" placeholder="Company / Side gig" required></label>
       <label>Pay Type
         <select id="ppaytype">
-          <option>HOURLY</option><option>WEEKLY</option><option>BIWEEKLY</option>
-          <option>MONTHLY</option><option>ANNUAL</option>
+          <option>HOURLY</option>
+          <option>WEEKLY</option>
+          <option>BIWEEKLY</option>
+          <option>MONTHLY</option>
+          <option>ANNUAL</option>
         </select>
       </label>
       <label>Amount <input id="pamount" type="number" step="0.01" min="0" required></label>
@@ -123,9 +159,17 @@
       </div>
     </form>
 
-    <table id="ptbl" class = "table-compact sticky">
+    <table id="ptbl" class="table-compact sticky">
       <thead>
-        <tr><th>Source</th><th>Type</th><th class="right num">Amount</th><th>Hours/Wk</th><th>From</th><th>To</th><th>Actions</th></tr>
+        <tr>
+          <th>Source</th>
+          <th>Type</th>
+          <th class="right num">Amount</th>
+          <th>Hours/Wk</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Actions</th>
+        </tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -133,46 +177,74 @@
     <!-- ================= Monthly Net + Summary (side by side) ================= -->
     <div class="grid-2 section">
       <!-- Monthly Net -->
-      <div>
-        <h2>Monthly Net</h2>
-        <div class="cards">
-          <div class="card"><div class="label">Expected income</div><div id="n_exp" class="value">$0.00</div></div>
-          <div class="card"><div class="label">Actual income</div><div id="n_act" class="value">$0.00</div></div>
-          <div class="card"><div class="label">Expenses</div><div id="n_expenses" class="value">$0.00</div></div>
-          <div class="card"><div class="label">Net (expected)</div><div id="n_netexp" class="value">$0.00</div></div>
-          <div class="card"><div class="label">Net (actual)</div><div id="n_netact" class="value">$0.00</div></div>
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Monthly Net</h2>
+            <div class="panel-sub">Uses the Year/Mon above</div>
+          </div>
+          <button id="refreshNet" class="btn-sm">Refresh</button>
         </div>
-        <div class="row">
-          <button id="refreshNet">Refresh month</button>
-          <span class="muted">Uses the Year/Mon above</span>
+
+        <div class="cards cards-wrap" id="netCards">
+          <div class="card">
+            <div class="label">Expected income</div>
+            <div id="n_exp" class="value">$0.00</div>
+          </div>
+          <div class="card">
+            <div class="label">Actual income</div>
+            <div id="n_act" class="value">$0.00</div>
+          </div>
+          <div class="card">
+            <div class="label">Expenses</div>
+            <div id="n_expenses" class="value">$0.00</div>
+          </div>
+          <div class="card">
+            <div class="label">Net (expected)</div>
+            <div id="n_netexp" class="value">$0.00</div>
+          </div>
+          <div class="card">
+            <div class="label">Net (actual)</div>
+            <div id="n_netact" class="value">$0.00</div>
+          </div>
         </div>
-      </div>
+      </section>
 
       <!-- Summary by Category -->
-      <div>
-        <h2>Summary by Category</h2>
-        <div class="row" style="margin:8px 0 12px">
-          <span class="muted">Uses the Year/Mon above</span>
-          <div style="flex:1"></div>
-          <button id="refreshCat">Refresh summary</button>
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Summary by Category</h2>
+            <div class="panel-sub">Uses the Year/Mon above</div>
+          </div>
+          <button id="refreshCat" class="btn-sm">Refresh</button>
         </div>
 
-        <table id="sumcat" class="table-compact sticky">
+        <table id="sumcat" class="table-compact sum-table">
           <thead>
-            <tr><th>Category</th><th class="right num">Total</th></tr>
+            <tr>
+              <th>Category</th>
+              <th class="right num">Total</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td class="muted" colspan="2">Select Year/Mon to see summary</td></tr>
+            <tr>
+              <td class="muted" colspan="2">Select Year/Mon to see summary</td>
+            </tr>
           </tbody>
           <tfoot>
-            <tr><th>Total</th><th id="sumcat_total" class="right num">$0.00</th></tr>
+            <tr>
+              <th>Total</th>
+              <th id="sumcat_total" class="right num">$0.00</th>
+            </tr>
           </tfoot>
         </table>
-      </div>
+      </section>
     </div>
-  </div>
 
-  <!-- JS -->
-  <script type="module" src="/assets/js/boojet.js"></script>
+    <!-- JS -->
+    <script type="module" src="/assets/js/boojet.js"></script>
+    </div>
 </body>
+
 </html>

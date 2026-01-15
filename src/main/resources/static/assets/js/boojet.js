@@ -270,18 +270,14 @@ async function loadCategorySummary() {
   if (!(yr && mo)) {
     tb.innerHTML = `<tr><td class="muted" colspan="2">Select Year/Mon to see summary</td></tr>`;
     $('#sumcat_total').textContent = money(0);
-    console.warn('Summary skipped: year/month missing', { yr, mo });
     return;
   }
 
   const url = `/transactions/summary/${yr}/${mo}`;
-  console.log('Loading category summary:', url);
 
   try {
     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     const text = await res.text();              // <- read raw text first (works even if it's HTML/error)
-    console.log('Summary status:', res.status);
-    console.log('Summary raw response:', text);
 
     if (!res.ok) {
       tb.innerHTML = `<tr><td class="muted" colspan="2">Failed (${res.status}): ${esc(text)}</td></tr>`;
@@ -316,8 +312,10 @@ async function loadCategorySummary() {
       grand += (Number.isFinite(amt) ? amt : 0);
 
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${r.category}</td><td class="right">${money(amt)}</td>`;
-      tr.classList.add(amt < 0 ? 'bad' : 'ok');
+      tr.innerHTML = `
+        <td>${r.category}</td>
+        <td class="right sum-amt ${amt < 0 ? 'bad' : 'ok'}">${money(amt)}</td>
+      `;
       tb.appendChild(tr);
     });
 

@@ -106,7 +106,7 @@ public class AccountController {
     @Operation(summary = "Get transactions for an account by ID", description = "Retrieve a paginated list of transactions associated with a specific account by its ID.")
     @GetMapping("/{id}/transactions")
     public Page<Transaction> byAccount(@PathVariable Long id, @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
-        return transactionService.search(id, null, null, pageable);
+        return transactionService.search(id, null, null, null, pageable);
     }
 
 }
