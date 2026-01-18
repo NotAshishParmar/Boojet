@@ -31,7 +31,7 @@ public class AccountServiceImpl implements AccountService{
     private final TransactionService transactionService;
 
     private static final Long DEFAULT_USER_ID = 1L; //temporary until user management is implemented
-    private static int DEFAULT_COUNTER = 0;
+    private static int DEFAULT_COUNTER = 1;
 
 
     public AccountServiceImpl(AccountRepository accountRepo, UserRepository userRepo, TransactionService transactionService){

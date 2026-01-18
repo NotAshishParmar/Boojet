@@ -1,5 +1,6 @@
 package com.boojet.boot_api.services;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -168,13 +169,10 @@ public interface TransactionService {
     /**
      * Calculates the net balance for the specified month.
      * 
-     * <ul>
-     *  <li>If {@code ym} is {@code null}, the net balance for all transactions is returned.</li>
-     * </ul>
-     * 
-     * @param ym the year and month to calculate the balance for; may be {@code null}
+     * @param year the year to calculate the balance for
+     * @param month the month to calculate the balance for
      * @return the net balance as a {@link Money} object
-     * @throws BadRequestException if the provided YearMonth is {@code null}
+     * @throws BadRequestException if the provided year or month is {@code null} or invalid
      */
     Money calculateMonthlyBalance(Integer year, Integer month);
 
@@ -203,16 +201,44 @@ public interface TransactionService {
      * 
      * @param account the account to calculate for
      * @return the total amount as {@link Money} object
-     * @throws BadRequesException if the provided account is null or not valid
+     * @throws BadRequestException if the provided account is null or not valid
      * @throws AccountNotFoundException if the provided account does not exist in the repository
      */
     Money calculateTotalByAccount(Account account);
 
     /**
-     * Summarises the total amounts of the provided transactions grouped by their categories.
-     * 
-     * @param transactions the list of transactions to summarise
-     * @return a list where each key is a {@link Category} and the corresponding value is the total {@link Money} amount for that category
+     * Returns a monthly summary of transaction totals grouped by category.
+     * <p>
+     * The summary covers the full calendar month specified by {@code year} and {@code month}
+     * (from the first day to the last day, inclusive). Categories with no transactions in the
+     * month are still included with a total of {@code 0}.
+     *
+     * @param year the calendar year (e.g., 2026)
+     * @param month the calendar month (1-12)
+     * @return a list of category summaries for the month (one entry per {@link Category})
+     * @throws BadRequestException if {@code month} is not in the range 1-12
      */
     List<CategorySummaryDto> monthlySummaryByCategory(int year, int month);
+
+    /**
+     * Calculates the total income from the ledger between the a given date range.
+     * Accpets parameters of type {@link LocalDate} to maintain accurary and convenience.
+     * 
+     * @param start the starting date as a {@link LocalDate}
+     * @param end the ending date as a {@link LocalDate}
+     * @return the income amount as {@link Money}
+     * @throws BadRequestException if any of the provided parameters are {@code null}
+     */
+    Money calculateIncomeBetween(LocalDate start, LocalDate end);
+
+    /**
+     * Calculates the total expenses from the ledger between the a given date range.
+     * Accpets parameters of type {@link LocalDate} to maintain accurary and convenience.
+     * 
+     * @param start the starting date as a {@link LocalDate}
+     * @param end the ending date as a {@link LocalDate}
+     * @return the total expense as {@link Money}
+     * @throws BadRequestException if any of the provided parameters are {@code null}
+     */
+    Money calculateExpensesBetween(LocalDate start, LocalDate end);
 }

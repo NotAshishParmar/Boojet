@@ -122,7 +122,7 @@ public interface AccountService {
      * Deletes the {@link Account} with the given ID.
      * 
      * @param id the ID of the account to delete
-     * @throws AccountNotFoundException if no transaction with the given ID exists
+     * @throws AccountNotFoundException if no account with the given ID exists
      * @throws BadRequestException if the provided ID is not positive or is {@code null}
      */
     void delete(Long id);
@@ -133,8 +133,7 @@ public interface AccountService {
      * 
      * 
      * @param id the ID of the account to check
-     * @return {@code true} if a account with the given ID exists, {@code false} otherwise. Invalid IDs return false.
-     * 
+     * @return {@code true} if an account with the given ID exists, {@code false} otherwise. Invalid IDs return false.
      */
     boolean isExists(Long id);
 

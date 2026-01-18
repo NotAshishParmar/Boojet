@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Money;
@@ -65,21 +63,13 @@ public class AccountController {
     @Operation(summary = "Update an account by ID", description = "Update the details of an existing account by its ID.")
     @PutMapping("/{id}")
     public Account updateAccount(@PathVariable Long id, @RequestBody Account account){
-        if(!accountService.isExists(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account with ID " + id + " not found.");
-        }
-
-        Account updatedAccount = accountService.updateAccount(id, account);
+        Account updatedAccount = accountService.updateAccountComplete(id, account);
         return updatedAccount;
     }
 
     @Operation(summary = "Partially update an account by ID", description = "Partially update the details of an existing account by its ID.")
     @PatchMapping("/{id}")
     public Account patchAccount(@PathVariable Long id, @RequestBody Account account){
-        if(!accountService.isExists(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account with ID " + id + " not found.");
-        }
-
         Account patchedAccount = accountService.updateAccount(id, account);
         return patchedAccount;
     }
@@ -87,10 +77,6 @@ public class AccountController {
     @Operation(summary = "Delete an account by ID", description = "Delete an existing account by its ID.")
     @DeleteMapping("/{id}")
     public void deleteAccount(@PathVariable Long id){
-        if(!accountService.isExists(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Income Account with ID " + id + " not found.");
-        }
-
         accountService.delete(id);
     }
 

@@ -20,12 +20,11 @@ import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.ValidationMode;
-import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.TransactionNotFoundException;
-import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
+import com.boojet.boot_api.services.AccountService;
 import com.boojet.boot_api.services.TransactionService;
 
 @Service
@@ -35,13 +34,13 @@ public class TransactionServiceImpl implements TransactionService {
     //private final AccountServiceImpl accountServiceImpl;
 
     // Dependency injection of the repository
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
 
-    private final AccountRepository accountRepository;
+    private final AccountService accountService;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountService accountService) {
         this.transactionRepository = transactionRepository;
-        this.accountRepository = accountRepository;
+        this.accountService = accountService;
     }
 
     // ----------------------------CRUD operations----------------------------------
@@ -70,8 +69,10 @@ public class TransactionServiceImpl implements TransactionService {
     // functions as findAll if no filters are provided (CRUD Read)
     @Override
     public Page<Transaction> search(Long accountId, Category category, Integer year, Integer month, Pageable pageable) {
-        if (accountId != null && !accountRepository.existsById(accountId)) {
-            throw new AccountNotFoundException(accountId);
+        
+        Long accId = null;
+        if (accountId != null) {
+            accId = accountService.findAccount(accountId).getId();
         }
 
         //try to build yearMonth, throw if invalid input
@@ -80,7 +81,7 @@ public class TransactionServiceImpl implements TransactionService {
         LocalDate from = (yearMonth != null) ? yearMonth.atDay(1) : LocalDate.of(1, 1, 1);
         LocalDate to = (yearMonth != null) ? yearMonth.atEndOfMonth() : LocalDate.of(9999, 12, 31);
 
-        return transactionRepository.search(accountId, category, from, to, pageable);
+        return transactionRepository.search(accId, category, from, to, pageable);
     }
 
     // return a transaction by its ID
@@ -242,9 +243,28 @@ public class TransactionServiceImpl implements TransactionService {
         return result;
     }
 
+    @Override
+    public Money calculateIncomeBetween(LocalDate start, LocalDate end){
+
+        if(start == null || end == null){
+            throw new BadRequestException("Date range cannot be null");
+        }
+
+        return Money.of(transactionRepository.sumIncomeBetween(start, end));
+    }
+
+    @Override 
+    public Money calculateExpensesBetween(LocalDate start, LocalDate end){
+        if(start == null || end == null){
+            throw new BadRequestException("Date range cannot be null");
+        }
+
+        return Money.of(transactionRepository.sumExpensesBetween(start, end));
+    }
 
 
-    //---------------------------------Helpers--------------------------------------
+
+    //---------------------------------------------------Helpers-----------------------------------------------------------------
 
     private void validateTransactionId(Long id) {
         if(id == null || id <= 0){
@@ -307,15 +327,14 @@ public class TransactionServiceImpl implements TransactionService {
         if(accountId == null || accountId <= 0){
             throw new BadRequestException("Account must have a valid positive ID");
         }
-        return accountRepository.findById(accountId)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
+        return accountService.findAccount(accountId);
     }
 
     private YearMonth buildYearMonthOrThrow(int year, int month){
         try{
             return YearMonth.of(year, month);
         }catch(RuntimeException e){
-            throw new BadRequestException("Invalid Year/Month");
+            throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month Transaction");
         }
     }
 
