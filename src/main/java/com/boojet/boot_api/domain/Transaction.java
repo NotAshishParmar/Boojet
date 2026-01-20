@@ -17,6 +17,19 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * Represents a single ledger entry (income or expense) recorded against an {@link Account}.
+ * <p>
+ * A transaction has an amount, date, category, and a flag indicating whether it is income.
+ * This entity is used to compute monthly summaries, category totals, and net reports.
+ *
+ * <p><b>Money persistence:</b>
+ * The {@link #amount} field is persisted as a {@link java.math.BigDecimal} via {@link MoneyConverter}.
+ *
+ * <p><b>Income vs Expense:</b>
+ * The {@link #income} flag indicates whether the transaction should be treated as income ({@code true})
+ * or expense ({@code false}). (This is independent of the numeric sign of {@link #amount}.)
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -48,6 +61,16 @@ public class Transaction{
     @ManyToOne(optional = false)
     private Account account;                            // The account associated with this transaction
 
+    /**
+     * Convenience constructor for creating a transaction without an id.
+     *
+     * @param description description of the transaction
+     * @param amount transaction amount
+     * @param date transaction date
+     * @param category transaction category
+     * @param income whether the transaction is income ({@code true}) or expense ({@code false})
+     * @param account owning account
+     */
     public Transaction(String description, Money amount, LocalDate date, Category category, boolean income, Account account){
         this.description = description;
         this.amount = amount;
@@ -56,11 +79,6 @@ public class Transaction{
         this.income = income;
         this.account = account;
     }
-
-    // //for Jackson
-    // @JsonProperty("isIncome")
-    // public boolean isIncome() { return isIncome; }
-
 
     @Override
     public String toString(){

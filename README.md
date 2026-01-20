@@ -67,11 +67,14 @@ http://localhost:8080/boojet.html
 
 ## Screenshots
 
-- **Transactions and Accounts View:**
-![Boojet UI Screenshot](docs/res/boojet-ui-tx&acc.png)
+- **Accounts View:**
+![Boojet UI Screenshot](docs/res/Accounts.png)
+
+- **Transactions View:**
+![Boojet UI Screenshot](docs/res/Transactions.png)
 
 - **Income Planning View:**
-![Boojet UI Screenshot](docs/res/boojet-ui-ip&net.png)
+![Boojet UI Screenshot](docs/res/IncomePlans_and_Summary.png)
 
 
 ## Docs
@@ -83,10 +86,10 @@ http://localhost:8080/boojet.html
 
 ## Future Improvements
 
-- API ergonomics: pagination/sorting; query params for filters
-- Documentation/ops: OpenAPI/Swagger; Actuator health/info
-- Validation/errors: bean validation + centralized error handling
-- Data layer: more aggregate queries in repositories
+- API ergonomics: ~~pagination~~/sorting; query params for filters
+- Documentation/ops: ~~OpenAPI/Swagger~~; Actuator health/info
+- Validation/errors: bean validation + ~~centralized error handling~~
+- Data layer: ~~more aggregate queries in repositories~~
 - Migrations: Flyway/Liquibase (avoid `ddl-auto` in prod)
 - Security: Spring Security and CORS tuning
 - Frontend: richer UI and charts; budgets/targets

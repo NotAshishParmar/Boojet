@@ -18,6 +18,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
+/**
+ * Represents a financial account owned by a {@link User} (e.g., chequing, savings, credit).
+ * <p>
+ * Accounts are uniquely named per user (enforced by a database unique constraint on {@code (user_id, name)}).
+ * An account is considered <em>active</em> when {@link #closedAt} is {@code null}.
+ *
+ * <p><b>Balance fields:</b>
+ * <ul>
+ *   <li>{@link #openingBalance} represents the starting balance at account creation (defaults to zero).</li>
+ *   <li>Current running balance is not represented here but is computed by the service.</li>
+ * </ul>
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,10 +39,12 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Account {
     
+    //database identifier for the account
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //owner of this account
     @ManyToOne(optional = false)                // Many accounts can belong to one user
     private User user;
 
@@ -49,7 +64,11 @@ public class Account {
     private LocalDate createdAt = LocalDate.now();
     private LocalDate closedAt;                  // Null if account is active
 
-
+    /**
+     * Indicates whether the account is active.
+     *
+     * @return {@code true} if {@link #closedAt} is {@code null}; otherwise {@code false}
+     */
     public boolean isActive(){
         return closedAt == null;
     }

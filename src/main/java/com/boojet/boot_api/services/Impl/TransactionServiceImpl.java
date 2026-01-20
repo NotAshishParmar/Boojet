@@ -20,27 +20,28 @@ import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.ValidationMode;
+import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.TransactionNotFoundException;
+import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
-import com.boojet.boot_api.services.AccountService;
 import com.boojet.boot_api.services.TransactionService;
 
 @Service
 @Transactional(readOnly = true)
 public class TransactionServiceImpl implements TransactionService {
 
-    //private final AccountServiceImpl accountServiceImpl;
+    //private final AccountServiceImpl accountRepositoryImpl;
 
     // Dependency injection of the repository
     private final TransactionRepository transactionRepository;
 
-    private final AccountService accountService;
+    private final AccountRepository accountRepository;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountService accountService) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
         this.transactionRepository = transactionRepository;
-        this.accountService = accountService;
+        this.accountRepository = accountRepository;
     }
 
     // ----------------------------CRUD operations----------------------------------
@@ -72,7 +73,10 @@ public class TransactionServiceImpl implements TransactionService {
         
         Long accId = null;
         if (accountId != null) {
-            accId = accountService.findAccount(accountId).getId();
+            if (!accountRepository.existsById(accountId)) {
+                throw new AccountNotFoundException(accountId);
+            }
+            accId = accountId; // safe to pass down
         }
 
         //try to build yearMonth, throw if invalid input
@@ -324,10 +328,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private Account validateAccount(Long accountId) {
-        if(accountId == null || accountId <= 0){
-            throw new BadRequestException("Account must have a valid positive ID");
+        if (accountId == null || accountId <= 0) {
+            throw new BadRequestException("Account ID must be a positive number");
         }
-        return accountService.findAccount(accountId);
+        return accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
     }
 
     private YearMonth buildYearMonthOrThrow(int year, int month){

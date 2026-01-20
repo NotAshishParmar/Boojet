@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 
 import jakarta.persistence.Column;
+
+import com.boojet.boot_api.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,6 +22,25 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
+/**
+ * Represents a recurring income source used to project expected income for a given month.
+ * <p>
+ * An {@code IncomePlan} becomes "effective" during a date range defined by {@link #effectiveFrom}
+ * (inclusive) and {@link #effectiveTo} (inclusive when present). If {@code effectiveTo} is {@code null},
+ * the plan is considered ongoing.
+ *
+ * <p><b>Pay types:</b>
+ * <ul>
+ *   <li>{@link PayType#HOURLY}: requires {@link #hoursPerWeek}.</li>
+ *   <li>{@link PayType#WEEKLY}, {@link PayType#BIWEEKLY}, {@link PayType#MONTHLY}, {@link PayType#ANNUAL}:
+ *       {@code hoursPerWeek} is not used.</li>
+ * </ul>
+ *
+ * <p><b>Projection rules:</b>
+ * This entity provides {@link #calculateMonthlyAmount(YearMonth)} to estimate the expected income
+ * contributed by this plan in a specific month.
+ */
 @Entity
 @Data
 @AllArgsConstructor
@@ -57,7 +78,15 @@ public class IncomePlan {
     private static final BigDecimal WEEKS_PER_MONTH = WEEKS_PER_YEAR.divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
 
 
-
+    /**
+     * Determines whether this income plan applies during the given month.
+     * <p>
+     * A plan is considered active for {@code ym} if its effective date range overlaps
+     * with the calendar month (inclusive boundaries).
+     *
+     * @param ym the month to evaluate
+     * @return {@code true} if the plan overlaps the month; otherwise {@code false}
+     */
     public boolean activeIn(YearMonth ym){
         var start = ym.atDay(1);
         var end = ym.atEndOfMonth();
@@ -67,50 +96,63 @@ public class IncomePlan {
         return true;
     }
 
-    public Money calculateMonthlyAmount(YearMonth ym){
 
-        if(!activeIn(ym)) return Money.zero();
+    /**
+     * Calculates the expected income contributed by this plan in the given month.
+     * <p>
+     * If the plan is not active in the month (see {@link #activeIn(YearMonth)}), this returns {@link Money#zero()}.
+     *
+     * <p><b>Calculation rules:</b>
+     * <ul>
+     *   <li>HOURLY: {@code hoursPerWeek * weeksPerMonth * hourlyRate}</li>
+     *   <li>WEEKLY: {@code weeklyPay * weeksPerMonth}</li>
+     *   <li>BIWEEKLY: {@code paycheckAmount * (26 / 12)}</li>
+     *   <li>MONTHLY: {@code monthlyPay}</li>
+     *   <li>ANNUAL: {@code annualSalary / 12}</li>
+     * </ul>
+     *
+     * @param ym the month to calculate for
+     * @return expected income for the month
+     * @throws BadRequestException if {@link #payType} is {@link PayType#HOURLY} and {@link #hoursPerWeek} is {@code null}
+     */
+    public Money calculateMonthlyAmount(YearMonth ym) {
 
-        if (payType == PayType.ANNUAL || payType == PayType.MONTHLY || payType == PayType.WEEKLY || payType == PayType.BIWEEKLY){
-            //hoursPerWeek is not relevant for these pay types
-            setHoursPerWeek(null);
+    if (!activeIn(ym)) return Money.zero();
+
+    if (payType == null) return Money.zero();
+    if (amount == null) return Money.zero();
+
+    switch (payType) {
+        case HOURLY -> {
+            if (hoursPerWeek == null) {
+                throw new BadRequestException("hoursPerWeek is required for HOURLY payType");
+            }
+
+            BigDecimal hoursPerMonth = hoursPerWeek.multiply(WEEKS_PER_MONTH);
+            BigDecimal monthlyPay = hoursPerMonth.multiply(amount.asBigDecimal());
+            return Money.of(monthlyPay);
         }
-
-
-        switch(payType){
-            case HOURLY -> {
-
-                //require hoursPerWeek to have a value for HOURLY payType
-                if(hoursPerWeek == null){
-                    throw new IllegalStateException("hoursPerWeek is required for HOURLY payTyple");
-                }
-
-                BigDecimal hoursPerMonth = hoursPerWeek.multiply(WEEKS_PER_MONTH);
-                BigDecimal monthlyPay = hoursPerMonth.multiply(amount.asBigDecimal());
-
-                return Money.of(monthlyPay);
-            }
-            case WEEKLY -> {
-                BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(WEEKS_PER_MONTH);
-                return Money.of(expectedMonthlyPay);
-            }
-            case BIWEEKLY -> {
-                BigDecimal paychecksPerMonth = new BigDecimal("26").divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
-                BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(paychecksPerMonth);
-
-                return Money.of(expectedMonthlyPay);
-            }
-            case MONTHLY -> {
-                return amount;
-            }
-            case ANNUAL -> {
-                BigDecimal expectedMonthlyPay = amount.asBigDecimal().divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
-
-                return Money.of(expectedMonthlyPay);
-            }
-            default -> {
-                return Money.zero();
-            }
+        case WEEKLY -> {
+            BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(WEEKS_PER_MONTH);
+            return Money.of(expectedMonthlyPay);
+        }
+        case BIWEEKLY -> {
+            BigDecimal paychecksPerMonth =
+                new BigDecimal("26").divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
+            BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(paychecksPerMonth);
+            return Money.of(expectedMonthlyPay);
+        }
+        case MONTHLY -> {
+            return amount;
+        }
+        case ANNUAL -> {
+            BigDecimal expectedMonthlyPay =
+                amount.asBigDecimal().divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
+            return Money.of(expectedMonthlyPay);
+        }
+        default -> {
+            return Money.zero();
         }
     }
+}
 }

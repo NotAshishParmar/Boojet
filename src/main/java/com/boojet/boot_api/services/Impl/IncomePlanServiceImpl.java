@@ -107,7 +107,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         if(!incomePlanRepo.existsById(id)){
             throw new IncomePlanNotFoundException(id);
         }
-
+ 
         incomePlanRepo.deleteById(id);
     }
 

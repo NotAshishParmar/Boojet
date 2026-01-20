@@ -6,6 +6,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+/**
+ * Represents an application user in Boojet.
+ * <p>
+ * Users own accounts, transactions, and income plans. This entity is used as the root
+ * owner reference for multi-user data separation.
+ */
 @Data
 @Entity
 @Table(name = "users")
