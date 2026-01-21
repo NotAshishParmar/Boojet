@@ -80,7 +80,7 @@ http://localhost:8080/boojet.html
 ## Docs
 
 - Architecture Overview: [Architecture Diagram](docs/architecture.md)
-- API Docs: [API Documentation](docs/api-docs.md)
+- API Docs: [API Documentation](docs/api.md)
 - Testing Strategy: [Testing Documentation](docs/testing.md)
 
 
