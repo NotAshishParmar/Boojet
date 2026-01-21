@@ -143,4 +143,12 @@ public class TransactionController {
     public List<CategorySummaryDto> monthlySummary(@PathVariable int year, @PathVariable int month){
         return transactionService.monthlySummaryByCategory(year, month);
     }
+
+    //TODO: add userId to this endpoint once Auth has been implemented
+    @Operation(summary = "Get a list of suggested names", description = "Returns a list of transactions descriptions that corresponds to the input String. Helps autofill names for that user")
+    @GetMapping("/suggestions")
+    public List<String> suggestDescription(@RequestParam String name,
+                                            @RequestParam(defaultValue = "10") int howMany){
+        return transactionService.suggest(name, howMany);
+    }
 }

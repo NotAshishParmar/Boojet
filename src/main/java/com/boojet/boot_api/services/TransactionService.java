@@ -78,6 +78,23 @@ public interface TransactionService {
      */
     Page<Transaction> search(Long accountId, Category category, Integer year, Integer month, Pageable pageable);
 
+
+    /**
+     * Goes through the ledger to identify a list of {@code Transactions.description(s)} that
+     * are close matches or contains the query name. 
+     * 
+     * <ul>
+     *  <li>We do a prefix match first and fill up the remaining results with a contains match for convenience.</li>
+     *  <li>Only searches the ledger for the current user (TO BE IMPLEMENTED WHEN AUTH).</li>
+     * </ul>
+     * 
+     * @param name the query name we suggest for
+     * @param howMany how many values to return
+     * @return a list of {@link String} that are valid suggestions to the user
+     * @throws
+     */
+    List<String> suggest(String name, int howMany);
+
     /**
      * Finds a {@link Transaction} by its unique ID.
      * 

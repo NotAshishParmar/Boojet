@@ -163,6 +163,11 @@ public class TransactionServiceImpl implements TransactionService {
         return id != null && id > 0 && transactionRepository.existsById(id);
     }
 
+    @Override
+    public List<String> suggest(String name, int howMany){
+        return null;
+    }
+
     // calculate the total balance from all transactions
     @Override
     public Money calculateTotalBalance() {
