@@ -165,6 +165,27 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<String> suggest(String name, int howMany){
+
+        //returns null if input name is empty
+        if(name == null)
+            return List.of();
+
+        String trimmed = name.trim();
+
+        //do not return a full list of suggestions for 0 or 1 letter words
+        if(trimmed.length() < 2)
+            return List.of();
+
+        //user wants no input sure
+        if(howMany <= 0)
+            return List.of();
+
+        if(howMany > 15)
+            howMany = 15;
+
+        
+
+
         return null;
     }
 
