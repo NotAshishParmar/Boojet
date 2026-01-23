@@ -68,6 +68,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       """)
   List<String> suggestPrefix(@Param("q") String q, Pageable pageable);
 
+
+  @Query("""
+      select t.description
+      from Transaction t
+      where t.description is not null
+        and t.description <> ''
+        and lower(t.description) like lower(concat('%', :q, '%'))
+      group by t.description
+      order by count(t) desc, max(t.date) desc
+      """)
+  List<String> suggestContains(@Param("q") String q, Pageable pageable);
+
   @Query("""
           select coalesce(
             sum(case when t.income = true then t.amount else -t.amount end), 0

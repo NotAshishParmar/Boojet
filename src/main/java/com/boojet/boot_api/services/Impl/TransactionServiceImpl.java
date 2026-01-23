@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -166,27 +169,44 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<String> suggest(String name, int howMany){
 
-        //returns null if input name is empty
         if(name == null)
             return List.of();
 
-        String trimmed = name.trim();
+        String trim = name.trim();
 
-        //do not return a full list of suggestions for 0 or 1 letter words
-        if(trimmed.length() < 2)
+        if(trim.length() < 2)
             return List.of();
 
-        //user wants no input sure
         if(howMany <= 0)
             return List.of();
 
-        if(howMany > 15)
-            howMany = 15;
+        int limit = Math.min(howMany, 15);
 
-        
+        //LinkedHashSet keeps the order of insertions and keeps duplicates in check (dedupes)
+        Set<String> out = new LinkedHashSet<>(limit);
 
+        //get prefixes first
+        List<String> prefix = transactionRepository.suggestPrefix(trim, PageRequest.of(0, limit));
+        out.addAll(prefix);
 
-        return null;
+        //exit early if limit already reached
+        if(out.size() >= limit){
+            return new ArrayList<>(out).subList(0, limit);
+        }
+
+        //fetch extra for contains so deduping doesn't starve results
+        int containsFetch = Math.min(limit*2, 30);
+
+        List<String> contains = transactionRepository.suggestContains(trim, PageRequest.of(0, containsFetch));
+
+        for(String s : contains){
+            out.add(s);
+            if(out.size() >= limit)
+                break;
+        }
+
+        return new ArrayList<>(out);
+
     }
 
     // calculate the total balance from all transactions
