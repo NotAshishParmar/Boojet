@@ -111,6 +111,8 @@ window.editTx = async function(id){
   const t = await j(`${API}/${id}`);
   $('#editId').value = id;
   $('#desc').value = t.description;
+  window.__clearDescAutocomplete?.();
+
   $('#amount').value = (typeof t.amount === 'number' ? t.amount : t.amount.amount);
   $('#date').value = t.date;
   $('#cat').value = t.category;
@@ -146,10 +148,162 @@ $('#f').addEventListener('submit', async e=>{
 });
 $('#cancel').addEventListener('click', resetTxForm);
 function resetTxForm(){
-  $('#f').reset(); $('#editId').value = '';
+  $('#f').reset(); 
+  window.__clearDescAutocomplete?.();
+  $('#editId').value = '';
   document.querySelector('#f button[type="submit"]').textContent = 'Add';
   $('#cancel').style.display = 'none';
   $('#date').value = new Date().toISOString().slice(0,10);
+}
+
+/* ------------ autocomplete: transaction description ------------ */
+function initDescriptionAutocomplete() {
+  const input = document.getElementById('desc');
+  const menu = document.getElementById('desc-ac');
+  if (!input || !menu) return;
+
+  let debounceTimer = null;
+  let activeIndex = -1;
+  let items = [];
+  let lastReqId = 0;
+
+  function openMenu() {
+    if (!items.length) return;
+    menu.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeMenu() {
+    menu.hidden = true;
+    input.setAttribute('aria-expanded', 'false');
+    activeIndex = -1;
+    // keep items so focus can re-open if desired
+  }
+
+  function clearMenu() {
+    menu.innerHTML = '';
+    items = [];
+    closeMenu();
+  }
+
+  function setActive(idx) {
+    activeIndex = idx;
+    const nodes = menu.querySelectorAll('.ac-item');
+    nodes.forEach((n, i) => n.classList.toggle('active', i === activeIndex));
+  }
+
+  function selectValue(v) {
+    input.value = v;
+    clearMenu();
+  }
+
+  function renderMenu(list) {
+    items = Array.isArray(list) ? list : [];
+
+    if (!items.length) {
+      menu.innerHTML = `<div class="ac-empty">No suggestions</div>`;
+      menu.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+      activeIndex = -1;
+      return;
+    }
+
+    menu.innerHTML = items.map((t, i) => `
+      <div class="ac-item" role="option" data-idx="${i}">
+        ${esc(t)}
+      </div>
+    `).join('');
+
+    activeIndex = -1;
+    openMenu();
+  }
+
+  async function fetchSuggestions(q, limit = 15) {
+    const reqId = ++lastReqId;
+
+    // Use your API constant: '/transactions'
+    const url = `${API}/suggestions?name=${encodeURIComponent(q)}&howMany=${limit}`;
+
+    // Use your JSON helper
+    let list;
+    try {
+      list = await j(url);
+    } catch {
+      return null;
+    }
+
+    // ignore stale responses
+    if (reqId !== lastReqId) return null;
+
+    return list;
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+
+    const q = input.value.trim();
+    if (q.length < 2) {
+      clearMenu();
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      const list = await fetchSuggestions(q, 15);
+      if (!list) return;
+      renderMenu(list);
+    }, 150);
+  });
+
+  // Keyboard support
+  input.addEventListener('keydown', (e) => {
+    const isOpen = !menu.hidden;
+    const max = items.length - 1;
+
+    if (!isOpen) {
+      if (e.key === 'ArrowDown' && items.length && input.value.trim().length >= 2) {
+        openMenu();
+        setActive(0);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      const next = activeIndex < max ? activeIndex + 1 : 0;
+      setActive(next);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      const prev = activeIndex > 0 ? activeIndex - 1 : max;
+      setActive(prev);
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (activeIndex >= 0 && activeIndex <= max) {
+        selectValue(items[activeIndex]);
+        e.preventDefault(); // prevents form submit when selecting
+      }
+    } else if (e.key === 'Escape') {
+      clearMenu();
+      e.preventDefault();
+    }
+  });
+
+  // Click selection (mousedown beats blur)
+  menu.addEventListener('mousedown', (e) => {
+    const el = e.target.closest('.ac-item');
+    if (!el) return;
+    const idx = Number(el.dataset.idx);
+    if (!Number.isNaN(idx) && items[idx] != null) {
+      selectValue(items[idx]);
+    }
+  });
+
+  // Close when clicking outside
+  document.addEventListener('mousedown', (e) => {
+    const wrap = e.target.closest('.ac-wrap');
+    if (wrap) return;
+    clearMenu();
+  });
+
 }
 
 /* filters + pager */
@@ -344,6 +498,7 @@ function bootDefaults(){
 }
 (async function boot(){
   bootDefaults();
+  initDescriptionAutocomplete();
   await loadAccounts();
   await fetchPage(0);
   await loadPlans();

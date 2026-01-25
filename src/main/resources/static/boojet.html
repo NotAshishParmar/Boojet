@@ -47,7 +47,16 @@
     <!-- ================= Transactions ================= -->
     <h2>Transactions</h2>
     <form id="f">
-      <label>Description <input id="desc" required></label>
+      <label>Description
+        <div class="ac-wrap">
+          <input id="desc" required autocomplete="off"
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-controls="desc-ac"
+                role="combobox" />
+          <div id="desc-ac" class="ac-menu" role="listbox" hidden></div>
+        </div>
+      </label>  
       <label>Amount <input id="amount" type="number" step="0.01" min="0" required></label>
       <label>Date <input id="date" type="date" required></label>
       <label>Category
