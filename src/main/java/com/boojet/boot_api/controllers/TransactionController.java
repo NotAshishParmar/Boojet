@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TransactionDto;
+import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
@@ -145,10 +146,18 @@ public class TransactionController {
     }
 
     //TODO: add userId to this endpoint once Auth has been implemented
-    @Operation(summary = "Get a list of suggested names", description = "Returns a list of transactions descriptions that corresponds to the input String. Helps autofill names for that user")
+    @Operation(summary = "Get a list of suggested descriptions", description = "Returns a list of transactions descriptions that corresponds to the input String. Helps autofill names for that user")
     @GetMapping("/suggestions")
-    public List<String> suggestDescription(@RequestParam String name,
+    public List<String> suggestDescription(@RequestParam String description,
                                             @RequestParam(defaultValue = "10") int howMany){
-        return transactionService.suggest(name, howMany);
+        return transactionService.suggest(description, howMany);
     }
+
+    @Operation(summary = "Get Transaction details that match input", description = "Returns a record of Transaction category, amount, income, account that match the description input. Useful for autofill")
+    @GetMapping("/suggestions/details")
+    public TxSuggestionDetails suggestDetails(@RequestParam String description) {
+        return transactionService.suggestionDetails(description);
+    }
+    
+
 }

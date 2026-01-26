@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
+import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
@@ -207,6 +208,27 @@ public class TransactionServiceImpl implements TransactionService {
 
         return new ArrayList<>(out);
 
+    }
+
+    @Override
+    public TxSuggestionDetails suggestionDetails(String description){
+        
+        if(description == null)
+            throw new BadRequestException("Description for transaction suggestion cannot be null");
+
+        String trimDescription = description.trim();
+
+        if(trimDescription.isEmpty())
+            throw new BadRequestException("Description for transaction suggestion cannot be blank");
+
+        if(trimDescription.length() < 2)
+            throw new BadRequestException("Description cannot be less than 2 characters (Tx suggestion)");
+        
+        Transaction match = transactionRepository.findTopByDescriptionIgnoreCaseOrderByDateDescIdDesc(trimDescription).orElseThrow(
+            () -> new TransactionNotFoundException("No transactions match the description provided (Tx Suggestion)")
+        );
+        
+        return new TxSuggestionDetails(match.getDescription(), match.getCategory(), match.getAmount(), match.isIncome(), match.getAccount().getId());
     }
 
     // calculate the total balance from all transactions

@@ -75,7 +75,6 @@ window.viewAccount = async function(id){
 $('#acctForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const payload = {
-    // If your service assigns default user, omit next line; else include it:
     user: { id: 1 },
     name: $('#aname').value.trim(),
     type: $('#atype').value,
@@ -222,7 +221,7 @@ function initDescriptionAutocomplete() {
     const reqId = ++lastReqId;
 
     // Use your API constant: '/transactions'
-    const url = `${API}/suggestions?name=${encodeURIComponent(q)}&howMany=${limit}`;
+    const url = `${API}/suggestions?description=${encodeURIComponent(q)}&howMany=${limit}`;
 
     // Use your JSON helper
     let list;

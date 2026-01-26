@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
+import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
@@ -94,6 +95,22 @@ public interface TransactionService {
      * @throws
      */
     List<String> suggest(String name, int howMany);
+
+    /**
+     * Retrieves autofill details for a previously used transaction description.
+     *
+     * <p>This is used by the UI to auto-populate other transaction fields (e.g. category, income/expense,
+     * and account) after the user selects a description suggestion.</p>
+     *
+     * <p>The returned {@link TxSuggestionDetails} is typically derived from the most recent transaction
+     * matching the given description (case-insensitive).</p>
+     *
+     * @param description the transaction description to look up (will be trimmed/validated)
+     * @return a {@link TxSuggestionDetails} record containing autofill defaults for the given description
+     * @throws BadRequestException if {@code description} is null/blank or too short to be valid
+     * @throws TransactionNotFoundException if no matching transaction exists for the description
+     */
+    TxSuggestionDetails suggestionDetails(String description);
 
     /**
      * Finds a {@link Transaction} by its unique ID.

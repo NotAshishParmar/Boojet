@@ -1,7 +1,7 @@
 package com.boojet.boot_api.exceptions;
 
 /**
- * Thrown when a transaction with the given id cannot be found.
+ * Thrown when a requested transaction resource cannot be found
  */
 public class TransactionNotFoundException extends NotFoundException{
 
@@ -10,5 +10,9 @@ public class TransactionNotFoundException extends NotFoundException{
      */
     public TransactionNotFoundException(Long id){
         super("Transaction " + String.valueOf(id) + " not found!");
+    }
+
+    public TransactionNotFoundException(String message){
+        super(message);
     }
 }
