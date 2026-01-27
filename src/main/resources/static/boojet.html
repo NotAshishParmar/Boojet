@@ -24,60 +24,88 @@
         <section class="block">
           <div class="block-head">
             <h2>Accounts</h2>
+            <div class="block-actions">
+              <span class="muted">Net worth</span>
+              <span id="netWorth" class="big-money">$0.00</span>
+            </div>
           </div>
 
-          <!-- acctForm + accounts table -->
-          <form id="acctForm">
-            <label>Name <input id="aname" required></label>
-            <label>Type
-              <select id="atype">
-                <option>CHEQUING</option>
-                <option>SAVINGS</option>
-                <option>CREDIT_CARD</option>
-                <option>CASH</option>
-                <option>OTHER</option>
-              </select>
-            </label>
-            <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
-            <div class="actions">
-              <button type="submit">Add Account</button>
-              <button type="button" id="aclear" class="muted">Clear</button>
-            </div>
-          </form>
-
+          <!-- Main thing user cares about -->
           <div id="acctList" class="side-list"></div>
 
+          <!-- Rarely used: keep collapsed -->
+          <details class="collapse" id="acctCollapse">
+            <summary>
+              <span>Add / manage account</span>
+              <span class="muted">+</span>
+            </summary>
+
+            <form id="acctForm">
+              <label>Name <input id="aname" required></label>
+
+              <label>Type
+                <select id="atype">
+                  <option>CHEQUING</option>
+                  <option>SAVINGS</option>
+                  <option>CREDIT_CARD</option>
+                  <option>CASH</option>
+                  <option>OTHER</option>
+                </select>
+              </label>
+
+              <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
+
+              <div class="actions">
+                <button type="submit">Add Account</button>
+                <button type="button" id="aclear" class="muted">Clear</button>
+              </div>
+            </form>
+          </details>
         </section>
 
         <!-- ================= Income Plans ================= -->
         <section class="block">
           <div class="block-head">
             <h2>Income Plans</h2>
+            <div class="block-actions">
+              <span class="muted">Used for Monthly Net</span>
+            </div>
           </div>
 
-          <form id="pform">
-            <label>Source <input id="psource" placeholder="Company / Side gig" required></label>
-            <label>Pay Type
-              <select id="ppaytype">
-                <option>HOURLY</option>
-                <option>WEEKLY</option>
-                <option>BIWEEKLY</option>
-                <option>MONTHLY</option>
-                <option>ANNUAL</option>
-              </select>
-            </label>
-            <label>Amount <input id="pamount" type="number" step="0.01" min="0" required></label>
-            <label id="phoursWrap">Hours/Week <input id="phours" type="number" step="0.25" min="0"></label>
-            <label>From <input id="pfrom" type="date" required></label>
-            <label>To <input id="pto" type="date" placeholder="(optional)"></label>
-            <div class="actions">
-              <button type="submit">Add Plan</button>
-              <button type="button" id="pclear" class="muted">Clear</button>
-            </div>
-          </form>
-
+          <!-- small list, not a wide table -->
           <div id="planList" class="side-list"></div>
-          
+
+          <!-- Rarely used: keep collapsed -->
+          <details class="collapse" id="planCollapse">
+            <summary>
+              <span>Add / manage plan</span>
+              <span class="muted">+</span>
+            </summary>
+
+            <form id="pform">
+              <label>Source <input id="psource" placeholder="Company / Side gig" required></label>
+
+              <label>Pay Type
+                <select id="ppaytype">
+                  <option>HOURLY</option>
+                  <option>WEEKLY</option>
+                  <option>BIWEEKLY</option>
+                  <option>MONTHLY</option>
+                  <option>ANNUAL</option>
+                </select>
+              </label>
+
+              <label>Amount <input id="pamount" type="number" step="0.01" min="0" required></label>
+              <label id="phoursWrap">Hours/Week <input id="phours" type="number" step="0.25" min="0"></label>
+              <label>From <input id="pfrom" type="date" required></label>
+              <label>To <input id="pto" type="date" placeholder="(optional)"></label>
+
+              <div class="actions">
+                <button type="submit">Add Plan</button>
+                <button type="button" id="pclear" class="muted">Clear</button>
+              </div>
+            </form>
+          </details>
         </section>
       </aside>
 

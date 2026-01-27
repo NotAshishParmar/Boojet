@@ -289,42 +289,100 @@ body{
   display: none;
 }
 
+/* ===== Left dashboard lists (no tables) ===== */
+.block-actions{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+.big-money{
+  font-weight:800;
+  font-variant-numeric: tabular-nums;
+}
+
 .side-list{
-  display: grid;
-  gap: 12px;
-  margin-top: 12px;
+  display:grid;
+  gap:10px;
+  margin-top:10px;
 }
 
 .side-item{
-  display: grid;
+  display:grid;
   grid-template-columns: 1fr auto;
-  gap: 10px 12px;
-  padding: 12px;
-  border: 1px solid #ededed;
-  border-radius: 12px;
-  background: #fff;
+  gap:8px 12px;
+  padding:12px;
+  border:1px solid #eee;
+  border-radius:12px;
+  background:#fafafa;
 }
 
-.side-title{ font-weight: 700; }
-.side-sub{ margin-top: 6px; display:flex; gap: 6px; flex-wrap: wrap; }
+.side-title{
+  font-weight:750;
+  line-height:1.15;
+}
+
+.side-sub{
+  margin-top:6px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
 
 .side-meta{
-  font-weight: 800;
+  font-weight:800;
   font-variant-numeric: tabular-nums;
-  align-self: start;
+  text-align:right;
+  white-space:nowrap;
 }
+.side-meta.bad{ color:#b00020; }
+.side-meta.ok{ color:#0a7f42; }
 
 .side-actions{
   grid-column: 1 / -1;
   display:flex;
   justify-content:flex-end;
+  gap:8px;
 }
 
 .side-btn{
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
+  height:34px;
+  padding:0 12px;
+  border-radius:10px;
 }
+
+/* ===== Collapsible forms (details/summary) ===== */
+details.collapse{
+  margin-top:12px;
+}
+
+details.collapse > summary{
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 12px;
+  border:1px dashed #e5e7eb;
+  border-radius:12px;
+  background:#fff;
+}
+
+details.collapse[open] > summary{
+  margin-bottom:12px;
+}
+
+/* remove default marker */
+details.collapse > summary::-webkit-details-marker{ display:none; }
+details.collapse > summary::marker{ content:""; }
+
+/* Make left forms roomy (not compact grid) */
+.left form{
+  grid-template-columns: 1fr;
+}
+.left .actions{
+  grid-column: 1 / -1;
+}
+
 .side-btn:hover{ background:#f3f4f6; }
 
 /* Make long names wrap nicely */
@@ -436,6 +494,14 @@ body{
 .right .row{
   gap: 10px;
 }
+
+.side-btn.danger{
+  border-color:#f3c2c2;
+}
+.side-btn.danger:hover{
+  background:#fff5f5;
+}
+
 
 /* ================= Responsive ================= */
 @media (max-width: 1100px){

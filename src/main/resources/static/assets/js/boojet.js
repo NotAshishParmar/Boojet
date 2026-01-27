@@ -9,6 +9,13 @@ function money(n) {
   const v = (typeof n === 'number') ? n : (n?.amount ?? 0);
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'CAD' }).format(v);
 }
+function toNum(x){
+  if (typeof x === 'number') return x;
+  if (typeof x === 'string') return Number(x) || 0;
+  return Number(x?.amount ?? 0) || 0;
+}
+
+
 function esc(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 async function j(url, opts = {}) {
   const r = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
@@ -71,6 +78,7 @@ $('#acctForm').addEventListener('submit', async e => {
     openingBalance: parseFloat($('#aopen').value || 0)
   };
   await j(ACCOUNT, { method: 'POST', body: JSON.stringify(payload) });
+  document.getElementById('acctCollapse')?.removeAttribute('open');
   $('#acctForm').reset();
   await loadAccounts();
 });
@@ -383,19 +391,34 @@ async function renderAccountsSidebar(list) {
 
       <div class="side-actions">
         <button class="side-btn" onclick="viewAccount(${a.id})">View Tx</button>
+        <button class="side-btn danger" onclick="delAccount(${a.id})">Delete</button>
       </div>
     </div>
   `).join('');
 
-  // fill balances after DOM exists
+  // fetch balances + compute net worth
+  let net = 0;
+
   await Promise.all(list.map(async (a) => {
     try {
-      const bal = await j(`${ACCOUNT}/balance/${a.id}`);
+      const raw = await j(`${ACCOUNT}/balance/${a.id}`);
+      const bal = toNum(raw);
+      net += bal;
+
       const el = document.getElementById(`accbal-${a.id}`);
-      if (el) el.textContent = money(bal);
+      if (el){
+        el.textContent = money(bal);
+        el.classList.toggle('bad', bal < 0);
+        el.classList.toggle('ok',  bal >= 0);
+      }
     } catch {}
   }));
+
+  // optional net worth label if you added <span id="netWorth">
+  const netEl = document.getElementById('netWorth');
+  if (netEl) netEl.textContent = money(net);
 }
+
 
 
   function renderPlansSidebar(list) {
@@ -474,6 +497,7 @@ $('#pform').addEventListener('submit', async e => {
     effectiveTo: $('#pto').value || null
   };
   await j(PLAN, { method: 'POST', body: JSON.stringify(payload) });
+  document.getElementById('planCollapse')?.removeAttribute('open');
   clearPlanForm(); await loadPlans(); await loadNet();
 });
 $('#pclear').addEventListener('click', clearPlanForm);
@@ -487,6 +511,26 @@ async function loadPlans() {
   const list = await j(PLAN);
   renderPlansSidebar(list);
 }
+
+window.delAccount = async function(id){
+  if (!confirm('Delete this account? (Any transactions linked to it may block deletion)')) return;
+
+  try{
+    await fetch(`${ACCOUNT}/${id}`, { method: 'DELETE' });
+    // clear filter if user was viewing this account
+    if ($('#faccount')?.value === String(id)) {
+      $('#faccount').value = '';
+      state.acc = '';
+    }
+    await loadAccounts();
+    await fetchPage(0);
+    await loadNet();
+    await loadCategorySummary();
+  } catch (e){
+    alert(`Could not delete account.\n\n${String(e?.message || e)}`);
+  }
+};
+
 
 window.delPlan = async function (id) {
   if (!confirm('Delete this plan?')) return;
