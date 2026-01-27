@@ -10,250 +10,265 @@
 
 <body>
   <div class="container">
-    <h1>Boojet</h1>
-
-    <!-- ================= Accounts ================= -->
-    <h2>Accounts</h2>
-    <form id="acctForm">
-      <label>Name <input id="aname" required></label>
-      <label>Type
-        <select id="atype">
-          <option>CHEQUING</option>
-          <option>SAVINGS</option>
-          <option>CREDIT_CARD</option>
-          <option>CASH</option>
-          <option>OTHER</option>
-        </select>
-      </label>
-      <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
-      <div class="actions">
-        <button type="submit">Add Account</button>
-        <button type="button" id="aclear" class="muted">Clear</button>
+    <header class="topbar">
+      <h1 class="brand">Boojet</h1>
+      <div class="topbar-actions">
+        <span class="chip muted">Local • CAD</span>
       </div>
-    </form>
+    </header>
 
-    <table id="atbl" class="table-compact sticky">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th class="right num">Balance</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="app-shell">
+      <!-- LEFT: everything except transactions -->
+      <aside class="left">
+        <!-- ================= Accounts ================= -->
+        <section class="block">
+          <div class="block-head">
+            <h2>Accounts</h2>
+          </div>
 
-    <!-- ================= Transactions ================= -->
-    <h2>Transactions</h2>
-    <form id="f">
-      <label>Description
-        <div class="ac-wrap">
-          <input id="desc" required autocomplete="off"
-                aria-autocomplete="list"
-                aria-expanded="false"
-                aria-controls="desc-ac"
-                role="combobox" />
-          <div id="desc-ac" class="ac-menu" role="listbox" hidden></div>
-        </div>
-      </label>  
-      <label>Amount <input id="amount" type="number" step="0.01" min="0" required></label>
-      <label>Date <input id="date" type="date" required></label>
-      <label>Category
-        <select id="cat">
-          <option>FOOD</option>
-          <option>RENT</option>
-          <option>TRANSPORT</option>
-          <option>ENTERTAINMENT</option>
-          <option>UTILITIES</option>
-          <option>HEALTH</option>
-          <option>OTHER</option>
-        </select>
-      </label>
-      <label>Type
-        <select id="income">
-          <option value="true">INCOME</option>
-          <option value="false">EXPENSE</option>
-        </select>
-      </label>
-      <label>Account
-        <select id="account"></select>
-      </label>
-      <div class="actions">
-        <input type="hidden" id="editId">
-        <button type="submit">Add</button>
-        <button type="button" id="cancel" class="muted" style="display:none">Cancel</button>
-      </div>
-    </form>
+          <!-- acctForm + accounts table -->
+          <form id="acctForm">
+            <label>Name <input id="aname" required></label>
+            <label>Type
+              <select id="atype">
+                <option>CHEQUING</option>
+                <option>SAVINGS</option>
+                <option>CREDIT_CARD</option>
+                <option>CASH</option>
+                <option>OTHER</option>
+              </select>
+            </label>
+            <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
+            <div class="actions">
+              <button type="submit">Add Account</button>
+              <button type="button" id="aclear" class="muted">Clear</button>
+            </div>
+          </form>
 
-    <div class="row" style="margin:8px 0 12px">
-      <div class="muted">Balance (all tx):</div>
-      <div id="balance" style="font-weight:600">$0.00</div>
-      <div style="flex:1"></div>
-      <label class="row muted" style="gap:6px">Account
-        <select id="faccount">
-          <option value="">(All)</option>
-        </select>
-      </label>
-      <label class="row muted" style="gap:6px">Cat
-        <select id="fcat">
-          <option value="">(All)</option>
-          <option>FOOD</option>
-          <option>RENT</option>
-          <option>TRANSPORT</option>
-          <option>ENTERTAINMENT</option>
-          <option>UTILITIES</option>
-          <option>HEALTH</option>
-          <option>OTHER</option>
-        </select>
-      </label>
-      <label class="row muted" style="gap:6px">Year <input id="fyr" type="number" min="2000" max="2100"
-          style="width:100px"></label>
-      <label class="row muted" style="gap:6px">Mon <input id="fmo" type="number" min="1" max="12"
-          style="width:70px"></label>
-      <button id="apply">Apply</button>
-      <button id="reset" type="button">Reset</button>
+          <div id="acctList" class="side-list"></div>
+
+        </section>
+
+        <!-- ================= Income Plans ================= -->
+        <section class="block">
+          <div class="block-head">
+            <h2>Income Plans</h2>
+          </div>
+
+          <form id="pform">
+            <label>Source <input id="psource" placeholder="Company / Side gig" required></label>
+            <label>Pay Type
+              <select id="ppaytype">
+                <option>HOURLY</option>
+                <option>WEEKLY</option>
+                <option>BIWEEKLY</option>
+                <option>MONTHLY</option>
+                <option>ANNUAL</option>
+              </select>
+            </label>
+            <label>Amount <input id="pamount" type="number" step="0.01" min="0" required></label>
+            <label id="phoursWrap">Hours/Week <input id="phours" type="number" step="0.25" min="0"></label>
+            <label>From <input id="pfrom" type="date" required></label>
+            <label>To <input id="pto" type="date" placeholder="(optional)"></label>
+            <div class="actions">
+              <button type="submit">Add Plan</button>
+              <button type="button" id="pclear" class="muted">Clear</button>
+            </div>
+          </form>
+
+          <div id="planList" class="side-list"></div>
+          
+        </section>
+      </aside>
+
+      <!-- RIGHT: Transactions workspace -->
+      <!-- ================= Transactions ================= -->
+      <main class="right">
+        <section class="block block-sticky">
+          <div class="block-head">
+            <h2>Transactions</h2>
+            <div class="muted" id="balanceWrap">
+              Balance (all tx): <span id="balance" style="font-weight:700">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Transactions form -->
+          <form id="f">
+            <label>Description
+              <div class="ac-wrap">
+                <input id="desc" required autocomplete="off" aria-autocomplete="list" aria-expanded="false"
+                  aria-controls="desc-ac" role="combobox" />
+                <div id="desc-ac" class="ac-menu" role="listbox" hidden></div>
+              </div>
+            </label>
+            <label>Amount <input id="amount" type="number" step="0.01" min="0" required></label>
+            <label>Date <input id="date" type="date" required></label>
+            <label>Category
+              <select id="cat">
+                <option>FOOD</option>
+                <option>RENT</option>
+                <option>TRANSPORT</option>
+                <option>ENTERTAINMENT</option>
+                <option>UTILITIES</option>
+                <option>HEALTH</option>
+                <option>OTHER</option>
+              </select>
+            </label>
+            <label>Type
+              <select id="income">
+                <option value="true">INCOME</option>
+                <option value="false">EXPENSE</option>
+              </select>
+            </label>
+            <label>Account
+              <select id="account"></select>
+            </label>
+            <div class="actions">
+              <input type="hidden" id="editId">
+              <button type="submit">Add</button>
+              <button type="button" id="cancel" class="muted" style="display:none">Cancel</button>
+            </div>
+          </form>
+
+          <!-- Filters row -->
+          <div class="row" style="margin:8px 0 12px">
+            <div style="flex:1"></div>
+            <label class="row muted" style="gap:6px">Account
+              <select id="faccount">
+                <option value="">(All)</option>
+              </select>
+            </label>
+            <label class="row muted" style="gap:6px">Cat
+              <select id="fcat">
+                <option value="">(All)</option>
+                <option>FOOD</option>
+                <option>RENT</option>
+                <option>TRANSPORT</option>
+                <option>ENTERTAINMENT</option>
+                <option>UTILITIES</option>
+                <option>HEALTH</option>
+                <option>OTHER</option>
+              </select>
+            </label>
+            <label class="row muted" style="gap:6px">Year <input id="fyr" type="number" min="2000" max="2100"
+                style="width:100px"></label>
+            <label class="row muted" style="gap:6px">Mon <input id="fmo" type="number" min="1" max="12"
+                style="width:70px"></label>
+            <button id="apply">Apply</button>
+            <button id="reset" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section class="block table-block">
+          <!-- Transactions table -->
+          <table id="tbl" class="table-compact sticky">
+            <thead>
+              <tr>
+                <th style="width:120px">Date</th>
+                <th>Description</th>
+                <th style="width:140px">Category</th>
+                <th style="width:130px">Account</th>
+                <th style="width:110px">Type</th>
+                <th class="right num" style="width:140px">Amount</th>
+                <th style="width:140px">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <!-- Pager -->
+          <div class="row" id="pager" style="justify-content:flex-end; gap: 8px; margin-top: 8px">
+            <button id="prev">Prev</button>
+            <span id="pages" class="muted">Page 1 of 1</span>
+            <button id="next">Next</button>
+            <label class="row muted" style="gap:6px">Size
+              <select id="psize">
+                <option>10</option>
+                <option selected>20</option>
+                <option>50</option>
+                <option>100</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <!-- ================= Monthly Net + Summary ================= -->
+        <section class="block">
+          <div class="grid-2 section">
+            <!-- Monthly Net -->
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">Monthly Net</h2>
+                  <div class="panel-sub">Uses the Year/Mon above</div>
+                </div>
+                <button id="refreshNet" class="btn-sm">Refresh</button>
+              </div>
+
+              <div class="cards cards-wrap" id="netCards">
+                <div class="card">
+                  <div class="label">Expected income</div>
+                  <div id="n_exp" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Actual income</div>
+                  <div id="n_act" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Expenses</div>
+                  <div id="n_expenses" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Net (expected)</div>
+                  <div id="n_netexp" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Net (actual)</div>
+                  <div id="n_netact" class="value">$0.00</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Summary by Category -->
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">Summary by Category</h2>
+                  <div class="panel-sub">Uses the Year/Mon above</div>
+                </div>
+                <button id="refreshCat" class="btn-sm">Refresh</button>
+              </div>
+
+              <table id="sumcat" class="table-compact sum-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th class="right num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="muted" colspan="2">Select Year/Mon to see summary</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th>Total</th>
+                    <th id="sumcat_total" class="right num">$0.00</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </section>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <table id="tbl" class="table-compact sticky">
-      <thead>
-        <tr>
-          <th style="width:120px">Date</th>
-          <th>Description</th>
-          <th style="width:140px">Category</th>
-          <th style="width:130px">Account</th>
-          <th style="width:110px">Type</th>
-          <th class="right num" style="width:140px">Amount</th>
-          <th style="width:140px">Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
 
-    <!-- ================= Pager ================= -->
-    <div class="row" id="pager" style="justify-content:flex-end; gap: 8px; margin-top: 8px">
-      <button id="prev">Prev</button>
-      <span id="pages" class="muted">Page 1 of 1</span>
-      <button id="next">Next</button>
-      <label class="row muted" style="gap:6px">Size
-        <select id="psize">
-          <option>10</option>
-          <option selected>20</option>
-          <option>50</option>
-          <option>100</option>
-        </select>
-      </label>
-    </div>
-
-    <!-- ================= Income Plans ================= -->
-    <h2>Income Plans</h2>
-    <form id="pform">
-      <label>Source <input id="psource" placeholder="Company / Side gig" required></label>
-      <label>Pay Type
-        <select id="ppaytype">
-          <option>HOURLY</option>
-          <option>WEEKLY</option>
-          <option>BIWEEKLY</option>
-          <option>MONTHLY</option>
-          <option>ANNUAL</option>
-        </select>
-      </label>
-      <label>Amount <input id="pamount" type="number" step="0.01" min="0" required></label>
-      <label id="phoursWrap">Hours/Week <input id="phours" type="number" step="0.25" min="0"></label>
-      <label>From <input id="pfrom" type="date" required></label>
-      <label>To <input id="pto" type="date" placeholder="(optional)"></label>
-      <div class="actions">
-        <button type="submit">Add Plan</button>
-        <button type="button" id="pclear" class="muted">Clear</button>
-      </div>
-    </form>
-
-    <table id="ptbl" class="table-compact sticky">
-      <thead>
-        <tr>
-          <th>Source</th>
-          <th>Type</th>
-          <th class="right num">Amount</th>
-          <th>Hours/Wk</th>
-          <th>From</th>
-          <th>To</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <!-- ================= Monthly Net + Summary (side by side) ================= -->
-    <div class="grid-2 section">
-      <!-- Monthly Net -->
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Monthly Net</h2>
-            <div class="panel-sub">Uses the Year/Mon above</div>
-          </div>
-          <button id="refreshNet" class="btn-sm">Refresh</button>
-        </div>
-
-        <div class="cards cards-wrap" id="netCards">
-          <div class="card">
-            <div class="label">Expected income</div>
-            <div id="n_exp" class="value">$0.00</div>
-          </div>
-          <div class="card">
-            <div class="label">Actual income</div>
-            <div id="n_act" class="value">$0.00</div>
-          </div>
-          <div class="card">
-            <div class="label">Expenses</div>
-            <div id="n_expenses" class="value">$0.00</div>
-          </div>
-          <div class="card">
-            <div class="label">Net (expected)</div>
-            <div id="n_netexp" class="value">$0.00</div>
-          </div>
-          <div class="card">
-            <div class="label">Net (actual)</div>
-            <div id="n_netact" class="value">$0.00</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Summary by Category -->
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <h2 class="panel-title">Summary by Category</h2>
-            <div class="panel-sub">Uses the Year/Mon above</div>
-          </div>
-          <button id="refreshCat" class="btn-sm">Refresh</button>
-        </div>
-
-        <table id="sumcat" class="table-compact sum-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th class="right num">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="muted" colspan="2">Select Year/Mon to see summary</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <th>Total</th>
-              <th id="sumcat_total" class="right num">$0.00</th>
-            </tr>
-          </tfoot>
-        </table>
-      </section>
-    </div>
 
     <!-- JS -->
     <script type="module" src="/assets/js/boojet.js"></script>
-    </div>
+  </div>
 </body>
 
 </html>
