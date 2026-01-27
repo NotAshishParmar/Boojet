@@ -16,6 +16,7 @@ async function j(url, opts = {}) {
   return r.status === 204 ? null : r.json();
 }
 
+
 /* ------------ pagination ------------ */
 function buildQuery(pageOverride){
   const p = new URLSearchParams();
@@ -38,6 +39,7 @@ function updatePager(p){
   $('#pages').textContent = `Page ${p.number + 1} of ${Math.max(1, p.totalPages)} • ${p.totalElements} items`;
   $('#prev').disabled = p.first; $('#next').disabled = p.last;
 }
+
 
 /* ------------ accounts ------------ */
 function ensureDefaultAccount(){
@@ -86,7 +88,10 @@ $('#acctForm').addEventListener('submit', async e=>{
 });
 $('#aclear').addEventListener('click', ()=> $('#acctForm').reset());
 
+
 /* ------------ transactions ------------ */
+const LAST_TX_DATE_KEY = 'boojet:lastTxDate';
+
 function renderTx(list){
   const tb = $('#tbl tbody'); tb.innerHTML = '';
   list.forEach(t=>{
@@ -139,9 +144,12 @@ $('#f').addEventListener('submit', async e=>{
     income: $('#income').value === 'true',
     account: { id: parseInt($('#account').value, 10) }
   };
+
   const id = $('#editId').value;
   if (id) await j(`${API}/${id}`, { method:'PUT', body: JSON.stringify(payload) });
   else    await j(API, { method:'POST', body: JSON.stringify(payload) });
+  saveLastTxDate(payload.date);
+
   resetTxForm();
   await fetchPage(state.page); await loadNet(); await loadAccounts();
 });
@@ -152,7 +160,19 @@ function resetTxForm(){
   $('#editId').value = '';
   document.querySelector('#f button[type="submit"]').textContent = 'Add';
   $('#cancel').style.display = 'none';
-  $('#date').value = new Date().toISOString().slice(0,10);
+  $('#date').value = getLastTxDateOrToday(); // today on first load, otherwise last used
+}
+
+function getLastTxDateOrToday() {
+  const saved = localStorage.getItem(LAST_TX_DATE_KEY);
+  if (saved && /^\d{4}-\d{2}-\d{2}$/.test(saved)) return saved;
+  return new Date().toISOString().slice(0,10);
+}
+
+function saveLastTxDate(d) {
+  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    localStorage.setItem(LAST_TX_DATE_KEY, d);
+  }
 }
 
 /* ------------ autocomplete: transaction description ------------ */
@@ -160,6 +180,11 @@ function initDescriptionAutocomplete() {
   const input = document.getElementById('desc');
   const menu = document.getElementById('desc-ac');
   if (!input || !menu) return;
+
+  const catEl = document.getElementById('cat');
+  const incomeEl = document.getElementById('income');
+  const accountEl = document.getElementById('account');
+  const amountEl = document.getElementById('amount');
 
   let debounceTimer = null;
   let activeIndex = -1;
@@ -176,7 +201,6 @@ function initDescriptionAutocomplete() {
     menu.hidden = true;
     input.setAttribute('aria-expanded', 'false');
     activeIndex = -1;
-    // keep items so focus can re-open if desired
   }
 
   function clearMenu() {
@@ -189,11 +213,6 @@ function initDescriptionAutocomplete() {
     activeIndex = idx;
     const nodes = menu.querySelectorAll('.ac-item');
     nodes.forEach((n, i) => n.classList.toggle('active', i === activeIndex));
-  }
-
-  function selectValue(v) {
-    input.value = v;
-    clearMenu();
   }
 
   function renderMenu(list) {
@@ -220,21 +239,72 @@ function initDescriptionAutocomplete() {
   async function fetchSuggestions(q, limit = 15) {
     const reqId = ++lastReqId;
 
-    // Use your API constant: '/transactions'
+    // NOTE: This must match your backend @RequestParam name.
+    // Your current code uses "description" and it's working, so keep it consistent.
     const url = `${API}/suggestions?description=${encodeURIComponent(q)}&howMany=${limit}`;
 
-    // Use your JSON helper
-    let list;
     try {
-      list = await j(url);
+      const list = await j(url);
+      if (reqId !== lastReqId) return null; // stale response
+      return list;
     } catch {
       return null;
     }
+  }
 
-    // ignore stale responses
-    if (reqId !== lastReqId) return null;
+  async function fetchSuggestionDetails(description) {
+    const url = `${API}/suggestions/details?description=${encodeURIComponent(description)}`;
+    return j(url);
+  }
 
-    return list;
+  function moneyToNumber(m) {
+    if (m == null) return null;
+    if (typeof m === 'number') return m;
+    if (typeof m === 'string' && m.trim() !== '' && !Number.isNaN(Number(m))) return Number(m);
+    // your Money object likely serializes like { amount: 12.34, ... }
+    if (typeof m === 'object' && m.amount != null) return Number(m.amount);
+    return null;
+  }
+
+  async function applyDetailsIfFound(selectedDescription) {
+    // This call should be made AFTER user selects an item
+    try {
+      const d = await fetchSuggestionDetails(selectedDescription);
+      if (!d) return;
+
+      // Category
+      if (catEl && d.category) {
+        catEl.value = d.category;
+      }
+
+      // Income/Expense
+      // backend returns boolean income; HTML expects "true"/"false"
+      if (incomeEl && typeof d.income === 'boolean') {
+        incomeEl.value = d.income ? 'true' : 'false';
+      }
+
+      // Account
+      if (accountEl && d.accountId != null) {
+        const idStr = String(d.accountId);
+        const exists = [...accountEl.options].some(o => o.value === idStr);
+        if (exists) accountEl.value = idStr;
+      }
+
+      // Amount (only fill if user hasn't typed anything)
+      if (amountEl && (amountEl.value == null || amountEl.value.trim() === '')) {
+        const amt = moneyToNumber(d.amount);
+        if (amt != null && Number.isFinite(amt)) amountEl.value = String(amt);
+      }
+
+    } catch {
+      // silently ignore; description was still applied
+    }
+  }
+
+  async function selectValue(v) {
+    input.value = v;
+    clearMenu();
+    await applyDetailsIfFound(v);
   }
 
   input.addEventListener('input', () => {
@@ -277,6 +347,7 @@ function initDescriptionAutocomplete() {
       e.preventDefault();
     } else if (e.key === 'Enter') {
       if (activeIndex >= 0 && activeIndex <= max) {
+        // async selection (safe to fire-and-forget)
         selectValue(items[activeIndex]);
         e.preventDefault(); // prevents form submit when selecting
       }
@@ -303,9 +374,12 @@ function initDescriptionAutocomplete() {
     clearMenu();
   });
 
+  // expose a hook used by edit/reset
+  window.__clearDescAutocomplete = clearMenu;
 }
 
-/* filters + pager */
+
+/* ------------ filters & pager ------------ */
 async function applyFilters(){
   state.acc = $('#faccount')?.value || '';
   state.cat = $('#fcat').value || '';
@@ -486,7 +560,7 @@ document.getElementById('refreshCat').addEventListener('click', e => { e.prevent
 
 /* ------------ boot ------------ */
 function bootDefaults(){
-  $('#date').value = new Date().toISOString().slice(0,10);
+  $('#date').value = getLastTxDateOrToday();  // today on first load, otherwise last used
   $('#pfrom').value = new Date().toISOString().slice(0,10);
 
   const d = new Date();
