@@ -3,7 +3,7 @@
  * renders the sidebar (including per-account balances), and handles account CRUD.
  */
 
-import { ACCOUNT } from '../core/config.js';
+import { ACCOUNT, LAST_TX_ACCOUNT_KEY } from '../core/config.js';
 import { $ } from '../core/dom.js';
 import { j } from '../core/api.js';
 import { esc, money, toNum } from '../core/format.js';
@@ -14,8 +14,22 @@ import { loadCategorySummary } from './categorySummary.js';
 
 function ensureDefaultAccount() {
   const sel = $('#account');
-  if (sel && sel.options.length > 0 && !sel.value) sel.value = sel.options[0].value;
+  if (!sel || sel.options.length === 0) return;
+
+  // 1) Try last-used account
+  const last = localStorage.getItem(LAST_TX_ACCOUNT_KEY);
+  if (last) {
+    const exists = Array.from(sel.options).some(o => o.value === String(last));
+    if (exists) {
+      sel.value = String(last);
+      return;
+    }
+  }
+
+  // 2) Fallback: first load / no saved / saved invalid
+  if (!sel.value) sel.value = sel.options[0].value;
 }
+
 
 export async function renderAccountsSidebar(list) {
   const wrap = document.getElementById('acctList');

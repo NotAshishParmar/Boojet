@@ -97,7 +97,11 @@ export function initDescriptionAutocomplete() {
       if (!d) return;
 
       if (catEl && d.category) catEl.value = d.category;
-      if (incomeEl && typeof d.income === 'boolean') incomeEl.value = d.income ? 'true' : 'false';
+      if (incomeEl && typeof d.income === 'boolean') {
+        incomeEl.value = d.income ? 'true' : 'false';
+        incomeEl.dispatchEvent(new Event('change', { bubbles: true })); //tell UI to update
+      }
+
 
       if (accountEl && d.accountId != null) {
         const idStr = String(d.accountId);
@@ -107,9 +111,12 @@ export function initDescriptionAutocomplete() {
 
       if (amountEl && (amountEl.value == null || amountEl.value.trim() === '')) {
         const amt = moneyToNumber(d.amount);
-        if (amt != null && Number.isFinite(amt)) amountEl.value = String(amt);
+        if (amt != null && Number.isFinite(amt)) {
+          amountEl.value = String(Math.abs(amt)); // set unsigned first
+          amountEl.dispatchEvent(new Event('input', { bubbles: true })); // let tx form logic adjust sign if needed
+        }
       }
-    } catch {}
+    } catch { }
   }
 
   async function selectValue(v) {
@@ -138,6 +145,11 @@ export function initDescriptionAutocomplete() {
     const isOpen = !menu.hidden;
     const max = items.length - 1;
 
+    if (e.key === 'Tab') {
+      clearMenu();
+      return; // let tab move focus normally
+    }
+
     if (!isOpen) {
       if (e.key === 'ArrowDown' && items.length && input.value.trim().length >= 2) {
         openMenu();
@@ -162,6 +174,16 @@ export function initDescriptionAutocomplete() {
       clearMenu();
       e.preventDefault();
     }
+  });
+
+  input.addEventListener('blur', () => {
+    // delay so clicking a suggestion still works
+    setTimeout(() => {
+      // if focus moved outside the autocomplete wrapper, close
+      const active = document.activeElement;
+      const wrap = input.closest('.ac-wrap');
+      if (!wrap || (active && !wrap.contains(active))) clearMenu();
+    }, 0);
   });
 
   menu.addEventListener('mousedown', (e) => {
