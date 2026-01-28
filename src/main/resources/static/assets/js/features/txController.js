@@ -1,3 +1,8 @@
+/**
+ * Transaction list controller: builds query strings from shared state,
+ * fetches paged transactions, renders the table, and updates the pager UI.
+ */
+
 import { API } from '../core/config.js';
 import { state } from '../core/state.js';
 import { $ } from '../core/dom.js';

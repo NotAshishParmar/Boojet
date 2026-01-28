@@ -1,3 +1,8 @@
+/**
+ * Accounts feature: loads accounts from backend, populates account dropdowns,
+ * renders the sidebar (including per-account balances), and handles account CRUD.
+ */
+
 import { ACCOUNT } from '../core/config.js';
 import { $ } from '../core/dom.js';
 import { j } from '../core/api.js';

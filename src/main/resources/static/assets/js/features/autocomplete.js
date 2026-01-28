@@ -1,3 +1,9 @@
+/**
+ * Transaction description autocomplete:
+ * fetches suggestion lists + optional details, renders a suggestion menu,
+ * and fills category/account/income/amount when a suggestion is selected.
+ */
+
 import { API } from '../core/config.js';
 import { j } from '../core/api.js';
 import { esc } from '../core/format.js';

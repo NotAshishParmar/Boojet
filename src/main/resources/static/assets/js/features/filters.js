@@ -1,3 +1,8 @@
+/**
+ * Filters + paging UI bindings: reads filter controls into shared state,
+ * hooks up Apply/Reset/Prev/Next/page-size events, and triggers refreshes.
+ */
+
 import { $ } from '../core/dom.js';
 import { state } from '../core/state.js';
 import { refreshTxPage } from './txController.js';

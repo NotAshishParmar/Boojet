@@ -1,3 +1,8 @@
+/**
+ * App entry point: wires up feature modules, attaches global handlers (if needed),
+ * applies default UI values, and runs initial data loads on page startup.
+ */
+
 import { $ } from './core/dom.js';
 import { state, initPageSizeFromStorage } from './core/state.js';
 

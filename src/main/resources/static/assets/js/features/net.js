@@ -1,3 +1,9 @@
+/**
+ * Monthly net calculation widget:
+ * fetches expected/actual income, expenses, and net for the selected year/month,
+ * updates the UI totals, and applies positive/negative styling.
+ */
+
 import { PLAN } from '../core/config.js';
 import { $ } from '../core/dom.js';
 import { j } from '../core/api.js';

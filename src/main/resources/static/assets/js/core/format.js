@@ -1,3 +1,8 @@
+/**
+ * Formatting + small pure utilities used across the UI:
+ * currency formatting, escaping HTML, numeric conversion, and UI color helpers.
+ */
+
 export function money(n) {
   const v = (typeof n === 'number') ? n : (n?.amount ?? 0);
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'CAD' }).format(v);

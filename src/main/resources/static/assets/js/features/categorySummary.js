@@ -1,3 +1,9 @@
+/**
+ * Monthly category summary table:
+ * fetches totals by category for the selected year/month and renders the table,
+ * including the month grand total and basic error handling.
+ */
+
 import { $ } from '../core/dom.js';
 import { esc, money } from '../core/format.js';
 

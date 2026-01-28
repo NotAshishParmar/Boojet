@@ -1,3 +1,8 @@
+/**
+ * Income plans feature: loads and renders income plans in the sidebar,
+ * handles creating/deleting plans, and toggles hourly fields in the plan form.
+ */
+
 import { PLAN } from '../core/config.js';
 import { $ } from '../core/dom.js';
 import { j } from '../core/api.js';

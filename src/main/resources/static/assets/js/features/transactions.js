@@ -1,3 +1,8 @@
+/**
+ * Transaction feature: renders transaction rows, handles add/edit/delete flows,
+ * manages the transaction form state, and persists the "last used date".
+ */
+
 import { API, LAST_TX_DATE_KEY } from '../core/config.js';
 import { $ } from '../core/dom.js';
 import { j } from '../core/api.js';
