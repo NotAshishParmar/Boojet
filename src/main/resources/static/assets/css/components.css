@@ -136,7 +136,15 @@ details.collapse > summary::-webkit-details-marker{ display:none; }
 details.collapse > summary::marker{ content:""; }
 
 /* Autocomplete */
-.ac-wrap{ position:relative; }
+.ac-wrap{ 
+    position:relative;
+    width: 100%; 
+}
+
+/* Make the input inside autocomplete behave like normal inputs */
+.ac-wrap > input{
+  width: 100%;
+}
 
 .ac-menu{
   position:absolute;

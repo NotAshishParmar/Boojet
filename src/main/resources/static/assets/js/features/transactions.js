@@ -12,6 +12,51 @@ import { refreshTxPage } from './txController.js';
 import { loadNet } from './net.js';
 import { loadAccounts } from './accounts.js';
 
+// UI-only state for the transaction form (not persisted)
+let typeExplicitlyChosen = false;
+
+
+function setIncomePill(isIncome) {
+  const root = document.querySelector('.pill');
+  if (!root) return;
+
+  const hidden = $('#income');
+  hidden.value = isIncome ? 'true' : 'false';
+
+  root.querySelectorAll('.pill-btn').forEach(btn => {
+    const v = btn.dataset.income === 'true';
+    btn.classList.toggle('is-active', v === isIncome);
+    btn.setAttribute('aria-pressed', (v === isIncome) ? 'true' : 'false');
+  });
+}
+
+function initIncomePill() {
+  const root = document.querySelector('.pill');
+  if (!root) return;
+
+  // click behavior
+  root.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pill-btn');
+    if (!btn) return;
+    typeExplicitlyChosen = true;
+    setIncomePill(btn.dataset.income === 'true');
+  });
+
+
+  // initialize from hidden input if present
+  setIncomePill($('#income').value === 'true');
+}
+
+function syncPillFromAmountSign() {
+  const raw = ($('#amount').value || '').trim();
+  if (!raw) return;
+
+  // user typed -... => Expense, +... => Income
+  if (raw.startsWith('-')) setIncomePill(false);
+  else if (raw.startsWith('+')) setIncomePill(true);
+}
+
+
 export function renderTx(list) {
   const tb = $('#tbl tbody');
   tb.innerHTML = '';
@@ -45,7 +90,10 @@ export async function editTx(id) {
   $('#amount').value = (typeof t.amount === 'number' ? t.amount : t.amount.amount);
   $('#date').value = t.date;
   $('#cat').value = t.category;
-  $('#income').value = t.income ? 'true' : 'false';
+  
+  typeExplicitlyChosen = true;
+  setIncomePill(!!t.income);
+
   if (t.account?.id) $('#account').value = String(t.account.id);
 
   document.querySelector('#f button[type="submit"]').textContent = 'Update';
@@ -82,19 +130,49 @@ export function resetTxForm() {
   document.querySelector('#f button[type="submit"]').textContent = 'Add';
   $('#cancel').style.display = 'none';
   $('#date').value = getLastTxDateOrToday();
+  typeExplicitlyChosen = false;
+  setIncomePill(true); // default to Income
+
 }
 
 export function initTxForm() {
+  initIncomePill();
+
+  $('#amount').addEventListener('keydown', (e) => {
+    if (e.key === '-') { typeExplicitlyChosen = true; setIncomePill(false); }
+    if (e.key === '+') { typeExplicitlyChosen = true; setIncomePill(true); }
+  });
+
+  // Handles paste / typing digits (since + may not stay in value for type="number")
+  $('#amount').addEventListener('input', () => {
+    const raw = String($('#amount').value || '').trim();
+    if (!raw) return;
+
+    if (raw.startsWith('-')) {
+      typeExplicitlyChosen = true;
+      setIncomePill(false);
+      return;
+    }
+
+    // If user hasn't explicitly chosen type, plain number => Income
+    if (!typeExplicitlyChosen) setIncomePill(true);
+  });
+
+
+
   $('#f').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!$('#account').value) { alert('Please create/select an account first.'); return; }
 
+    const rawAmount = parseFloat($('#amount').value);
+    const isIncome = $('#income').value === 'true';
+
     const payload = {
       description: $('#desc').value.trim(),
-      amount: parseFloat($('#amount').value),
+      amount: Math.abs(rawAmount),         // always positive to backend
       date: $('#date').value,
       category: $('#cat').value,
-      income: $('#income').value === 'true',
+      income: isIncome,                    // type from pill
       account: { id: parseInt($('#account').value, 10) }
     };
 
@@ -104,6 +182,10 @@ export function initTxForm() {
 
     saveLastTxDate(payload.date);
     resetTxForm();
+
+    //auto focus description block after submit
+    $('#desc')?.focus();
+    $('#desc')?.select();
 
     await refreshTxPage(state.page);
     await loadNet();

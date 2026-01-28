@@ -466,6 +466,51 @@ details.collapse.tx-create[open] .plus{
   opacity:.9;
 }
 
+/* Amount + Type inline */
+.amount-inline{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.amount-inline input{
+  flex:1;
+  min-width:0;
+}
+
+/* Pill (compact) */
+.pill{
+  display:inline-flex;
+  border:1px solid var(--line);
+  border-radius:999px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.pill-compact{
+  height:38px;               /* match input height */
+}
+
+.pill-btn{
+  border:0;
+  background:transparent;
+  padding:0 14px;
+  height:38px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+}
+
+.pill-btn + .pill-btn{
+  border-left:1px solid var(--line);
+}
+
+.pill-btn.is-active{
+  background:#111827;
+  color:#fff;
+}
+
+
 /* TX form layout */
 .right form.tx-form{
   margin:0;
