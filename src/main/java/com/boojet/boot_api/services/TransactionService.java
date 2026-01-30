@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
-import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
@@ -77,7 +77,7 @@ public interface TransactionService {
      * @return A {@code Page} of transactions matching the provided filters
      * @throws AccountNotFoundException if the provided accountId does not exist
      */
-    Page<Transaction> search(Long accountId, Category category, Integer year, Integer month, Pageable pageable);
+    Page<Transaction> search(Long accountId, CategoryEnum category, Integer year, Integer month, Pageable pageable);
 
 
     /**
@@ -218,7 +218,7 @@ public interface TransactionService {
      * @return a page of transactions in the specified category
      * @throws BadRequestException if the provided category is {@code null}
      */
-    Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable);
+    Page<Transaction> findTransactionsByCategory(CategoryEnum category, Pageable pageable);
 
     /**
      * Calculates the total amount for transactions in the specified category.
@@ -227,7 +227,7 @@ public interface TransactionService {
      * @return the total amount as a {@link Money} object
      * @throws BadRequestException if the provided category is {@code null}
      */
-    Money calculateTotalByCategory(Category category);
+    Money calculateTotalByCategory(CategoryEnum category);
 
 
     /**
@@ -249,7 +249,7 @@ public interface TransactionService {
      *
      * @param year the calendar year (e.g., 2026)
      * @param month the calendar month (1-12)
-     * @return a list of category summaries for the month (one entry per {@link Category})
+     * @return a list of category summaries for the month (one entry per {@link CategoryEnum})
      * @throws BadRequestException if {@code month} is not in the range 1-12
      */
     List<CategorySummaryDto> monthlySummaryByCategory(int year, int month);

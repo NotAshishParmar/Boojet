@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TransactionDto;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
-import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.mappers.Mapper;
@@ -67,7 +67,7 @@ public class TransactionController {
     @Operation(summary = "Search transactions", description = "Search for transactions based on optional filters such as account ID, category, year, and month. Supports pagination.")
     @GetMapping
     public PageResponse<TransactionDto> search(@RequestParam(required = false) Long accountId,
-                                    @RequestParam(required = false) Category category,
+                                    @RequestParam(required = false) CategoryEnum category,
                                     @RequestParam(required = false) Integer year,
                                     @RequestParam(required = false) Integer month,
                                     @ParameterObject
@@ -110,7 +110,7 @@ public class TransactionController {
 
     @Operation(summary = "Get transactions by category", description = "Retrieve a list of transactions filtered by the specified category.")
     @GetMapping("/category/{cat}")
-    public PageResponse<TransactionDto> byCategory(@PathVariable Category cat, 
+    public PageResponse<TransactionDto> byCategory(@PathVariable CategoryEnum cat, 
                                             @ParameterObject
                                             @PageableDefault(size = 20, sort = "date", direction = Sort.Direction.DESC) Pageable pageable){
 

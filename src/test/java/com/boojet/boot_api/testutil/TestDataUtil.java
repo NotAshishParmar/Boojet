@@ -9,7 +9,7 @@ import org.springframework.cglib.core.Local;
 
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.AccountType;
-import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.IncomePlan;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.PayType;
@@ -31,7 +31,7 @@ public final class TestDataUtil{
                 .build();
     }
 
-    public static Transaction createTransaction(String description, Money amount, LocalDate date, Category category, boolean income, Account account){
+    public static Transaction createTransaction(String description, Money amount, LocalDate date, CategoryEnum category, boolean income, Account account){
         return Transaction.builder()
                 .description(description)
                 .amount(amount)
@@ -63,15 +63,15 @@ public final class TestDataUtil{
     }
 
     public static Transaction createTestTransactionA(Account account){
-        return createTransaction("Salary", Money.of("3000.00"), LocalDate.of(2024, 6, 1), Category.INCOME, true, account);
+        return createTransaction("Salary", Money.of("3000.00"), LocalDate.of(2024, 6, 1), CategoryEnum.INCOME, true, account);
     }
 
     public static Transaction createTestTransactionB(Account account){
-        return createTransaction("Grocery Shopping", Money.of("150.75"), LocalDate.of(2024, 6, 15), Category.FOOD, false, account);
+        return createTransaction("Grocery Shopping", Money.of("150.75"), LocalDate.of(2024, 6, 15), CategoryEnum.FOOD, false, account);
     }
 
     public static Transaction createTestTransactionC(Account account){
-        return createTransaction("Electricity Bill", Money.of("75.50"), LocalDate.of(2024, 6, 20), Category.UTILITIES, false, account);
+        return createTransaction("Electricity Bill", Money.of("75.50"), LocalDate.of(2024, 6, 20), CategoryEnum.UTILITIES, false, account);
     }
 
     public static List<Transaction> someTransactions(Account a) {
@@ -92,7 +92,7 @@ public final class TestDataUtil{
         private String description = "Sample";
         private Money amount = Money.of("12.34");
         private LocalDate date = LocalDate.of(2025, 1, 15);
-        private Category category = Category.FOOD;          
+        private CategoryEnum category = CategoryEnum.FOOD;          
         private boolean income = false;
         private Account account = createTestAccountA();
 
@@ -101,8 +101,8 @@ public final class TestDataUtil{
         public TxBuilder amt(Money m){ this.amount = m; return this; }
         public TxBuilder on(LocalDate d){ this.date = d; return this; }
         public TxBuilder on(YearMonth ym, int day){ this.date = ym.atDay(day); return this; }
-        public TxBuilder cat(Category c){ this.category = c; return this; }
-        public TxBuilder income(){ this.income = true; this.category = Category.INCOME; return this; }
+        public TxBuilder cat(CategoryEnum c){ this.category = c; return this; }
+        public TxBuilder income(){ this.income = true; this.category = CategoryEnum.INCOME; return this; }
         public TxBuilder expense(){ this.income = false; return this; }
         public TxBuilder acct(Account a){ this.account = a; return this; }
         public TxBuilder acct(String name, AccountType type, String opening){

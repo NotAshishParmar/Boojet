@@ -2,7 +2,7 @@ package com.boojet.boot_api.controllers.dto;
 
 import java.time.LocalDate;
 
-import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Account;
 
@@ -21,7 +21,7 @@ public class TransactionDto {
     private String description;
     private Money amount;
     private LocalDate date;
-    private Category category;
+    private CategoryEnum category;
     private boolean income;
     private Account Account;
 }

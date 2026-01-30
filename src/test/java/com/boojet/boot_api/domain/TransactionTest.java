@@ -58,7 +58,7 @@ public class TransactionTest {
             "Groceries",
             Money.of("12.34"),
             LocalDate.of(2025, 12, 1),
-            Category.FOOD,
+            CategoryEnum.FOOD,
             false,
             acc
         );
@@ -68,7 +68,7 @@ public class TransactionTest {
         assertThat(transaction.getDescription()).isEqualTo("Groceries");
         assertThat(transaction.getAmount().toString()).contains("12.34");
         assertThat(transaction.getDate()).isEqualTo(LocalDate.of(2025, 12, 1));
-        assertThat(transaction.getCategory()).isEqualTo(Category.FOOD);
+        assertThat(transaction.getCategory()).isEqualTo(CategoryEnum.FOOD);
         assertThat(transaction.isIncome()).isFalse();
         assertThat(transaction.getAccount()).isEqualTo(acc);
     }
@@ -102,7 +102,7 @@ public class TransactionTest {
             "Salary",
             Money.of("3000.00"),
             LocalDate.of(2024, 6, 1),
-            Category.FOOD,
+            CategoryEnum.FOOD,
             false,
             acc
         );

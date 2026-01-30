@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 
@@ -31,7 +31,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findForAccount(@Param("accountId") Long accountId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
-            @Param("category") Category category,
+            @Param("category") CategoryEnum category,
             @Param("income") Boolean income);
 
     @Query("""
@@ -44,7 +44,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             order by t.date desc
             """)
     Page<Transaction> search(@Param("accountId") Long accountId,
-            @Param("category") Category category,
+            @Param("category") CategoryEnum category,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
             Pageable pageable);
@@ -134,7 +134,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                 from Transaction t
                 where t.category = :category
             """)
-    BigDecimal sumNetByCategory(@Param("category") Category category);
+    BigDecimal sumNetByCategory(@Param("category") CategoryEnum category);
 
     @Query("""
             select coalesce (

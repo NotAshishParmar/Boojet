@@ -55,7 +55,7 @@ public class Transaction{
     @JsonProperty
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Category category;
+    private CategoryEnum category;
 
     @JsonProperty("income")
     @Column(name = "is_income", nullable = false)       // DB uses "is_income"
@@ -74,7 +74,7 @@ public class Transaction{
      * @param income whether the transaction is income ({@code true}) or expense ({@code false})
      * @param account owning account
      */
-    public Transaction(String description, Money amount, LocalDate date, Category category, boolean income, Account account){
+    public Transaction(String description, Money amount, LocalDate date, CategoryEnum category, boolean income, Account account){
         this.description = description;
         this.amount = amount;
         this.date = date;

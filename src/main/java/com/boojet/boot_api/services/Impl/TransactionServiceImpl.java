@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
-import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.ValidationMode;
@@ -73,7 +73,7 @@ public class TransactionServiceImpl implements TransactionService {
     // search transactions with optional filters and pagination
     // functions as findAll if no filters are provided (CRUD Read)
     @Override
-    public Page<Transaction> search(Long accountId, Category category, Integer year, Integer month, Pageable pageable) {
+    public Page<Transaction> search(Long accountId, CategoryEnum category, Integer year, Integer month, Pageable pageable) {
         
         Long accId = null;
         if (accountId != null) {
@@ -268,14 +268,14 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable) {
+    public Page<Transaction> findTransactionsByCategory(CategoryEnum category, Pageable pageable) {
         if (category == null) throw new BadRequestException("Category must not be null");
         return transactionRepository.search(null, category, 
             LocalDate.of(1,1,1), LocalDate.of(9999,12,31), pageable);
     }
 
     @Override
-    public Money calculateTotalByCategory(Category category) {
+    public Money calculateTotalByCategory(CategoryEnum category) {
         if (category == null) throw new BadRequestException("Category must not be null");
         BigDecimal net = transactionRepository.sumNetByCategory(category);
         return Money.of(net);
@@ -299,7 +299,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         List<CategoryTotalView> rows =  transactionRepository.sumNetByCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
 
-        Map<Category, BigDecimal> byCat = rows.stream()
+        Map<CategoryEnum, BigDecimal> byCat = rows.stream()
             .collect(Collectors.toMap(
                 CategoryTotalView::getCategory,
                 CategoryTotalView::getTotal
@@ -307,7 +307,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         ArrayList<CategorySummaryDto> result = new ArrayList<CategorySummaryDto>();
 
-        for(Category c: Category.values()){
+        for(CategoryEnum c: CategoryEnum.values()){
             BigDecimal total = byCat.getOrDefault(c, BigDecimal.ZERO);
             result.add(new CategorySummaryDto(c, Money.of(total)));
         }
