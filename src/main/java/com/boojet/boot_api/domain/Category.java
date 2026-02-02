@@ -5,8 +5,6 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.data.annotation.Id;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -16,6 +14,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -73,8 +72,9 @@ public class Category {
     private boolean system = true;
 
     //for future as created categories will be specific to the user (multi-user prep)
-    @Column(name= "owner_user_id")
-    private Long ownerUserId;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     //to allow soft deletes, so historical use of this category can still be displayed in ledger
     @Column(nullable = false)

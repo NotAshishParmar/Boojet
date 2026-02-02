@@ -30,7 +30,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
     private final TransactionService transactionService;                    //NOTE: IncomePLanServiceImpl depends on TransactionService
                                                                             //DO NOT CREATE CIRCULAR DEPENDENCY
 
-    private static final Long DEAFULT_USER_ID = 1L; //temporary until user management is implemented
+    private static final Long DEFAULT_USER_ID = 1L; //temporary until user management is implemented
 
     private static int DEFAULT_INCOMEPLAN_COUNTER = 1;
 
@@ -46,7 +46,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
     @Transactional
     public IncomePlan createPlan(IncomePlan plan){
         if(plan.getUser() == null){
-            User defaultUser = userRepo.getReferenceById(DEAFULT_USER_ID);
+            User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
             plan.setUser(defaultUser);
         }
 
