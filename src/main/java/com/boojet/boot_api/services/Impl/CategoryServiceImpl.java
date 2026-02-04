@@ -5,10 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.domain.ValidationMode;
+import com.boojet.boot_api.exceptions.BadRequestException;
+import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 import com.boojet.boot_api.repositories.CategoryRepository;
 import com.boojet.boot_api.repositories.UserRepository;
 import com.boojet.boot_api.services.CategoryService;
@@ -29,42 +30,57 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public Category createCategory(Category cat) {
         if(cat.getUser() == null){
             User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
             cat.setUser(defaultUser);
         }
-        return null;
+
+        Category verifiedCategory = validateCategory(cat, ValidationMode.CREATE);
+        return categoryRepo.save(verifiedCategory);
     }
 
     @Override
     public List<Category> findAllCategories() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findAllCategories'");
+        return categoryRepo.findAll();
     }
 
     @Override
     public List<Category> findAllRootCategories() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findAllRootCategories'");
+        return categoryRepo.findChildCategories();
     }
 
     @Override
     public List<Category> listChildren(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listChildren'");
+        validateCategoryId(id);
+        return categoryRepo.listChildren(id);
     }
 
     @Override
     public List<Category> listChildren(String code) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listChildren'");
+
+        if(code == null || code.isBlank())
+            throw new BadRequestException("Category code must not be null or blank");
+
+        String normalized = code.trim().toUpperCase();
+
+        List<Category> children = categoryRepo.listChildren(normalized);
+
+        if(children.isEmpty() && !categoryRepo.existsByCodeIgnoreCase(normalized)){
+            throw new CategoryNotFoundException("No category found with code "+ normalized);
+        }
+
+        return children;
     }
 
     @Override
     public Category findCategory(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findCategory'");
+        validateCategoryId(id);
+        Category cat = categoryRepo.findById(id).
+            orElseThrow(() -> new CategoryNotFoundException(id));
+
+        return cat;
     }
 
     @Override
@@ -116,9 +132,18 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
 
+    private void validateCategoryId(Long id){
+        if(id == null || id <= 0){
+            throw new BadRequestException("Category Id must be positive and valid");
+        }
+    }
 
     private Category validateCategory(Category cat, ValidationMode mode){
         return null;
+    }
+
+    private void applyCreateDefaults(Category cat){
+
     }
     
 }
