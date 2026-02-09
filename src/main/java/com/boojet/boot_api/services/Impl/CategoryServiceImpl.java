@@ -132,6 +132,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public Category putCategory(Long id, CategoryPutRequest req) {
         validateCategoryId(id);
         
@@ -172,6 +173,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public Category patchCategory(Long id, CategoryPatchRequest req) {
         validateCategoryId(id);
 
@@ -236,33 +238,39 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+        validateCategoryId(id);
+
+        if(!categoryRepo.existsById(id))
+            throw new CategoryNotFoundException(id);
+
+        categoryRepo.deleteById(id);
     }
 
     @Override
     public boolean isExists(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isExists'");
+        return id != null && id > 0 && categoryRepo.existsById(id);
     }
 
     @Override
     public boolean hasChildren(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'hasChildren'");
+        validateCategoryId(id);
+
+        Category cat = categoryRepo.findById(id)
+                            .orElseThrow(() -> new CategoryNotFoundException(id));
+        
+        return !cat.getChildren().isEmpty();
     }
 
     @Override
     public List<Category> listAllEssentialCategories() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listAllEssentialCategories'");
+        return categoryRepo.findByEssential(true);
     }
 
     @Override
     public List<Category> listAllNonEssentialCategories() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'listAllNonEssentialCategories'");
+        return categoryRepo.findByEssential(false);
     }
 
 

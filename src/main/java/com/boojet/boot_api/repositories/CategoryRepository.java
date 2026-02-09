@@ -48,5 +48,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long>{
 
     boolean existsByUserIdAndCodeIgnoreCase(Long userId, String code);
 
+    List<Category> findByEssential(Boolean essential);
+
     
 }
