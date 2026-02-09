@@ -2,11 +2,14 @@ package com.boojet.boot_api.services;
 
 import java.util.List;
 
+import com.boojet.boot_api.controllers.dto.CategoryCreateRequest;
+import com.boojet.boot_api.controllers.dto.CategoryPatchRequest;
+import com.boojet.boot_api.controllers.dto.CategoryPutRequest;
 import com.boojet.boot_api.domain.Category;
 
 public interface CategoryService {
     
-    Category createCategory(Category cat);
+    Category createCategory(CategoryCreateRequest req);
 
     List<Category> findAllCategories();
 
@@ -20,9 +23,9 @@ public interface CategoryService {
 
     Category findCategory(String code);
 
-    Category updateCategoryComplete(Long id, Category cat);
+    Category putCategory(Long id, CategoryPutRequest req);
 
-    Category updateCategory(Long id, Category cat);
+    Category patchCategory(Long id, CategoryPatchRequest req);
 
     void delete(Long id);
 

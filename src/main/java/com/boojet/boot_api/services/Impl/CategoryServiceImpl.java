@@ -1,10 +1,15 @@
 package com.boojet.boot_api.services.Impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.boojet.boot_api.controllers.dto.CategoryCreateRequest;
+import com.boojet.boot_api.controllers.dto.CategoryPatchRequest;
+import com.boojet.boot_api.controllers.dto.CategoryPutRequest;
+import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.domain.ValidationMode;
@@ -31,14 +36,41 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public Category createCategory(Category cat) {
-        if(cat.getUser() == null){
-            User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
-            cat.setUser(defaultUser);
+    public Category createCategory(CategoryCreateRequest req) {
+
+        //use default user for now
+        User user = userRepo.getReferenceById(DEFAULT_USER_ID);
+
+        String code = normalizeCode(req.code());
+
+        //unique per user
+        if(categoryRepo.existsByUserIdAndCodeIgnoreCase(DEFAULT_USER_ID, code)){
+            throw new BadRequestException("Category code already exists: " + code);
         }
 
-        Category verifiedCategory = validateCategory(cat, ValidationMode.CREATE);
-        return categoryRepo.save(verifiedCategory);
+        Category parent = null;
+
+        if(req.parentId() != null){
+            parent = requireParent(user.getId(), req.parentId());
+        }
+
+        Category cat = Category.builder()
+                                .user(user)
+                                .code(code)
+                                .name(req.name().trim())
+                                .type(req.type())
+                                .essential(req.essential())
+                                .sortOrder(req.sortOrder())
+                                .parent(parent)
+                                .system(false)
+                                .active(true)
+                                .build();
+
+        //keep both sides consistent
+        if(parent != null)
+            parent.getChildren().add(cat);
+
+        return categoryRepo.save(cat);
     }
 
     @Override
@@ -85,20 +117,122 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category findCategory(String code) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findCategory'");
+        if(code == null || code.isBlank())
+            throw new BadRequestException("Category code must not be null or blank");
+
+        String normalized = code.trim().toUpperCase();
+
+        Category cat = categoryRepo.findByCodeIgnoreCase(normalized);
+
+        if(cat == null){
+            throw new CategoryNotFoundException("Category with Code " + normalized + " not found!");
+        }
+
+        return cat;
     }
 
     @Override
-    public Category updateCategoryComplete(Long id, Category cat) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateCategoryComplete'");
+    public Category putCategory(Long id, CategoryPutRequest req) {
+        validateCategoryId(id);
+        
+        Category existing = categoryRepo.findById(id)
+                                .orElseThrow(() -> new CategoryNotFoundException(id));
+
+        Long userId = existing.getUser().getId();
+
+        String code = normalizeCode(req.code());
+
+        if(categoryRepo.existsByUserIdAndCodeIgnoreCaseAndIdNot(userId, code, id)){
+            throw new BadRequestException("Category code already exists: " + code);
+        }
+
+        existing.setCode(code);
+        existing.setName(req.name().trim());
+        existing.setType(req.type());
+        existing.setEssential(req.essential());
+        existing.setSortOrder((req.sortOrder()));
+
+
+        //parent update logic
+        Category newParent = null;
+        if(req.parentId() != null){
+            newParent = requireParent(userId, req.parentId());
+
+            if(newParent.getId().equals(existing.getId()))
+                throw new BadRequestException("Category cannot be it's own parent");
+
+            if(wouldCreateCycle(existing, newParent))
+                throw new BadRequestException("Invalid parent: would create a cycle");
+        }
+
+        setParent(existing, newParent);
+
+        return categoryRepo.save(existing);
+
     }
 
     @Override
-    public Category updateCategory(Long id, Category cat) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateCategory'");
+    public Category patchCategory(Long id, CategoryPatchRequest req) {
+        validateCategoryId(id);
+
+        Category existing = categoryRepo.findById(id)
+                                .orElseThrow(() -> new CategoryNotFoundException(id));
+
+        Long userId = existing.getUser().getId();
+
+        //code semantics
+        if(req.code() != null){
+            String code = normalizeCode(req.code());
+
+            //"AndIdNot" is added to prevent the lookup from finding itself and return true always
+            if(categoryRepo.existsByUserIdAndCodeIgnoreCaseAndIdNot(userId, code, id)){
+                throw new BadRequestException("Category code already exists for this user: "+ code);
+            }
+            existing.setCode(code);
+        }
+
+        //patch basics
+        if(req.name() != null)
+            existing.setName(req.name().trim());
+        if(req.type() != null)
+            existing.setType(req.type());
+        if(req.essential() != null)
+            existing.setEssential(req.essential());
+        if(req.sortOrder() != null)
+            existing.setSortOrder(req.sortOrder());
+
+        //parent semantics
+        //if request does not include parent then do nothing
+        if(req.parentId() != null){
+            //parentId included in payload
+
+            //request intends to set parent to null (defining root category)
+            if(req.parentId().isNull()){
+                //clear parent
+                setParent(existing, null);
+            }
+            //request intends to reassign the parent
+            else if(req.parentId().isNumber()){
+                Long newParentId = req.parentId().asLong();
+                Category newParent = requireParent(userId, newParentId);
+
+                //self reference check
+                if(newParent.getId().equals(existing.getId()))
+                    throw new BadRequestException("Category cannot be it's own parent!");
+                //cycle check
+                if(wouldCreateCycle(existing, newParent))
+                    throw new BadRequestException("Invalid parent: would create a cycle");
+
+                setParent(existing, newParent);
+            }
+            //request has been made by an idiot
+            else{
+                throw new BadRequestException("parentId must be a number or null");
+            }
+        }
+
+        return categoryRepo.save(existing);
+
     }
 
     @Override
@@ -132,18 +266,62 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
 
+    //-----------------------------------------Helpers---------------------------------------------------------
+
+    private String normalizeCode(String code){
+        if(code == null)
+            throw new BadRequestException("Code is required for Categories");
+
+        String format = code.trim().toUpperCase();
+
+        if(format.isBlank())
+            throw new BadRequestException("Code must not be blank");
+
+        return format;
+    }
+
+    private Category requireParent(Long userId, Long parentId){
+        Category parent = categoryRepo.findById(parentId)
+                            .orElseThrow(() -> new BadRequestException("Parent categoryu not found: "+ parentId));
+
+        if(!parent.getUser().getId().equals(userId))
+            throw new BadRequestException("Parent must belong to the same user");
+
+        return parent;
+    }
+
+    private void setParent(Category child, Category newParent){
+        Category oldParent = child.getParent();
+
+        //remove from old
+        if(oldParent != null)
+            oldParent.getChildren().remove(child);
+
+        //set new parent
+        child.setParent(newParent);
+
+        //link parent back to child
+        if(newParent != null)
+            newParent.getChildren().add(child);
+    }
+
+    private boolean wouldCreateCycle(Category existing, Category newParent){
+        Category curr = newParent;
+
+        while(curr != null){
+            if(curr.getId().equals(existing.getId()))
+                return true;
+
+            curr = curr.getParent();
+        }
+        return false;
+    }
+
+
     private void validateCategoryId(Long id){
         if(id == null || id <= 0){
             throw new BadRequestException("Category Id must be positive and valid");
         }
-    }
-
-    private Category validateCategory(Category cat, ValidationMode mode){
-        return null;
-    }
-
-    private void applyCreateDefaults(Category cat){
-
     }
     
 }
