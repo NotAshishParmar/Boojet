@@ -9,6 +9,7 @@ import { state, initPageSizeFromStorage } from './core/state.js';
 import { initDescriptionAutocomplete } from './features/autocomplete.js';
 import { loadAccounts, initAccountForm, viewAccount, delAccount } from './features/accounts.js';
 import { initTxForm, resetTxForm, getLastTxDateOrToday, editTx, delTx } from './features/transactions.js';
+import { initCategoryPicker, preloadCategories } from './features/categories.js';
 import { initPlans, loadPlans, toggleHours, delPlan } from './features/plans.js';
 import { initFilters } from './features/filters.js';
 import { refreshTxPage } from './features/txController.js';
@@ -43,11 +44,15 @@ function attachGlobals() {
   attachGlobals();
 
   bootDefaults();
+  
   initTxForm();
   initAccountForm();
   initPlans();
   initFilters();
   initDescriptionAutocomplete();
+
+  await preloadCategories();
+  initCategoryPicker();
 
   await loadAccounts();
   resetTxForm();

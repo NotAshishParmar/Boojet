@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.boojet.boot_api.domain.CategoryEnum;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 
@@ -24,27 +23,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
               where t.account.id = :accountId
                 and (:from is null or t.date >= :from)
                 and (:to   is null or t.date <= :to)
-                and (:category is null or t.category = :category)
+                and (:categoryId is null or t.category.id = :categoryId)
                 and (:income   is null or t.income   = :income)
               order by t.date desc
             """)
     List<Transaction> findForAccount(@Param("accountId") Long accountId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
-            @Param("category") CategoryEnum category,
+            @Param("categoryId") Long categoryId,
             @Param("income") Boolean income);
 
     @Query("""
             select t
             from Transaction t
             where (:accountId is null or t.account.id = :accountId)
-              and (:category  is null or t.category     = :category)
+              and (:categoryId  is null or t.category.id = :categoryId)
               and t.date >= :fromDate
               and t.date <= :toDate
             order by t.date desc
             """)
     Page<Transaction> search(@Param("accountId") Long accountId,
-            @Param("category") CategoryEnum category,
+            @Param("categoryId") Long categoryId,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
             Pageable pageable);
@@ -132,9 +131,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                     sum(case when t.income = true then t.amount else -t.amount end), 0
                 )
                 from Transaction t
-                where t.category = :category
+                where t.category.id = :categoryId
             """)
-    BigDecimal sumNetByCategory(@Param("category") CategoryEnum category);
+    BigDecimal sumNetForCategory(@Param("categoryId") Long categoryId);
 
     @Query("""
             select coalesce (

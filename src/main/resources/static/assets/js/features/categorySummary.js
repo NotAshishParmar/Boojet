@@ -1,11 +1,17 @@
 /**
  * Monthly category summary table:
- * fetches totals by category for the selected year/month and renders the table,
- * including the month grand total and basic error handling.
+ * fetches totals by category for the selected year/month and renders the table.
  */
 
 import { $ } from '../core/dom.js';
 import { esc, money } from '../core/format.js';
+
+function categoryLabel(cat) {
+  if (!cat) return '—';
+  if (typeof cat === 'string') return cat; // legacy CategoryEnum
+  if (cat.parentCode) return `${cat.parentCode} → ${cat.name}`;
+  return cat.name || cat.code || `#${cat.id}`;
+}
 
 export async function loadCategorySummary() {
   const yr = $('#fyr')?.value;
@@ -57,7 +63,7 @@ export async function loadCategorySummary() {
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${r.category}</td>
+        <td>${esc(categoryLabel(r.category))}</td>
         <td class="right sum-amt ${amt < 0 ? 'bad' : 'ok'}">${money(amt)}</td>
       `;
       tb.appendChild(tr);

@@ -2,9 +2,9 @@ package com.boojet.boot_api.repositories.projections;
 
 import java.math.BigDecimal;
 
-import com.boojet.boot_api.domain.CategoryEnum;
+import com.boojet.boot_api.domain.Category;
 
 public interface CategoryTotalView {
-    CategoryEnum getCategory();
+    Category getCategory();
     BigDecimal getTotal();
 }

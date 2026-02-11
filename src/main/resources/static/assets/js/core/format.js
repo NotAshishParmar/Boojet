@@ -15,10 +15,12 @@ export function toNum(x) {
 }
 
 export function esc(s) {
-  return (s || '').replace(/[&<>"']/g, c => (
+  const str = (s == null) ? '' : String(s);
+  return str.replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
 }
+
 
 export function colorize(el, v) {
   const num = (typeof v === 'number') ? v : (v?.amount ?? 0);

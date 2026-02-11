@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -52,10 +52,9 @@ public class Transaction{
     @JsonProperty
     private LocalDate date;
     
-    @JsonProperty
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CategoryEnum category;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @JsonProperty("income")
     @Column(name = "is_income", nullable = false)       // DB uses "is_income"
@@ -71,15 +70,13 @@ public class Transaction{
      * @param amount transaction amount
      * @param date transaction date
      * @param category transaction category
-     * @param income whether the transaction is income ({@code true}) or expense ({@code false})
      * @param account owning account
      */
-    public Transaction(String description, Money amount, LocalDate date, CategoryEnum category, boolean income, Account account){
+    public Transaction(String description, Money amount, LocalDate date, Category category, Account account){
         this.description = description;
         this.amount = amount;
         this.date = date;
         this.category = category;
-        this.income = income;
         this.account = account;
     }
 

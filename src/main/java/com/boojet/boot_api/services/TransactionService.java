@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
-import com.boojet.boot_api.domain.CategoryEnum;
+import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
@@ -63,21 +63,21 @@ public interface TransactionService {
 
     /**
      * Searches the ledger for {@code Page(s)} of transactions that are associated
-     * with the provided {@code accountId}, {@code category} or {@code yearMonth}.
+     * with the provided {@code accountId}, {@code categoryId} or {@code yearMonth}.
      * Returns all transactions if none are provided (findAll)
      * 
      * Use {@link org.springframework.data.domain.Pageable} to control pagination and sorting. If no sort is supplied,
      * then defaults to sorting by {@code date} descending.
      * 
      * @param accountId Optional account ID to filter by; may be {@code null}
-     * @param category Optional category to filter by; may be {@code null}
+     * @param categoryId Optional category ID to filter by; may be {@code null}
      * @param year Optional year to filter by; may be {@code null}
      * @param month Optional month to filter by; may be {@code null}
      * @param pageable Pagination information
      * @return A {@code Page} of transactions matching the provided filters
      * @throws AccountNotFoundException if the provided accountId does not exist
      */
-    Page<Transaction> search(Long accountId, CategoryEnum category, Integer year, Integer month, Pageable pageable);
+    Page<Transaction> search(Long accountId, Long categoryId, Integer year, Integer month, Pageable pageable);
 
 
     /**
@@ -218,7 +218,7 @@ public interface TransactionService {
      * @return a page of transactions in the specified category
      * @throws BadRequestException if the provided category is {@code null}
      */
-    Page<Transaction> findTransactionsByCategory(CategoryEnum category, Pageable pageable);
+    Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable);
 
     /**
      * Calculates the total amount for transactions in the specified category.
@@ -227,7 +227,7 @@ public interface TransactionService {
      * @return the total amount as a {@link Money} object
      * @throws BadRequestException if the provided category is {@code null}
      */
-    Money calculateTotalByCategory(CategoryEnum category);
+    Money calculateTotalByCategory(Category category);
 
 
     /**
@@ -249,7 +249,7 @@ public interface TransactionService {
      *
      * @param year the calendar year (e.g., 2026)
      * @param month the calendar month (1-12)
-     * @return a list of category summaries for the month (one entry per {@link CategoryEnum})
+     * @return a list of category summaries for the month (one entry per {@link Category})
      * @throws BadRequestException if {@code month} is not in the range 1-12
      */
     List<CategorySummaryDto> monthlySummaryByCategory(int year, int month);

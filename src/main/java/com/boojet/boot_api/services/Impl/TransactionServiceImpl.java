@@ -6,10 +6,8 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
-import com.boojet.boot_api.domain.CategoryEnum;
+import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.domain.CategoryType;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.ValidationMode;
@@ -60,6 +59,9 @@ public class TransactionServiceImpl implements TransactionService {
         //verify transaction data (all fields including Account) or throw
         Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.CREATE);
 
+        //save income type in tx (derived from category)
+        syncIncomeFromCategory(verifiedTransaction);
+
         return transactionRepository.save(verifiedTransaction);
     }
 
@@ -73,7 +75,7 @@ public class TransactionServiceImpl implements TransactionService {
     // search transactions with optional filters and pagination
     // functions as findAll if no filters are provided (CRUD Read)
     @Override
-    public Page<Transaction> search(Long accountId, CategoryEnum category, Integer year, Integer month, Pageable pageable) {
+    public Page<Transaction> search(Long accountId, Long categoryId, Integer year, Integer month, Pageable pageable) {
         
         Long accId = null;
         if (accountId != null) {
@@ -89,7 +91,7 @@ public class TransactionServiceImpl implements TransactionService {
         LocalDate from = (yearMonth != null) ? yearMonth.atDay(1) : LocalDate.of(1, 1, 1);
         LocalDate to = (yearMonth != null) ? yearMonth.atEndOfMonth() : LocalDate.of(9999, 12, 31);
 
-        return transactionRepository.search(accId, category, from, to, pageable);
+        return transactionRepository.search(accId, categoryId, from, to, pageable);
     }
 
     // return a transaction by its ID
@@ -133,12 +135,17 @@ public class TransactionServiceImpl implements TransactionService {
         // Ensure the transaction to update has the correct ID
         transaction.setId(id);
 
+        Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.PATCH_PARTIAL);
+
         return transactionRepository.findById(id).map(existingTransaction -> {
-            Optional.ofNullable(transaction.getDescription()).ifPresent(existingTransaction::setDescription);
-            Optional.ofNullable(transaction.getAmount()).ifPresent(existingTransaction::setAmount);
-            Optional.ofNullable(transaction.getDate()).ifPresent(existingTransaction::setDate);
-            Optional.ofNullable(transaction.getCategory()).ifPresent(existingTransaction::setCategory);
-            Optional.ofNullable(transaction.isIncome()).ifPresent(existingTransaction::setIncome);
+            Optional.ofNullable(verifiedTransaction.getDescription()).ifPresent(existingTransaction::setDescription);
+            Optional.ofNullable(verifiedTransaction.getAmount()).ifPresent(existingTransaction::setAmount);
+            Optional.ofNullable(verifiedTransaction.getDate()).ifPresent(existingTransaction::setDate);
+            Optional.ofNullable(verifiedTransaction.getCategory()).ifPresent(existingTransaction::setCategory);
+            Optional.ofNullable(verifiedTransaction.getAccount()).ifPresent(existingTransaction::setAccount);
+
+            syncIncomeFromCategory(existingTransaction);
+
             return transactionRepository.save(existingTransaction);
         }).orElseThrow(() -> new TransactionNotFoundException(id));
     }
@@ -228,7 +235,7 @@ public class TransactionServiceImpl implements TransactionService {
             () -> new TransactionNotFoundException("No transactions match the description provided (Tx Suggestion)")
         );
         
-        return new TxSuggestionDetails(match.getDescription(), match.getCategory(), match.getAmount(), match.isIncome(), match.getAccount().getId());
+        return new TxSuggestionDetails(match.getDescription(), match.getCategory().getId(), match.getAmount(), match.isIncome(), match.getAccount().getId());
     }
 
     // calculate the total balance from all transactions
@@ -268,16 +275,16 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Page<Transaction> findTransactionsByCategory(CategoryEnum category, Pageable pageable) {
+    public Page<Transaction> findTransactionsByCategory(Category category, Pageable pageable) {
         if (category == null) throw new BadRequestException("Category must not be null");
-        return transactionRepository.search(null, category, 
+        return transactionRepository.search(null, category.getId(), 
             LocalDate.of(1,1,1), LocalDate.of(9999,12,31), pageable);
     }
 
     @Override
-    public Money calculateTotalByCategory(CategoryEnum category) {
+    public Money calculateTotalByCategory(Category category) {
         if (category == null) throw new BadRequestException("Category must not be null");
-        BigDecimal net = transactionRepository.sumNetByCategory(category);
+        BigDecimal net = transactionRepository.sumNetForCategory(category.getId());
         return Money.of(net);
     }
 
@@ -299,20 +306,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         List<CategoryTotalView> rows =  transactionRepository.sumNetByCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
 
-        Map<CategoryEnum, BigDecimal> byCat = rows.stream()
-            .collect(Collectors.toMap(
-                CategoryTotalView::getCategory,
-                CategoryTotalView::getTotal
-            ));
-
-        ArrayList<CategorySummaryDto> result = new ArrayList<CategorySummaryDto>();
-
-        for(CategoryEnum c: CategoryEnum.values()){
-            BigDecimal total = byCat.getOrDefault(c, BigDecimal.ZERO);
-            result.add(new CategorySummaryDto(c, Money.of(total)));
-        }
-
-        return result;
+        return rows.stream()
+                .map(r -> new CategorySummaryDto(r.getCategory(), Money.of(r.getTotal())))
+                .toList();
     }
 
     @Override
@@ -358,8 +354,8 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Transaction amount must be provided and be a positive value");
         }
 
-        if(mode != ValidationMode.PATCH_PARTIAL && transaction.getCategory() == null){
-            throw new BadRequestException("Transaction category must be provided");
+        if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getCategory() == null || transaction.getCategory().getId() ==null)){
+            throw new BadRequestException("Transactionmust be associated with an existing category");
         }
 
         if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getAccount() == null || transaction.getAccount().getId() == null)){
@@ -409,6 +405,13 @@ public class TransactionServiceImpl implements TransactionService {
         }catch(RuntimeException e){
             throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month Transaction");
         }
+    }
+
+    private void syncIncomeFromCategory(Transaction tx){
+        if(tx.getCategory() == null || tx.getCategory().getType() == null){
+            throw new BadRequestException("Transaction category (and its type) is required");
+        }
+        tx.setIncome(tx.getCategory().getType() == CategoryType.INCOME);
     }
 
     // @Override 

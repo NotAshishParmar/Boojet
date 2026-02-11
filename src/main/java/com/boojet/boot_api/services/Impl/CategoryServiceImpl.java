@@ -1,7 +1,6 @@
 package com.boojet.boot_api.services.Impl;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,10 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.boojet.boot_api.controllers.dto.CategoryCreateRequest;
 import com.boojet.boot_api.controllers.dto.CategoryPatchRequest;
 import com.boojet.boot_api.controllers.dto.CategoryPutRequest;
-import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.User;
-import com.boojet.boot_api.domain.ValidationMode;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 import com.boojet.boot_api.repositories.CategoryRepository;
@@ -149,7 +146,6 @@ public class CategoryServiceImpl implements CategoryService {
 
         existing.setCode(code);
         existing.setName(req.name().trim());
-        existing.setType(req.type());
         existing.setEssential(req.essential());
         existing.setSortOrder((req.sortOrder()));
 
@@ -196,8 +192,6 @@ public class CategoryServiceImpl implements CategoryService {
         //patch basics
         if(req.name() != null)
             existing.setName(req.name().trim());
-        if(req.type() != null)
-            existing.setType(req.type());
         if(req.essential() != null)
             existing.setEssential(req.essential());
         if(req.sortOrder() != null)

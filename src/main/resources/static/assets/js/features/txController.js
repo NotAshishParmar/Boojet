@@ -1,6 +1,8 @@
 /**
  * Transaction list controller: builds query strings from shared state,
  * fetches paged transactions, renders the table, and updates the pager UI.
+ *
+ * NOTE: category filter now uses categoryId
  */
 
 import { API } from '../core/config.js';
@@ -14,9 +16,16 @@ function buildQuery(pageOverride) {
   const p = new URLSearchParams();
   p.set('page', pageOverride ?? state.page);
   p.set('size', state.size);
+
   if (state.acc) p.set('accountId', state.acc);
-  if (state.cat) p.set('category', state.cat);
-  if (state.yr && state.mo) { p.set('year', state.yr); p.set('month', state.mo); }
+
+  if (state.cat) p.set('categoryId', state.cat);
+
+  if (state.yr && state.mo) {
+    p.set('year', state.yr);
+    p.set('month', state.mo);
+  }
+
   return p.toString();
 }
 
@@ -33,7 +42,9 @@ export async function refreshTxPage(page = 0) {
   renderTx(data.content);
   updatePager(data);
 
-  try { $('#balance').textContent = money(await j(`${API}/balance`)); } catch {}
+  try {
+    $('#balance').textContent = money(await j(`${API}/balance`));
+  } catch {}
 
   return data;
 }
