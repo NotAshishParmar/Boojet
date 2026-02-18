@@ -107,6 +107,78 @@
             </form>
           </details>
         </section>
+
+        <!-- ================= Categories ================= -->
+        <section class="block">
+          <div class="block-head">
+            <h2>Categories</h2>
+            <div class="block-actions">
+              <span class="muted">Manage your categories</span>
+            </div>
+          </div>
+
+          <!-- quick list (roots + children) -->
+          <div id="catAdminList" class="side-list"></div>
+
+          <!-- collapsed create/edit form -->
+          <details class="collapse" id="catAdminCollapse">
+            <summary>
+              <span>Add / manage category</span>
+              <span class="muted">+</span>
+            </summary>
+
+            <form id="catForm">
+              <input type="hidden" id="catEditId" />
+
+              <label>Code
+                <input id="catCode" maxlength="64" placeholder="FOOD_DINING_OUT" required>
+              </label>
+
+              <label>Name
+                <input id="catName" maxlength="64" placeholder="Dining Out" required>
+              </label>
+
+              <label>Parent (optional)
+                <select id="catParent">
+                  <option value="">(No parent)</option>
+                </select>
+              </label>
+
+              <label>Essential (only for subcategories)
+                <select id="catEssential">
+                  <option value="">(auto / none)</option>
+                  <option value="true">Essential</option>
+                  <option value="false">Non-essential</option>
+                </select>
+              </label>
+
+              <label>Sort Order
+                <input id="catSortOrder" type="number" step="1" placeholder="10">
+              </label>
+
+              <!-- Type changes not allowed! -->
+              <label>Type
+                <select id="catType">
+                  <option value="EXPENSE">EXPENSE</option>
+                  <option value="INCOME">INCOME</option>
+                </select>
+              </label>
+
+              <label class="row" style="gap:10px; align-items:center">
+                <input id="catActive" type="checkbox" checked>
+                <span>Active</span>
+              </label>
+
+              <div class="actions">
+                <button type="submit" id="catSaveBtn">Save</button>
+                <button type="button" id="catClearBtn" class="muted">Clear</button>
+              </div>
+
+              <div class="muted small" id="catFormHint" style="margin-top:8px"></div>
+            </form>
+          </details>
+        </section>
+
       </aside>
 
       <!-- RIGHT: Transactions workspace -->

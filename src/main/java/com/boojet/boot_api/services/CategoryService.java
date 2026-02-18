@@ -19,6 +19,10 @@ public interface CategoryService {
 
     List<Category> listChildren (String code);
 
+    List<Category> listAllCategories();  
+
+    List<Category> listActiveCategories();    
+
     Category findCategory(Long id);
 
     Category findCategory(String code);

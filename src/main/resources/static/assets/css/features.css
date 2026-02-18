@@ -224,6 +224,10 @@ details.collapse.tx-create[open] .plus{
   z-index: 9999;
 }
 
+.overlay[hidden] {
+  display: none !important;
+}
+
 .modal {
   width: min(920px, 100%);
   max-height: min(80vh, 720px);
@@ -331,6 +335,3 @@ details.collapse.tx-create[open] .plus{
     grid-template-columns: 1fr;
   }
 }
-
-
-[hidden] { display: none !important; }

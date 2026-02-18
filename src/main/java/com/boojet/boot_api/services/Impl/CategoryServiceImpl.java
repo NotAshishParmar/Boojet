@@ -13,6 +13,7 @@ import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 import com.boojet.boot_api.repositories.CategoryRepository;
+import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.UserRepository;
 import com.boojet.boot_api.services.CategoryService;
 
@@ -22,13 +23,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     private CategoryRepository categoryRepo;
     private UserRepository userRepo;
+    private TransactionRepository transactionRepo;
 
     private static final Long DEFAULT_USER_ID = 1L; //temporary until user management is implemented
 
 
-    public CategoryServiceImpl (CategoryRepository categoryRepo, UserRepository userRepo){
+    public CategoryServiceImpl (CategoryRepository categoryRepo, UserRepository userRepo, TransactionRepository transactionRepo){
         this.categoryRepo = categoryRepo;
         this.userRepo = userRepo;
+        this.transactionRepo = transactionRepo;
     }
 
     @Override
@@ -101,6 +104,16 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         return children;
+    }
+
+    @Override
+    public List<Category> listAllCategories() {
+        return categoryRepo.listAll(DEFAULT_USER_ID);
+    }
+
+    @Override
+    public List<Category> listActiveCategories() {
+        return categoryRepo.listActive(DEFAULT_USER_ID);
     }
 
     @Override
@@ -236,10 +249,18 @@ public class CategoryServiceImpl implements CategoryService {
     public void delete(Long id) {
         validateCategoryId(id);
 
-        if(!categoryRepo.existsById(id))
-            throw new CategoryNotFoundException(id);
+        Category cat = categoryRepo.findById(id)
+                        .orElseThrow(() -> new CategoryNotFoundException(id));
 
-        categoryRepo.deleteById(id);
+        //soft delete if refernced by transactions
+        if(transactionRepo.existsByCategoryId(id)){
+            cat.setActive(false);
+            categoryRepo.save(cat);
+            return;
+        }
+
+        //hard delete for non-referenced
+        categoryRepo.delete(cat);
     }
 
     @Override

@@ -38,6 +38,10 @@ body{
 .empty{ padding:10px; color:#666; font-style:italic; }
 .section{ margin-top:24px; padding-top:8px; border-top:1px solid var(--line); }
 
+.is-inactive { opacity: 0.55; }
+.is-inactive > div { pointer-events: none; }
+.is-inactive button { pointer-events: auto; }
+
 /* ================= Inputs / Buttons ================= */
 input,select,button{
   height:38px;

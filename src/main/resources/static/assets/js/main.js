@@ -9,7 +9,8 @@ import { state, initPageSizeFromStorage } from './core/state.js';
 import { initDescriptionAutocomplete } from './features/autocomplete.js';
 import { loadAccounts, initAccountForm, viewAccount, delAccount } from './features/accounts.js';
 import { initTxForm, resetTxForm, getLastTxDateOrToday, editTx, delTx } from './features/transactions.js';
-import { initCategoryPicker, preloadCategories } from './features/categories.js';
+import { initCategoryPicker, preloadCategories, preloadCategoriesActive } from './features/categories.js';
+import { initCategoryAdmin, loadCategoryAdmin } from './features/categoryAdmin.js';
 import { initPlans, loadPlans, toggleHours, delPlan } from './features/plans.js';
 import { initFilters } from './features/filters.js';
 import { refreshTxPage } from './features/txController.js';
@@ -44,15 +45,18 @@ function attachGlobals() {
   attachGlobals();
 
   bootDefaults();
-  
+
   initTxForm();
   initAccountForm();
   initPlans();
   initFilters();
   initDescriptionAutocomplete();
 
-  await preloadCategories();
   initCategoryPicker();
+  initCategoryAdmin();
+  await preloadCategories();        //picker + filter
+  await preloadCategoriesActive();  //category admin 
+  await loadCategoryAdmin();        //left admin list + parent dropdown
 
   await loadAccounts();
   resetTxForm();

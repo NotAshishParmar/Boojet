@@ -1,4 +1,8 @@
-// /assets/js/features/categories.js
+/**
+ * Category Picker Modal logic: 
+ */
+
+
 import { $ } from "../core/dom.js";
 import { state } from "../core/state.js";
 import { j } from "../core/api.js";
@@ -117,11 +121,18 @@ function populateFilterDropdown() {
   }
 }
 
+export async function preloadCategoriesActive() {
+  const out = await j("/category/active"); // ONLY active
+  indexCategories(out);
+  populateFilterDropdown();
+  renderRoots();
+}
+
 export async function preloadCategories() {
   const out = await j("/category"); // returns array of CategoryResponse
   indexCategories(out);
 
-  populateFilterDropdown();
+  // populateFilterDropdown();
   renderRoots();
 }
 
