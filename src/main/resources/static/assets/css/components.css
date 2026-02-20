@@ -94,12 +94,7 @@ td button{ height:30px; padding:0 10px; }
 
 .table-compact td, .table-compact th{ padding:6px 8px; }
 
-.sticky thead th{
-  position:sticky;
-  top:0;
-  background:#fff;
-  z-index:4;
-}
+
 
 /* zebra striping (don’t apply to summary table) */
 table:not(.sum-table) tbody tr:nth-child(odd) td{ background:#fafafa; }

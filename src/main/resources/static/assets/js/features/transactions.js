@@ -42,13 +42,15 @@ export function renderTx(list) {
     const catLabel = t.categoryName ?? t.categoryCode ?? (t.categoryId ? `#${t.categoryId}` : '—');
     const acctLabel = t.accountName ?? (t.accountId ? `#${t.accountId}` : '—');
 
+    const acctName = t.account?.name ?? (t.accountId ?? '');
+    const amt = signedAmount(t);
+
     tr.innerHTML = `
       <td>${t.date}</td>
       <td>${esc(t.description)}</td>
       <td>${esc(catLabel)}</td>
       <td>${esc(acctLabel)}</td>
-      <td>${t.income ? 'INCOME' : 'EXPENSE'}</td>
-      <td class="right">${money(t.amount)}</td>
+      <td class="right num ${amt < 0 ? 'bad' : 'ok'}">${money(amt)}</td>
       <td>
         <button onclick="editTx(${t.id})">Edit</button>
         <button onclick="delTx(${t.id})">Delete</button>
@@ -173,4 +175,21 @@ export function initTxForm() {
 
 
   $('#cancel').addEventListener('click', resetTxForm);
+}
+
+
+// ---------------- HELPER ----------------
+
+function amountNumber(a){
+  return (typeof a === 'number') ? a : (a?.amount ?? 0);
+}
+
+function signedAmount(t){
+  const raw = amountNumber(t.amount);
+
+  // If backend already sends negative expenses, keep it
+  if (raw < 0) return raw;
+
+  // Otherwise, use "income" flag to assign sign
+  return t.income ? raw : -raw;
 }

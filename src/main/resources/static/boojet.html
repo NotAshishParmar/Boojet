@@ -201,7 +201,7 @@
             </summary>
 
             <form id="f" class="tx-form">
-              <label>Description
+              <label class="tx-field tx-desc">Description
                 <div class="ac-wrap">
                   <input id="desc" required autocomplete="off" aria-autocomplete="list" aria-expanded="false"
                     aria-controls="desc-ac" role="combobox" />
@@ -209,7 +209,7 @@
                 </div>
               </label>
 
-              <label class="amount-field">Amount
+              <label class="tx-field tx-amt">Amount
                 <div class="amount-inline">
                   <input id="amount" type="number" step="0.01" required>
                   <span class="muted small" id="incomeHint" title="Derived from Category">Type auto</span>
@@ -217,9 +217,9 @@
               </label>
 
 
-              <label>Date <input id="date" type="date" required></label>
+              <label class="tx-field tx-date">Date <input id="date" type="date" required></label>
 
-              <label>Category
+              <label class="tx-field tx-cat">Category
                 <div class="row" style="gap:8px">
                   <!-- what the user sees -->
                   <input id="catDisplay" type="text" placeholder="Choose category…" readonly required>
@@ -234,7 +234,7 @@
 
 
 
-              <label>Account <select id="account"></select></label>
+              <label class="tx-field tx-acct">Account <select id="account"></select></label>
 
               <div class="actions tx-actions">
                 <input type="hidden" id="editId">
@@ -275,37 +275,48 @@
               <button id="reset" type="button" class="btn-ghost">Reset</button>
             </div>
 
-            <div class="ledger-pager" id="pager">
-              <button id="prev" class="btn-ghost">Prev</button>
-              <span id="pages" class="muted">Page 1 of 1</span>
-              <button id="next" class="btn-ghost">Next</button>
-              <label class="row muted" style="gap:6px">Size
-                <select id="psize">
-                  <option>10</option>
-                  <option selected>20</option>
-                  <option>50</option>
-                  <option>100</option>
-                </select>
-              </label>
-            </div>
+
           </div>
 
           <div class="ledger-scroll">
             <table id="tbl" class="table-compact sticky">
+
+              <colgroup>
+                <col style="width:120px"> <!-- Date -->
+                <col> <!-- Description (flex) -->
+                <col style="width:180px"> <!-- Category -->
+                <col style="width:140px"> <!-- Account -->
+                <col style="width:140px"> <!-- Amount -->
+                <col style="width:160px"> <!-- Actions -->
+              </colgroup>
               <thead>
                 <tr>
-                  <th style="width:120px">Date</th>
+                  <th>Date</th>
                   <th>Description</th>
-                  <th style="width:140px">Category</th>
-                  <th style="width:130px">Account</th>
-                  <th style="width:110px">Type</th>
-                  <th class="right num" style="width:140px">Amount</th>
-                  <th style="width:140px">Actions</th>
+                  <th>Category</th>
+                  <th>Account</th>
+                  <th class="right num">Amount</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody></tbody>
             </table>
           </div>
+
+          <div class="ledger-pager" id="pager">
+            <button id="prev" class="btn-ghost">Prev</button>
+            <span id="pages" class="muted">Page 1 of 1</span>
+            <button id="next" class="btn-ghost">Next</button>
+            <label class="row muted" style="gap:6px">Size
+              <select id="psize">
+                <option>10</option>
+                <option selected>20</option>
+                <option>50</option>
+                <option>100</option>
+              </select>
+            </label>
+          </div>
+
         </section>
 
         <!-- Monthly Net + Summary -->
