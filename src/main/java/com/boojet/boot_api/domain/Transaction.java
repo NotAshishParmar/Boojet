@@ -20,17 +20,25 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 /**
- * Represents a single ledger entry (income or expense) recorded against an {@link Account}.
+ * Represents a single ledger entry (income or expense) recorded against an
+ * {@link Account}.
  * <p>
- * A transaction has an amount, date, category, and a flag indicating whether it is income.
- * This entity is used to compute monthly summaries, category totals, and net reports.
+ * A transaction has an amount, date, category, and a flag indicating whether it
+ * is income.
+ * This entity is used to compute monthly summaries, category totals, and net
+ * reports.
  *
- * <p><b>Money persistence:</b>
- * The {@link #amount} field is persisted as a {@link java.math.BigDecimal} via {@link MoneyConverter}.
+ * <p>
+ * <b>Money persistence:</b>
+ * The {@link #amount} field is persisted as a {@link java.math.BigDecimal} via
+ * {@link MoneyConverter}.
  *
- * <p><b>Income vs Expense:</b>
- * The {@link #income} flag indicates whether the transaction should be treated as income ({@code true})
- * or expense ({@code false}). (This is independent of the numeric sign of {@link #amount}.)
+ * <p>
+ * <b>Income vs Expense:</b>
+ * The {@link #income} flag indicates whether the transaction should be treated
+ * as income ({@code true})
+ * or expense ({@code false}). (This is independent of the numeric sign of
+ * {@link #amount}.)
  */
 @Data
 @NoArgsConstructor
@@ -38,7 +46,7 @@ import java.time.LocalDate;
 @Builder
 @Entity
 @Table(name = "transactions")
-public class Transaction{
+public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_id_seq")
@@ -51,28 +59,32 @@ public class Transaction{
     private Money amount;
     @JsonProperty
     private LocalDate date;
-    
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @JsonProperty("income")
-    @Column(name = "is_income", nullable = false)       // DB uses "is_income"
+    @Column(name = "is_income", nullable = false) // DB uses "is_income"
     private boolean income;
 
     @ManyToOne(optional = false)
-    private Account account;                            // The account associated with this transaction
+    private Account account; // The account associated with this transaction
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_account_id")
+    private Account toAccount; // destination account for transfers (nullable otherwise)
 
     /**
      * Convenience constructor for creating a transaction without an id.
      *
      * @param description description of the transaction
-     * @param amount transaction amount
-     * @param date transaction date
-     * @param category transaction category
-     * @param account owning account
+     * @param amount      transaction amount
+     * @param date        transaction date
+     * @param category    transaction category
+     * @param account     owning account
      */
-    public Transaction(String description, Money amount, LocalDate date, Category category, Account account){
+    public Transaction(String description, Money amount, LocalDate date, Category category, Account account) {
         this.description = description;
         this.amount = amount;
         this.date = date;
@@ -80,10 +92,15 @@ public class Transaction{
         this.account = account;
     }
 
+    private boolean isTransfer(Transaction tx) {
+        return tx.getCategory() != null && tx.getCategory().getType() == CategoryType.TRANSFER;
+    }
+
     @Override
-    public String toString(){
+    public String toString() {
         String type = income ? "Income" : "Expense";
-        return "[" + date + "] " + type + ": " + amount + " | " + category + " | " + description + " (Account: " + account.getName() + ")";
+        return "[" + date + "] " + type + ": " + amount + " | " + category + " | " + description + " (Account: "
+                + account.getName() + ")";
     }
 
 }
