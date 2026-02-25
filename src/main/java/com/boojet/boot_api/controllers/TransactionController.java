@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,9 +17,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
+import com.boojet.boot_api.controllers.dto.TransactionCreateRequest;
 import com.boojet.boot_api.controllers.dto.TransactionDto;
+import com.boojet.boot_api.controllers.dto.TransactionResponse;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
@@ -49,20 +53,12 @@ public class TransactionController {
 
     @Operation(summary = "Create a new transaction", description = "Creates a new transaction with the provided details.")
     @PostMapping
-    public TransactionDto createTransaction(@RequestBody TransactionDto transactionDto) {
+    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody TransactionCreateRequest req) {
 
         Transaction transaction = transactionMapper.mapFrom(transactionDto);
         Transaction savedTransaction = transactionService.addTransaction(transaction);
         return transactionMapper.mapTo(savedTransaction);
     }
-
-    // @GetMapping
-    // public List<TransactionDto> getAllTransactions() {
-    //     List<Transaction> transactions = transactionService.findAllTransactions();
-    //     return transactions.stream()
-    //             .map(transaction -> transactionMapper.mapTo(transaction))
-    //             .toList();
-    // }
 
     @Operation(summary = "Search transactions", description = "Search for transactions based on optional filters such as account ID, category, year, and month. Supports pagination.")
     @GetMapping

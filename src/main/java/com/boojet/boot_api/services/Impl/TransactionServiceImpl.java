@@ -25,6 +25,7 @@ import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.ValidationMode;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
+import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 import com.boojet.boot_api.exceptions.TransactionNotFoundException;
 import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
@@ -348,26 +349,29 @@ public class TransactionServiceImpl implements TransactionService {
 
         Money amount = transaction.getAmount();
 
+        boolean requireAll = mode != ValidationMode.PATCH_PARTIAL;
+
         //amount must be positive if provided, required for CREATE & PUT_FULL
-        if((mode != ValidationMode.PATCH_PARTIAL && amount == null) ||
-           (amount != null && !amount.isPositive())){
-            throw new BadRequestException("Transaction amount must be provided and be a positive value");
-        }
+        if(requireAll){
+            if(amount == null || (amount != null && !amount.isPositive())){
+                throw new BadRequestException("Transaction amount must be provided and be a positive value");
+            }
 
-        if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getCategory() == null || transaction.getCategory().getId() ==null)){
-            throw new BadRequestException("Transactionmust be associated with an existing category");
-        }
+            if(transaction.getCategory() == null || transaction.getCategory().getId() ==null){
+                throw new BadRequestException("Transaction must be associated with an existing category");
+            }
 
-        if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getAccount() == null || transaction.getAccount().getId() == null)){
-            throw new BadRequestException("Transaction must be associated with an existing account");
-        }
+            if(transaction.getAccount() == null || transaction.getAccount().getId() == null){
+                throw new BadRequestException("Transaction must be associated with an existing account");
+            }
 
-        if(mode != ValidationMode.PATCH_PARTIAL && transaction.getDate() == null){
-            throw new BadRequestException("Date of transaction cannot be null");
-        }
+            if(transaction.getDate() == null){
+                throw new BadRequestException("Date of transaction cannot be null");
+            }
 
-        if(mode != ValidationMode.PATCH_PARTIAL && (transaction.getDescription() == null || transaction.getDescription().isBlank())){
-            throw new BadRequestException("Transaction description must be provided");
+            if(transaction.getDescription() == null || transaction.getDescription().isBlank()){
+                throw new BadRequestException("Transaction description must be provided");
+            }
         }
 
         // if client provides an account with an id in any mode, verify it exists and attach verified account OR throw
@@ -375,6 +379,10 @@ public class TransactionServiceImpl implements TransactionService {
             transaction.setAccount(validateAccount(transaction.getAccount().getId()));
         }
 
+        //validate Category logic
+        if(transaction.getCategory() != null && transaction.getCategory().getId() != null){
+            transaction.setCategory(validateCategory(transaction.getCategory().getId()));
+        }
 
         return transaction;
     }
@@ -399,12 +407,27 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
     }
 
+    private Category validateCategory(Long catId){
+
+        if(catId == null || catId <= 0)
+            throw new BadRequestException("Category ID must be a positive number");
+
+        Category toVerify = categoryRepo.findById(catId)
+                .orElseThrow(()-> new CategoryNotFoundException(catId));
+
+        if()
+    }
+
     private YearMonth buildYearMonthOrThrow(int year, int month){
         try{
             return YearMonth.of(year, month);
         }catch(RuntimeException e){
             throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month Transaction");
         }
+    }
+
+    private boolean isTransfer(Transaction tx){
+        return tx.getCategory() != null && tx.getCategory().getType() == CategoryType.TRANSFER;
     }
 
     private void syncIncomeFromCategory(Transaction tx){

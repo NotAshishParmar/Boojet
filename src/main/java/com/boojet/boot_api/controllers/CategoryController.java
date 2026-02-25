@@ -1,7 +1,6 @@
 package com.boojet.boot_api.controllers;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,6 @@ import com.boojet.boot_api.services.CategoryService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,27 +44,10 @@ public class CategoryController {
 
     // ----------------------------------------------CRUD-------------------------------------------------------
 
-    // @PostMapping(consumes = "application/json")
-    // public ResponseEntity<CategoryResponse> createCategory(@RequestBody
-    // CategoryCreateRequest req){
-    // log.info("HIT createCategory(CategoryCreateRequest)");
-    // log.info("CREATE CategoryCreateRequest code='{}' name='{}' type='{}'
-    // parentId={}",
-    // req.code(), req.name(), req.type(), req.parentId());
-
-    // Category cat = categoryService.createCategory(req);
-    // CategoryResponse response = categoryMapper.mapTo(cat);
-
-    // URI location = URI.create("/category/" + cat.getId());
-    // return ResponseEntity.created(location).body(response);
-    // }
-
     @Operation(summary = "Create a new category", description = "Creates a new category with the provided details.")
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@RequestBody
     CategoryCreateRequest req){
-
-    log.info("CREATE CategoryCreateRequest code='{}' name='{}' type='{}'  parentId={}",   req.code(), req.name(), req.type(), req.parentId());
 
     Category cat = categoryService.createCategory(req);
     CategoryResponse response = categoryMapper.mapTo(cat);
@@ -75,15 +56,6 @@ public class CategoryController {
     URI location = URI.create("/category/" + cat.getId());
     return ResponseEntity.created(location).body(response);
     }
-
-    // @Operation(summary = "Get all categories.", description = "Retreive a list of all categories.")
-    // @GetMapping
-    // public List<CategoryResponse> getAllCategories() {
-    //     return categoryService.findAllCategories()
-    //             .stream()
-    //             .map(categoryMapper::mapTo)
-    //             .toList();
-    // }
 
     @Operation(summary = "List all categories (admin)", description = "Returns active and inactive categories.")
     @GetMapping
