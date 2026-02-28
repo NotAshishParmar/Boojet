@@ -6,7 +6,6 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -16,21 +15,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
+import com.boojet.boot_api.controllers.dto.TransactionCreateRequest;
+import com.boojet.boot_api.controllers.dto.TransactionPatchRequest;
+import com.boojet.boot_api.controllers.dto.TransactionPutRequest;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.CategoryType;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
-import com.boojet.boot_api.domain.ValidationMode;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 import com.boojet.boot_api.exceptions.TransactionNotFoundException;
 import com.boojet.boot_api.repositories.AccountRepository;
+import com.boojet.boot_api.repositories.CategoryRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 import com.boojet.boot_api.services.TransactionService;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 @Transactional(readOnly = true)
@@ -40,12 +43,13 @@ public class TransactionServiceImpl implements TransactionService {
 
     // Dependency injection of the repository
     private final TransactionRepository transactionRepository;
-
     private final AccountRepository accountRepository;
+    private final CategoryRepository categoryRepository;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository, CategoryRepository categoryRepository) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     // ----------------------------CRUD operations----------------------------------
@@ -53,17 +57,29 @@ public class TransactionServiceImpl implements TransactionService {
     // add a new transaction and return the saved entity
     @Override
     @Transactional                                            //this annotation allows Spring to rollback and avoid partial writes to DB in case of an early termination due to exceptions
-    public Transaction addTransaction(Transaction transaction) {
+    public Transaction createTransaction(TransactionCreateRequest req) {
 
-        applyCreateDefaults(transaction);
+        if(req == null) throw new BadRequestException("Request must not be null");
 
-        //verify transaction data (all fields including Account) or throw
-        Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.CREATE);
+        requirePositive(req.amount());
 
-        //save income type in tx (derived from category)
-        syncIncomeFromCategory(verifiedTransaction);
+        Category cat = resolveCategoryId(req.categoryId());
+        Account from = resolveAccountId(req.accountId());
 
-        return transactionRepository.save(verifiedTransaction);
+        LocalDate date = (req.date() != null) ? req.date() : LocalDate.now();
+
+        Transaction tx = Transaction.builder()
+                .description(normalizeDescription(req.description()))
+                .amount(req.amount())
+                .date(date)
+                .category(cat)
+                .account(from)
+                .toAccount(resolveToAccountId(req.toAccountId()))
+                .build();
+
+        applyDerivedAndTransferRules(tx);
+
+        return transactionRepository.save(tx);
     }
 
     // return a list of all transactions
@@ -110,10 +126,32 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public Transaction updateTransactionComplete(Long id, Transaction transaction) {
+    public Transaction putTransaction(Long id, TransactionPutRequest req) {
 
-        Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.PUT_FULL);
-        return updateTransaction(id, verifiedTransaction);
+        validateTransactionId(id);
+        if(req == null) throw new BadRequestException("Request must not be null");
+
+        requirePositive(req.amount());
+
+        Transaction existing = transactionRepository.findById(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+
+        Category cat = resolveCategoryId(req.categoryId());
+        Account from = resolveAccountId(req.accountId());
+        Account to = resolveToAccountId(req.toAccountId());
+
+        if(req.date() == null) throw new BadRequestException("date is required");
+
+        existing.setDescription(normalizeDescription(req.description()));
+        existing.setAmount(req.amount());
+        existing.setDate(req.date());
+        existing.setCategory(cat);
+        existing.setAccount(from);
+        existing.setToAccount(to);
+
+        applyDerivedAndTransferRules(existing);
+
+        return transactionRepository.save(existing);
     }
 
 
@@ -121,34 +159,30 @@ public class TransactionServiceImpl implements TransactionService {
     // update an existing transaction by its ID and return the updated entity
     @Override
     @Transactional
-    public Transaction updateTransaction(Long id, Transaction transaction) {
+    public Transaction patchTransaction(Long id, TransactionPatchRequest req) {
 
-        //throws BadRequestException if id is null or not positive
         validateTransactionId(id);
+        if(req == null) throw new BadRequestException("Request must not be null");
 
-        //attach verified account or throw
-        if(transaction.getAccount() != null && transaction.getAccount().getId() != null){
-            Account account = transaction.getAccount();
-            Account verifiedAccount = validateAccount(account.getId());
-            transaction.setAccount(verifiedAccount);
+        Transaction existing = transactionRepository.findById(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+
+        if(req.description() != null) existing.setDescription(normalizeDescription(req.description()));
+        if(req.amount() != null){
+            validatePositiveIfPresent(req.amount());
+            existing.setAmount(req.amount());
         }
+        if(req.date() != null) existing.setDate(req.date());
 
-        // Ensure the transaction to update has the correct ID
-        transaction.setId(id);
+        if(req.categoryId() != null) existing.setCategory(resolveCategoryId(req.categoryId()));
+        if(req.accountId() != null) existing.setAccount(resolveAccountId(req.accountId()));
 
-        Transaction verifiedTransaction = validateTransaction(transaction, ValidationMode.PATCH_PARTIAL);
+        applyToAccountPatch(existing, req.toAccountId());
 
-        return transactionRepository.findById(id).map(existingTransaction -> {
-            Optional.ofNullable(verifiedTransaction.getDescription()).ifPresent(existingTransaction::setDescription);
-            Optional.ofNullable(verifiedTransaction.getAmount()).ifPresent(existingTransaction::setAmount);
-            Optional.ofNullable(verifiedTransaction.getDate()).ifPresent(existingTransaction::setDate);
-            Optional.ofNullable(verifiedTransaction.getCategory()).ifPresent(existingTransaction::setCategory);
-            Optional.ofNullable(verifiedTransaction.getAccount()).ifPresent(existingTransaction::setAccount);
+        // after all changes, enforce final semantics
+        applyDerivedAndTransferRules(existing);
 
-            syncIncomeFromCategory(existingTransaction);
-
-            return transactionRepository.save(existingTransaction);
-        }).orElseThrow(() -> new TransactionNotFoundException(id));
+        return transactionRepository.save(existing);
     }
 
     // delete a transaction by its ID
@@ -335,87 +369,104 @@ public class TransactionServiceImpl implements TransactionService {
 
     //---------------------------------------------------Helpers-----------------------------------------------------------------
 
+
+    private void applyDerivedAndTransferRules(Transaction tx){
+
+        CategoryType type = tx.getCategory().getType();
+
+        if(type == CategoryType.TRANSFER){
+
+            if(tx.getToAccount() == null){
+                throw new BadRequestException("Transfer transactions must include toAccountId");
+            }
+
+            if(tx.getAccount().getId().equals(tx.getToAccount().getId())){
+                throw new BadRequestException("Transfer source and destination accounts must be different");
+            }
+
+            tx.setIncome(false);
+            return;
+        }
+
+        // non-transfer
+        tx.setToAccount(null);
+        tx.setIncome(type == CategoryType.INCOME);
+    }
+
+    private void applyToAccountPatch(Transaction existing, JsonNode toAccountId){
+
+        // missing -> no change
+        if(toAccountId == null) return;
+
+        if(toAccountId.isNull()){
+            existing.setToAccount(null); // explicit clear
+            return;
+        }
+
+        if(toAccountId.isNumber()){
+            existing.setToAccount(validateAccount(toAccountId.asLong()));
+            return;
+        }
+
+        throw new BadRequestException("toAccountId must be a number or null");
+    }
+
     private void validateTransactionId(Long id) {
         if(id == null || id <= 0){
             throw new BadRequestException("Transaction ID must be a positive number");
         }
     }
 
-    private Transaction validateTransaction(Transaction transaction, ValidationMode mode) {
-
-        if (transaction == null) {
-            throw new BadRequestException("Transaction must not be null");
-        }
-
-        Money amount = transaction.getAmount();
-
-        boolean requireAll = mode != ValidationMode.PATCH_PARTIAL;
-
-        //amount must be positive if provided, required for CREATE & PUT_FULL
-        if(requireAll){
-            if(amount == null || (amount != null && !amount.isPositive())){
-                throw new BadRequestException("Transaction amount must be provided and be a positive value");
-            }
-
-            if(transaction.getCategory() == null || transaction.getCategory().getId() ==null){
-                throw new BadRequestException("Transaction must be associated with an existing category");
-            }
-
-            if(transaction.getAccount() == null || transaction.getAccount().getId() == null){
-                throw new BadRequestException("Transaction must be associated with an existing account");
-            }
-
-            if(transaction.getDate() == null){
-                throw new BadRequestException("Date of transaction cannot be null");
-            }
-
-            if(transaction.getDescription() == null || transaction.getDescription().isBlank()){
-                throw new BadRequestException("Transaction description must be provided");
-            }
-        }
-
-        // if client provides an account with an id in any mode, verify it exists and attach verified account OR throw
-        if(transaction.getAccount() != null && transaction.getAccount().getId() != null){
-            transaction.setAccount(validateAccount(transaction.getAccount().getId()));
-        }
-
-        //validate Category logic
-        if(transaction.getCategory() != null && transaction.getCategory().getId() != null){
-            transaction.setCategory(validateCategory(transaction.getCategory().getId()));
-        }
-
-        return transaction;
+    private String normalizeDescription(String desc){
+        if(desc == null || desc.isBlank())
+            return "No description";
+        return desc.trim();
     }
 
-    private Transaction applyCreateDefaults(Transaction transaction) {
-        if (transaction.getDate() == null) {
-            transaction.setDate(LocalDate.now());
-        }
-
-        if (transaction.getDescription() == null || transaction.getDescription().isBlank()) {
-            transaction.setDescription("No description");
-        }
-
-        return transaction;
+    private void requirePositive(Money amount){
+        if(amount == null || !amount.isPositive())
+            throw new BadRequestException("Transaction amount must be provided and be a positive value");
     }
 
-    private Account validateAccount(Long accountId) {
-        if (accountId == null || accountId <= 0) {
+    private void validatePositiveIfPresent(Money amount){
+        if(amount != null && !amount.isPositive())
+            throw new BadRequestException("Transaction amount must be a positive value");
+    }
+
+    private Account resolveAccountId(Long accountId){
+        if(accountId == null)
+            throw new BadRequestException("Account id is required");
+        return validateAccount(accountId);
+    }
+
+    private Account resolveToAccountId(Long accountId){
+        if(accountId == null)
+            return null;
+        return validateAccount(accountId);
+    }
+
+    private Category resolveCategoryId(Long categoryId){
+        if(categoryId == null)
+            throw new BadRequestException("Category ID is required");
+        return validateCategory(categoryId);
+    }
+
+    private Account validateAccount(Long accountId){
+
+        if(accountId == null || accountId <= 0)
             throw new BadRequestException("Account ID must be a positive number");
-        }
+
         return accountRepository.findById(accountId)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
+                .orElseThrow(()-> new AccountNotFoundException(accountId));
     }
 
-    private Category validateCategory(Long catId){
+    private Category validateCategory(Long categoryId){
 
-        if(catId == null || catId <= 0)
+        if(categoryId == null || categoryId <= 0)
             throw new BadRequestException("Category ID must be a positive number");
 
-        Category toVerify = categoryRepo.findById(catId)
-                .orElseThrow(()-> new CategoryNotFoundException(catId));
-
-        if()
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(()-> new CategoryNotFoundException(categoryId));
     }
 
     private YearMonth buildYearMonthOrThrow(int year, int month){
@@ -425,37 +476,5 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month Transaction");
         }
     }
-
-    private boolean isTransfer(Transaction tx){
-        return tx.getCategory() != null && tx.getCategory().getType() == CategoryType.TRANSFER;
-    }
-
-    private void syncIncomeFromCategory(Transaction tx){
-        if(tx.getCategory() == null || tx.getCategory().getType() == null){
-            throw new BadRequestException("Transaction category (and its type) is required");
-        }
-        tx.setIncome(tx.getCategory().getType() == CategoryType.INCOME);
-    }
-
-    // @Override 
-    // public List<Transaction> findTransactionsByAccount(Account account) {
-    // return transactionRepository.findAll().stream()
-    // .filter(t -> t.getAccount() == account)
-    // .toList();
-    // }
-
-    // @Override
-    // public Money calculateAccountBalance(Account account) {
-    // List<Transaction> transactions = findTransactionsByAccount(account);
-    // Money balance = Money.zero();
-
-    // for(Transaction t : transactions){
-    // balance = balance.add(t.isIncome()
-    // ? t.getAmount()
-    // : t.getAmount().negate());
-    // }
-
-    // return balance;
-    // }
 
 }

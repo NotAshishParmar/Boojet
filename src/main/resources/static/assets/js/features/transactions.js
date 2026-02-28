@@ -15,6 +15,12 @@ import { state } from '../core/state.js';
 import { refreshTxPage } from './txController.js';
 import { loadNet } from './net.js';
 import { loadAccounts } from './accounts.js';
+import { getCategoryById } from './categories.js';
+
+
+function toWrapEl(){ return $('#toAccountWrap'); }
+function toSelEl(){ return $('#toAccount'); }
+function fromSelEl(){ return $('#account'); }
 
 // ---------------- RENDER ----------------
 
@@ -40,7 +46,9 @@ export function renderTx(list) {
     const tr = document.createElement('tr');
 
     const catLabel = t.categoryName ?? t.categoryCode ?? (t.categoryId ? `#${t.categoryId}` : '—');
-    const acctLabel = t.accountName ?? (t.accountId ? `#${t.accountId}` : '—');
+    const acctLabel = t.toAccountName
+      ? `${t.accountName ?? (t.accountId ? `#${t.accountId}` : '—')} → ${t.toAccountName}`
+      : (t.accountName ?? (t.accountId ? `#${t.accountId}` : '—'));
 
     const acctName = t.account?.name ?? (t.accountId ?? '');
     const amt = signedAmount(t);
@@ -64,12 +72,13 @@ export function renderTx(list) {
 
 export async function editTx(id) {
   const t = await j(`${API}/${id}`);
+  const cat = getCategoryById(t.categoryId);
 
   $('#editId').value = id;
   $('#desc').value = t.description;
   window.__clearDescAutocomplete?.();
 
-  // amount: your backend might return Money object or number
+  // amount: backend might return Money object or number
   $('#amount').value = (typeof t.amount === 'number' ? t.amount : (t.amount?.amount ?? t.amount?.value ?? 0));
   $('#date').value = t.date;
 
@@ -82,8 +91,18 @@ export async function editTx(id) {
   // account
   $('#account').value = t.accountId ? String(t.accountId) : '';
 
+  // transfer fields
+  syncToAccountOptionsFromAccountSelect();
+  if (t.toAccountId) {
+    setTransferMode(true);
+    $('#toAccount').value = String(t.toAccountId);
+  } else {
+    setTransferMode(false);
+  }
+  refreshToAccountDisableSame();
+
   // hint (derived)
-  $('#incomeHint').textContent = t.income ? 'Income' : 'Expense';
+  $('#incomeHint').textContent = (cat?.type === 'TRANSFER') ? 'Transfer' : (t.income ? 'Income' : 'Expense');
 
   document.querySelector('#f button[type="submit"]').textContent = 'Update';
   $('#cancel').style.display = 'inline-block';
@@ -120,6 +139,68 @@ function saveLastTxAccountId(id) {
 
 // ---------------- FORM ----------------
 
+
+
+
+function isTransferSelected() {
+  const cid = parseInt($('#catId').value, 10);
+  if (!Number.isFinite(cid)) return false;
+  const cat = getCategoryById(cid);
+  return cat?.type === 'TRANSFER';
+}
+
+function setTransferMode(on) {
+  const toWrap = toWrapEl();
+  const toSel = toSelEl();
+  if (!toWrap || !toSel) return;
+
+  toWrap.style.display = on ? 'block' : 'none';   // ✅ here
+  if (!on) toSel.value = '';
+  refreshToAccountDisableSame();
+}
+
+function refreshToAccountDisableSame() {
+  const toSel = toSelEl();
+  const fromSel = fromSelEl();
+  if (!toSel || !fromSel) return;
+
+  const fromId = String(fromSel.value || '');
+  [...toSel.options].forEach(opt => {
+    if (!opt.value) return;
+    opt.disabled = (opt.value === fromId);
+  });
+}
+
+function syncToAccountOptionsFromAccountSelect() {
+  const toSel = toSelEl();
+  const fromSel = fromSelEl();
+  if (!toSel || !fromSel) return;
+
+  // Clone options from #account
+  const opts = [...fromSel.options].map(o => {
+    const opt = document.createElement('option');
+    opt.value = o.value;
+    opt.textContent = o.textContent;
+    return opt;
+  });
+
+  toSel.innerHTML = '';
+
+  // Add "(Choose)" placeholder
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = '(Choose)';
+  toSel.appendChild(ph);
+
+  opts.forEach(o => {
+    // skip empty "(All)" etc
+    if (!o.value) return;
+    toSel.appendChild(o);
+  });
+
+  refreshToAccountDisableSame();
+}
+
 export function resetTxForm() {
   $('#f').reset();
   window.__clearDescAutocomplete?.();
@@ -132,6 +213,8 @@ export function resetTxForm() {
   $('#catId').value = '';
   $('#catDisplay').value = '';
   $('#incomeHint').textContent = 'Type auto';
+
+  setTransferMode(false);
 }
 
 export function initTxForm() {
@@ -139,6 +222,17 @@ export function initTxForm() {
     const v = parseInt($('#account').value, 10);
     if (!Number.isNaN(v)) saveLastTxAccountId(v);
   });
+
+  $('#catId').addEventListener('change', () => {
+    setTransferMode(isTransferSelected());
+    // Ensure options exist + disable same-account
+    syncToAccountOptionsFromAccountSelect();
+    refreshToAccountDisableSame();
+  });
+
+  // keep toAccount dropdown in sync with account list
+  syncToAccountOptionsFromAccountSelect();
+  fromSelEl()?.addEventListener('change', refreshToAccountDisableSame);
 
   $('#f').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -151,11 +245,23 @@ export function initTxForm() {
 
     const payload = {
       description: $('#desc').value.trim(),
-      amount: Math.abs(rawAmount),       
+      amount: Math.abs(rawAmount),
       date: $('#date').value,
       categoryId: parseInt($('#catId').value, 10),
       accountId: parseInt($('#account').value, 10),
     };
+
+    const transfer = isTransferSelected();
+    if (transfer) {
+      if (!$('#toAccount').value) { alert('Please choose a destination (To) account.'); return; }
+      const toId = parseInt($('#toAccount').value, 10);
+      if (!Number.isFinite(toId)) { alert('To account is invalid'); return; }
+      if (toId === payload.accountId) { alert('From and To accounts must be different.'); return; }
+      payload.toAccountId = toId;
+    } else {
+      // for PUT (full replace), explicitly clear toAccountId
+      payload.toAccountId = null;
+    }
 
     const id = $('#editId').value;
     if (id) await j(`${API}/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
@@ -180,11 +286,11 @@ export function initTxForm() {
 
 // ---------------- HELPER ----------------
 
-function amountNumber(a){
+function amountNumber(a) {
   return (typeof a === 'number') ? a : (a?.amount ?? 0);
 }
 
-function signedAmount(t){
+function signedAmount(t) {
   const raw = amountNumber(t.amount);
 
   // If backend already sends negative expenses, keep it

@@ -7,6 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
+import com.boojet.boot_api.controllers.dto.TransactionCreateRequest;
+import com.boojet.boot_api.controllers.dto.TransactionPatchRequest;
+import com.boojet.boot_api.controllers.dto.TransactionPutRequest;
 import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
@@ -24,7 +27,7 @@ import com.boojet.boot_api.exceptions.BadRequestException;
  * 
  * <b>Notes:</b>
  * <ul>
- * <li>Callers should provide a valid {@link Transaction} that meets the
+ * <li>Callers should make valid create/put/patch requests that meets the
  * applications constraints.</li>
  * <li>Adding a transaction, updates the related account balance and total
  * balance on the ledger</li>
@@ -52,12 +55,12 @@ public interface TransactionService {
      * Runs within a transactional context to ensure data integrity. On any runtime
      * exception, the transaction is rolled back (no partial writes).
      * 
-     * @param transaction the candidate transaction to add
+     * @param req the request object containing transaction creation details
      * @return the saved transaction with generated ID and any defaults applied
      * @throws BadRequestException if input is {@code null} or fails validation
      * @throws AccountNotFoundException if the associated account does not exist
      */
-    Transaction addTransaction(Transaction transaction);
+    Transaction createTransaction(TransactionCreateRequest req);
 
     // List<Transaction> findAllTransactions();
 
@@ -136,12 +139,12 @@ public interface TransactionService {
      * </ul>
      * 
      * @param id the ID of the transaction to update
-     * @param transaction the transaction data to update with (all fields used)
+     * @param req the request object containing new transaction data
      * @return the updated transaction
      * @throws TransactionNotFoundException if no transaction with the given ID exists
      * @throws BadRequestException if input is {@code null} or fails validation
      */
-    Transaction updateTransactionComplete(Long id, Transaction transaction);
+    Transaction putTransaction(Long id, TransactionPutRequest req);
 
     /**
      * Partially updates an existing {@link Transaction} with the non-null fields
@@ -156,12 +159,12 @@ public interface TransactionService {
      *  {@link TransactionNotFoundException} is thrown.</li>
      * </ul>
      * @param id the ID of the transaction to update
-     * @param transaction the transaction data to update with (only non-null fields used)
+     * @param req the request object containing fields to update
      * @return the updated transaction
      * @throws TransactionNotFoundException if no transaction with the given ID exists
      * @throws BadRequestException if input fails validation
      */
-    Transaction updateTransaction(Long id, Transaction transaction);
+    Transaction patchTransaction(Long id, TransactionPatchRequest req);
 
     /**
      * Deletes the {@link Transaction} with the given ID.

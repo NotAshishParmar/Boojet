@@ -146,7 +146,15 @@ function setCatField(cat) {
 
   // Optional hint in UI: derived type
   const hint = $("#incomeHint");
-  if (hint) hint.textContent = cat.type === "INCOME" ? "Income" : "Expense";
+  if (hint) {
+    hint.textContent =
+      cat.type === "INCOME" ? "Income" :
+      cat.type === "EXPENSE" ? "Expense" :
+      "Transfer";
+  }
+
+  // IMPORTANT: notify listeners (transactions.js) that catId changed
+  $("#catId").dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function openOverlay() {

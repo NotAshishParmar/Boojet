@@ -50,7 +50,7 @@ details.collapse.tx-create[open] > summary{
   grid-template-columns: 1.25fr 0.9fr 0.9fr;
   grid-template-areas:
     "desc  amt   date"
-    "cat   cat   acct"
+    "cat   acct  toacct"
     "acts  acts  acts";
 }
 
@@ -68,6 +68,7 @@ details.collapse.tx-create[open] > summary{
 .tx-date{ grid-area: date; }
 .tx-cat { grid-area: cat; }
 .tx-acct{ grid-area: acct; }
+.tx-toacct{ grid-area: toacct; }
 
 .tx-actions{
   grid-area: acts;
@@ -129,7 +130,7 @@ details.collapse.tx-create[open] > summary{
       "desc desc"
       "amt  date"
       "cat  cat"
-      "acct acct"
+      "acct toacct"
       "acts acts";
   }
 }
@@ -143,8 +144,10 @@ details.collapse.tx-create[open] > summary{
       "date"
       "cat"
       "acct"
+      "toacct"
       "acts";
   }
+
   .tx-actions{
     justify-content:stretch;
   }
