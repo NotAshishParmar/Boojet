@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
+import com.boojet.boot_api.repositories.projections.CreditCardTotalView;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -231,5 +232,62 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       @Param("end") LocalDate end);
 
   boolean existsByCategoryId(Long categoryId);
+
+  // credit report summary
+  @Query("""
+        select coalesce(sum(t.amount), 0)
+        from Transaction t
+        join t.category c
+        join t.account a
+        where c.type = com.boojet.boot_api.domain.CategoryType.EXPENSE
+          and a.type = com.boojet.boot_api.domain.AccountType.CREDIT_CARD
+          and t.date between :start and :end
+      """)
+  BigDecimal creditAccumulatedBetween(@Param("start") LocalDate start,
+      @Param("end") LocalDate end);
+
+  @Query("""
+        select coalesce(sum(t.amount), 0)
+        from Transaction t
+        join t.category c
+        join t.toAccount a
+        where c.type = com.boojet.boot_api.domain.CategoryType.TRANSFER
+          and a.type = com.boojet.boot_api.domain.AccountType.CREDIT_CARD
+          and t.date between :start and :end
+      """)
+  BigDecimal creditPaidOffBetween(@Param("start") LocalDate start,
+      @Param("end") LocalDate end);
+
+  @Query("""
+        select a.id as accountId,
+               a.name as accountName,
+               coalesce(sum(t.amount), 0) as total
+        from Transaction t
+        join t.category c
+        join t.account a
+        where c.type = com.boojet.boot_api.domain.CategoryType.EXPENSE
+          and a.type = com.boojet.boot_api.domain.AccountType.CREDIT_CARD
+          and t.date between :start and :end
+        group by a.id, a.name
+        order by a.name asc
+      """)
+  List<CreditCardTotalView> creditAccumulatedByCardBetween(
+      @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+  @Query("""
+        select a.id as accountId,
+               a.name as accountName,
+               coalesce(sum(t.amount), 0) as total
+        from Transaction t
+        join t.category c
+        join t.toAccount a
+        where c.type = com.boojet.boot_api.domain.CategoryType.TRANSFER
+          and a.type = com.boojet.boot_api.domain.AccountType.CREDIT_CARD
+          and t.date between :start and :end
+        group by a.id, a.name
+        order by a.name asc
+      """)
+  List<CreditCardTotalView> creditPaidOffByCardBetween(
+      @Param("start") LocalDate start, @Param("end") LocalDate end);
 
 }
