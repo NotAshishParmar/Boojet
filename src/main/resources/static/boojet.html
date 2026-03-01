@@ -327,6 +327,34 @@
         <!-- Monthly Net + Summary -->
         <section class="block">
           <div class="grid-2 section">
+
+            <!-- Credit Summary -->
+            <section class="panel">
+
+              <div class="panel-header">
+                <div>
+                  <h2 class="panel-title">Credit Summary</h2>
+                  <div class="panel-sub">Uses the Year/Mon above</div>
+                </div>
+                <button id="refreshNet" class="btn-sm">Refresh</button>
+              </div>
+
+              <div class="cards cards-wrap" id="netCards">
+                <div class="card">
+                  <div class="label">Credit accumulated</div>
+                  <div id="c_acc" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Credit paid off</div>
+                  <div id="c_paid" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Credit net change</div>
+                  <div id="c_net" class="value">$0.00</div>
+                </div>
+              </div>
+            </section>
+
             <!-- Monthly Net -->
             <section class="panel">
               <div class="panel-header">

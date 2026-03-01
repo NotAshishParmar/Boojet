@@ -16,6 +16,7 @@ import { initFilters } from './features/filters.js';
 import { refreshTxPage } from './features/txController.js';
 import { loadNet } from './features/net.js';
 import { loadCategorySummary } from './features/categorySummary.js';
+import { loadCreditMonthly } from "./features/creditInsights.js";
 
 function bootDefaults() {
   $('#date').value = getLastTxDateOrToday();
@@ -63,10 +64,13 @@ function attachGlobals() {
   await refreshTxPage(0);
   await loadPlans();
   await loadNet();
+  await loadCreditMonthly();
   await loadCategorySummary();
+  
 
   document.getElementById('refreshNet')?.addEventListener('click', async () => {
     await loadNet();
+    await loadCreditMonthly();
     await loadCategorySummary();
   });
 
