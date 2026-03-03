@@ -92,10 +92,6 @@ public class Transaction {
         this.account = account;
     }
 
-    private boolean isTransfer(Transaction tx) {
-        return tx.getCategory() != null && tx.getCategory().getType() == CategoryType.TRANSFER;
-    }
-
     @Override
     public String toString() {
         String type = income ? "Income" : "Expense";
