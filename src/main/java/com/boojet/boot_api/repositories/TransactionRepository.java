@@ -194,6 +194,30 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       """)
   BigDecimal sumNetForAccount(@Param("accountId") Long accountId);
 
+
+  @Query("""
+      select coalesce(sum(
+        case
+          when c.type = com.boojet.boot_api.domain.CategoryType.TRANSFER then
+            case
+              when t.account.id = :accountId then -t.amount
+              else t.amount
+            end
+          else
+            case
+              when c.type = com.boojet.boot_api.domain.CategoryType.INCOME then t.amount
+              else -t.amount
+            end
+          end
+        ), 0)
+        from Transaction t
+        join t.category c
+        where (t.account.id = :accountId or t.toAccount.id = :accountId)
+          and t.date between :start and :end
+      """)
+  BigDecimal sumNetForAccountBetween(@Param("accountId") Long accountId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+
   @Query("""
         select coalesce(sum(t.amount), 0)
         from Transaction t
