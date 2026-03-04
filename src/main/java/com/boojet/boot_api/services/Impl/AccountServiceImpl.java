@@ -19,7 +19,9 @@ import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.repositories.AccountRepository;
 import com.boojet.boot_api.repositories.UserRepository;
+import com.boojet.boot_api.services.AccountBalanceSnapshotService;
 import com.boojet.boot_api.services.AccountService;
+import com.boojet.boot_api.services.BalanceService;
 import com.boojet.boot_api.services.TransactionService;
 
 
@@ -28,15 +30,20 @@ public class AccountServiceImpl implements AccountService{
 
     private final AccountRepository accountRepo;
     private final UserRepository userRepo;
+    private final BalanceService balanceService;
+    private final AccountBalanceSnapshotService snapshotService;
     private final TransactionService transactionService;
 
     private static final Long DEFAULT_USER_ID = 1L; //temporary until user management is implemented
     private static int DEFAULT_COUNTER = 1;
 
 
-    public AccountServiceImpl(AccountRepository accountRepo, UserRepository userRepo, TransactionService transactionService){
+    public AccountServiceImpl(AccountRepository accountRepo, UserRepository userRepo, BalanceService balanceService,
+                                 AccountBalanceSnapshotService snapshotService, TransactionService transactionService){
         this.accountRepo = accountRepo;
         this.userRepo = userRepo;
+        this.balanceService = balanceService;
+        this.snapshotService = snapshotService;
         this.transactionService = transactionService;
     }
 
@@ -52,7 +59,12 @@ public class AccountServiceImpl implements AccountService{
         applyCreateDefaults(account);
         Account verifiedAccount = validateAccount(account, ValidationMode.CREATE);
 
-        return accountRepo.save(verifiedAccount);
+        Account saved = accountRepo.save(verifiedAccount);
+
+        //seed initial snapshot at account creation date
+        snapshotService.upsert(saved.getId(), saved.getCreatedAt(), saved.getOpeningBalance());
+
+        return saved;
     }
 
     @Override
@@ -131,14 +143,20 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     @Transactional(readOnly = true)
-    public Money balance(Long id){
+    public Money balance(Long id) {
 
         validateAccountId(id);
-        Account acct = accountRepo.findById(id)
-            .orElseThrow(() -> new AccountNotFoundException(id));
 
-        Money delta = transactionService.calculateTotalByAccount(acct);
-        return acct.getOpeningBalance().add(delta);
+        if (!accountRepo.existsById(id)) {
+            throw new AccountNotFoundException(id);
+        }
+
+        LocalDate current = LocalDate.now().plusDays(1);
+
+        return balanceService.getBalanceAsOf(id, current)
+            .orElseThrow(() -> new BadRequestException(
+                "No balance snapshot exists for this account yet."
+            ));
     }
 
     @Override
