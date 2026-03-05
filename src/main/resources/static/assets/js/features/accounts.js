@@ -45,6 +45,7 @@ export async function renderAccountsSidebar(list) {
       <div class="side-meta" id="accbal-${a.id}">${money(0)}</div>
 
       <div class="side-actions">
+        <button class="side-btn" onclick="openBalanceDialog(${a.id}, '${esc(a.name)}')">Set Balance</button>
         <button class="side-btn" onclick="viewAccount(${a.id})">View Tx</button>
         <button class="side-btn danger" onclick="delAccount(${a.id})">Delete</button>
       </div>
@@ -135,3 +136,72 @@ export function initAccountForm() {
 
   $('#aclear').addEventListener('click', () => $('#acctForm').reset());
 }
+
+function fmtDate(d) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function openBalOverlay() {
+  document.getElementById('balOverlay')?.removeAttribute('hidden');
+}
+function closeBalOverlay() {
+  document.getElementById('balOverlay')?.setAttribute('hidden', '');
+}
+
+export function initBalanceSnapshotUI() {
+  const ov = document.getElementById('balOverlay');
+  const form = document.getElementById('balForm');
+  if (!ov || !form) return;
+
+  // ensure it's hidden on load
+  closeBalOverlay();
+
+  document.getElementById('balCancel')?.addEventListener('click', closeBalOverlay);
+  document.getElementById('balClose')?.addEventListener('click', closeBalOverlay);
+
+  // click outside the modal to close
+  ov.addEventListener('click', (e) => {
+    if (e.target === ov) closeBalOverlay();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = Number(document.getElementById('balAccountId').value);
+    const asOfDate = document.getElementById('balDate').value;
+    const balance = Number(document.getElementById('balAmount').value);
+
+    if (!id || !asOfDate || Number.isNaN(balance)) {
+      alert('Please enter a valid date and balance.');
+      return;
+    }
+
+    try {
+      await j(`${ACCOUNT}/${id}/balance-snapshot`, {
+        method: 'PUT',
+        body: JSON.stringify({ asOfDate, balance })
+      });
+
+      closeBalOverlay();
+      await loadAccounts();
+      await loadNet();
+      await loadCategorySummary();
+    } catch (err) {
+      alert(`Could not save balance snapshot.\n\n${String(err?.message || err)}`);
+    }
+  });
+}
+
+// Make it accessible for inline onclick
+window.openBalanceDialog = (accountId, accountName) => {
+  document.getElementById('balAccountId').value = String(accountId);
+
+  // default to tomorrow
+  const t = new Date();
+  t.setDate(t.getDate() + 1);
+  document.getElementById('balDate').value = fmtDate(t);
+
+  document.getElementById('balAmount').value = '';
+  openBalOverlay();
+};

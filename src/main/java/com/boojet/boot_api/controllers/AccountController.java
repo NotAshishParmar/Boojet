@@ -94,9 +94,9 @@ public class AccountController {
 
     //---------------------------------------------Reports / Calculations---------------------------------------------
 
-    @Operation(summary = "Get account balance by ID", description = "Calculate and retrieve the balance for a specific account by its ID.")
+    @Operation(summary = "Get current account balance by ID", description = "Calculate and retrieve the current balance for a specific account by its ID.")
     @GetMapping("/balance/{id}")
-    public ResponseEntity<?> balance(@PathVariable Long id) {
+    public ResponseEntity<?> currentBalance(@PathVariable Long id) {
         LocalDate current = LocalDate.now().plusDays(1);
 
         return balanceService.getBalanceAsOf(id, current)

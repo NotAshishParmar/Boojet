@@ -7,7 +7,7 @@ import { $ } from './core/dom.js';
 import { state, initPageSizeFromStorage } from './core/state.js';
 
 import { initDescriptionAutocomplete } from './features/autocomplete.js';
-import { loadAccounts, initAccountForm, viewAccount, delAccount } from './features/accounts.js';
+import { loadAccounts, initAccountForm, initBalanceSnapshotUI, viewAccount, delAccount } from './features/accounts.js';
 import { initTxForm, resetTxForm, getLastTxDateOrToday, editTx, delTx } from './features/transactions.js';
 import { initCategoryPicker, preloadCategories, preloadCategoriesActive } from './features/categories.js';
 import { initCategoryAdmin, loadCategoryAdmin } from './features/categoryAdmin.js';
@@ -49,6 +49,7 @@ function attachGlobals() {
 
   initTxForm();
   initAccountForm();
+  initBalanceSnapshotUI();
   initPlans();
   initFilters();
   initDescriptionAutocomplete();
