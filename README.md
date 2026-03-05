@@ -1,27 +1,54 @@
 # Boojet — Personal Budgeting API
 
-Budgeting API built with Java and Spring Boot. It exposes a REST API to track and record transactions for multiple accounts and display statistics based on the input data. Allows the user to define plans based on their expected income. Also includes a minimal static web page for quick interaction. 
-
+Boojet is a personal budgeting backend built with Java and Spring Boot. It exposes a REST API to record transactions across multiple accounts, categorize spending, and generate monthly summaries and insights. It also includes a lightweight static web UI for quick interaction.
 
 ## Features
 
-- Transactions API
-  - CRUD operations at `/transactions`
-  - Filter by date range, category, income/expense
+### Transactions
+- CRUD at `/transactions`
+- **Supports Transfers** (move money between accounts or pay credit cards)
+  - Transfer transactions include **from account** (`accountId`) and **to account** (`toAccountId`)
+  - Transfers are represented using `CategoryType.TRANSFER`
+- Search & filters:
+  - Filter by account, category, year/month
   - Pagination support
-- Accounts: 
-    - Group transactions under different accounts
-    - List transactions per account at `/accounts/{id}/transactions`
-- Categories
-  - Predefined set of categories (FOOD, RENT, UTILITIES, etc.)
-  - Assign categories to transactions
-- Income Planning
-  - Define monthly income plans at `/plan`
-  - Compare actual income vs planned
-- Simple Static UI
-  - Basic HTML/JS page at `/boojet.html` for quick interaction
-- Data Persistence
-  - PostgreSQL database (Docker Compose for local dev)
+
+### Accounts
+- Group transactions under different accounts (CHEQUING, SAVINGS, CREDIT_CARD, etc.) to keep track of balances and spending per account
+- Account totals update automatically based on transactions
+- **Account Snapshots** allow user to set and adjust account balances at specific points in time to correct for discrepancies and ensure accurate tracking
+
+### Categories
+- System-defined categories (FOOD, RENT, UTILITIES, INCOME, TRANSFER, etc.)
+- Gives user full flexibility to create/edit/define their own categories and subcategories
+- Category types: `EXPENSE`, `INCOME`, `TRANSFER`
+- Summary by Categories allows user to see where their money is going each month and identify areas for improvement
+
+### Income Planning
+- Define income plans at `/plan`
+- Monthly Net widget compares expected income vs actual income and expenses
+
+### Credit Insights
+- Monthly credit metrics endpoint:
+  - `GET /insights/credit/monthly?year=YYYY&month=M`
+  - Returns:
+    - **credit accumulated** (spending on credit cards)
+    - **credit paid off** (payments to credit cards via transfers)
+    - **net change** (accumulated − paid off)
+    - optional per-card breakdown (`byCard`)
+
+### Static Web UI
+- Basic HTML/JS UI for quick interaction
+- Supports:
+  - accounts
+  - categories (modal picker)
+  - transactions (including transfers with From/To accounts)
+  - monthly net + summary by category
+  - credit monthly metrics
+
+### Data Persistence
+- PostgreSQL database (Docker Compose for local dev)
+- Flyway migrations
 
 
 ## Tech Stack
@@ -29,8 +56,9 @@ Budgeting API built with Java and Spring Boot. It exposes a REST API to track an
 - Java 17, Maven
 - Spring Boot 3.5.x (Web, Data JPA, Validation)
 - PostgreSQL (Docker Compose for local dev)
-- ModelMapper, Lombok, Jackson
+- Lombok, Jackson
 - JUnit 5
+- Flyway (migrations)
 
 ## How To Run
 
@@ -68,18 +96,25 @@ http://localhost:8080/boojet.html
 ## Screenshots
 
 - **Accounts View:**
+
 ![Boojet UI Screenshot](docs/res/Accounts.png)
 
 - **Transactions View:**
+
 ![Boojet UI Screenshot](docs/res/Transactions.png)
 
-- **Income Planning View:**
-![Boojet UI Screenshot](docs/res/IncomePlans_and_Summary.png)
+- **Income Planning & Category Manager View:**
+
+![Boojet UI Screenshot](docs/res/IncomePlans_and_Categories.png)
+
+- **Analytics View:**
+
+![Boojet UI Screenshot](docs/res/Analytics.png)
 
 
 ## Docs
 
-- Architecture Overview: [Architecture Diagram](docs/architecture.md)
+- Architecture Overview[Outdated]: [Architecture Diagram](docs/architecture.md)
 - API Docs: [API Documentation](docs/api.md)
 - Testing Strategy: [Testing Documentation](docs/testing.md)
 
@@ -87,14 +122,16 @@ http://localhost:8080/boojet.html
 ## Future Improvements
 
 - API ergonomics: ~~pagination~~/sorting; query params for filters
+- Analytics/insights: more metrics and graphing
+- Features: recurring transactions, budgets/alerts, more account types (investments, loans), CSV import/export
 - Documentation/ops: ~~OpenAPI/Swagger~~; Actuator health/info
 - Validation/errors: bean validation + ~~centralized error handling~~
 - Data layer: ~~more aggregate queries in repositories~~
-- Migrations: Flyway/Liquibase (avoid `ddl-auto` in prod)
+- ~~Migrations: Flyway/Liquibase (avoid `ddl-auto` in prod)~~
 - Security: Spring Security and CORS tuning
 - Frontend: richer UI and charts; budgets/targets
-- Build/testing: fold CLI into Maven; add controller/service tests
+- More automated tests (controller/service level)
 
 
 ## Why I Built This
-I wanted to build something useful for myself. Boojet helps me track my spending, understand where my money goes, and take control of my finances. This is part of my personal journey back into software development.
+I wanted to built something useful for myself. Boojet helps me track spending, understand where money goes, and stay on top of credit card debt and payoff patterns. It’s also a portfolio-quality Spring Boot project that mirrors real-world patterns (DTOs, migrations, aggregate queries, and a small UI).
