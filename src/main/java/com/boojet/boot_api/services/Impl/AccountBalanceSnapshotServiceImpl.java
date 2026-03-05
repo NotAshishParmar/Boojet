@@ -40,7 +40,7 @@ public class AccountBalanceSnapshotServiceImpl implements AccountBalanceSnapshot
 
         LocalDate date = (asOfDate == null) ? LocalDate.now() : asOfDate;
 
-        if (date.isAfter(LocalDate.now())) {
+        if (date.isAfter(LocalDate.now().plusDays(1))) {
             throw new BadRequestException("asOfDate must not be in the future");
         }
 

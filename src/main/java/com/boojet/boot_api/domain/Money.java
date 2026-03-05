@@ -159,7 +159,7 @@ public class Money implements Comparable<Money>{
      * @param value numeric JSON value
      * @return a {@code Money} instance
      */
-    @JsonCreator
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static Money fromJson(BigDecimal value){
         return Money.of(value);
     }
