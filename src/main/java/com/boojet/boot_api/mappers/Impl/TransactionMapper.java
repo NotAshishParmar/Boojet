@@ -3,10 +3,10 @@ package com.boojet.boot_api.mappers.Impl;
 
 import org.springframework.stereotype.Component;
 
-import com.boojet.boot_api.controllers.dto.TransactionResponse;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.dto.transaction.TransactionResponse;
 import com.boojet.boot_api.mappers.Mapper;
 
 @Component

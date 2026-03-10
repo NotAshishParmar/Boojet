@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boojet.boot_api.controllers.dto.CategoryCreateRequest;
-import com.boojet.boot_api.controllers.dto.CategoryPatchRequest;
-import com.boojet.boot_api.controllers.dto.CategoryPutRequest;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.User;
+import com.boojet.boot_api.dto.category.CategoryPatchRequest;
+import com.boojet.boot_api.dto.category.CategoryCreateRequest;
+import com.boojet.boot_api.dto.category.CategoryPutRequest;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 import com.boojet.boot_api.repositories.CategoryRepository;

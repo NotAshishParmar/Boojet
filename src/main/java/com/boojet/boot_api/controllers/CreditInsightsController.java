@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.boojet.boot_api.controllers.dto.CreditMonthlySummaryResponse;
+import com.boojet.boot_api.dto.credit.CreditMonthlySummaryResponse;
 import com.boojet.boot_api.services.InsightsService;
 
 import io.swagger.v3.oas.annotations.Operation;

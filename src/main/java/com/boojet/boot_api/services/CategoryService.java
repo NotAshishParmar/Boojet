@@ -2,10 +2,10 @@ package com.boojet.boot_api.services;
 
 import java.util.List;
 
-import com.boojet.boot_api.controllers.dto.CategoryCreateRequest;
-import com.boojet.boot_api.controllers.dto.CategoryPatchRequest;
-import com.boojet.boot_api.controllers.dto.CategoryPutRequest;
 import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.dto.category.CategoryPatchRequest;
+import com.boojet.boot_api.dto.category.CategoryCreateRequest;
+import com.boojet.boot_api.dto.category.CategoryPutRequest;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.CategoryNotFoundException;
 

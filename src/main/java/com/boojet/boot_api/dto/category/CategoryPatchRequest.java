@@ -1,4 +1,4 @@
-package com.boojet.boot_api.controllers.dto;
+package com.boojet.boot_api.dto.category;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

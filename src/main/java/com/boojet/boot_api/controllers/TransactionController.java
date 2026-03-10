@@ -19,15 +19,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.boojet.boot_api.controllers.dto.CategorySummaryDto;
-import com.boojet.boot_api.controllers.dto.TransactionCreateRequest;
-import com.boojet.boot_api.controllers.dto.TransactionPatchRequest;
-import com.boojet.boot_api.controllers.dto.TransactionPutRequest;
-import com.boojet.boot_api.controllers.dto.TransactionResponse;
-import com.boojet.boot_api.controllers.dto.TxSuggestionDetails;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.dto.category.CategorySummaryDto;
+import com.boojet.boot_api.dto.transaction.TransactionCreateRequest;
+import com.boojet.boot_api.dto.transaction.TransactionPatchRequest;
+import com.boojet.boot_api.dto.transaction.TransactionPutRequest;
+import com.boojet.boot_api.dto.transaction.TransactionResponse;
+import com.boojet.boot_api.dto.transaction.TxSuggestionDetails;
 import com.boojet.boot_api.mappers.Impl.TransactionMapper;
 import com.boojet.boot_api.services.TransactionService;
 

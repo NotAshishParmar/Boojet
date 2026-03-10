@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.boojet.boot_api.controllers.dto.CategoryCreateRequest;
-import com.boojet.boot_api.controllers.dto.CategoryPatchRequest;
-import com.boojet.boot_api.controllers.dto.CategoryPutRequest;
-import com.boojet.boot_api.controllers.dto.CategoryResponse;
 import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.dto.category.CategoryPatchRequest;
+import com.boojet.boot_api.dto.category.CategoryCreateRequest;
+import com.boojet.boot_api.dto.category.CategoryPutRequest;
+import com.boojet.boot_api.dto.category.CategoryResponse;
 import com.boojet.boot_api.mappers.Impl.CategoryMapper;
 import com.boojet.boot_api.services.CategoryService;
 

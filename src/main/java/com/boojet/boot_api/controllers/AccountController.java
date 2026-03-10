@@ -20,10 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.boojet.boot_api.controllers.dto.BalanceSnapshotRequest;
+import com.boojet.boot_api.dto.account.BalanceSnapshotRequest;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.AccountBalanceSnapshot;
-import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.services.AccountBalanceSnapshotService;
 import com.boojet.boot_api.services.AccountService;

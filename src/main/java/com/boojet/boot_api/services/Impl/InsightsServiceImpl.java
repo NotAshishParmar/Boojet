@@ -10,8 +10,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boojet.boot_api.controllers.dto.CreditMonthlySummaryResponse;
 import com.boojet.boot_api.domain.Money;
+import com.boojet.boot_api.dto.credit.CreditMonthlySummaryResponse;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.projections.CreditCardTotalView;

@@ -2,9 +2,9 @@ package com.boojet.boot_api.mappers.Impl;
 
 import org.springframework.stereotype.Component;
 
-import com.boojet.boot_api.controllers.dto.CategoryResponse;
 import com.boojet.boot_api.mappers.Mapper;
 import com.boojet.boot_api.domain.Category;
+import com.boojet.boot_api.dto.category.CategoryResponse;
 
 @Component
 public class CategoryMapper implements Mapper<Category, CategoryResponse>{
