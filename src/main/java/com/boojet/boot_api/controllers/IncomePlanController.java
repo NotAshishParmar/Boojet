@@ -4,6 +4,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.boojet.boot_api.domain.IncomePlan;                                           //NOTE: remove dependency on Entity later
 import com.boojet.boot_api.domain.Money;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanCreateRequest;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanPatchRequest;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanPutRequest;
 import com.boojet.boot_api.services.IncomePlanService;
 import com.boojet.boot_api.services.IncomePlanService.NetReport;
 
@@ -38,8 +41,8 @@ public class IncomePlanController {
     //--------------------------------------------------CRUD-------------------------------------------------------
     @Operation(summary = "Create a new income plan", description = "Creates a new income plan with the provided details.")
     @PostMapping
-    public IncomePlan createPlan(@RequestBody IncomePlan incomePlan) {          
-        return incomePlanService.createPlan(incomePlan);
+    public IncomePlan createPlan(@RequestBody IncomePlanCreateRequest req) {          
+        return incomePlanService.createIncomePlan(req);
     }
 
     @Operation(summary = "Get all income plans", description = "Retrieve a list of all income plans.")
@@ -57,15 +60,15 @@ public class IncomePlanController {
 
     @Operation(summary = "Update an income plan by ID", description = "Update the details of an existing income plan by its ID.")
     @PutMapping("/{id}")
-    public IncomePlan updateIncomePlan(@PathVariable Long id, @RequestBody IncomePlan incomePlan){
-        IncomePlan updatedPlan = incomePlanService.updatePlanComplete(id, incomePlan);
+    public IncomePlan updateIncomePlan(@PathVariable Long id, @RequestBody IncomePlanPutRequest req){
+        IncomePlan updatedPlan = incomePlanService.putIncomePlan(id, req);
         return updatedPlan;
     }
 
     @Operation(summary = "Partially update an income plan by ID", description = "Partially update the details of an existing income plan by its ID.")
     @PatchMapping("/{id}")
-    public IncomePlan patchIncomePlan(@PathVariable Long id, @RequestBody IncomePlan incomePlan){
-        IncomePlan patchedPlan = incomePlanService.updatePlan(id, incomePlan);
+    public IncomePlan patchIncomePlan(@PathVariable Long id, @RequestBody IncomePlanPatchRequest req){
+        IncomePlan patchedPlan = incomePlanService.patchIncomePlan(id, req);
         return patchedPlan;
     }
 

@@ -1,9 +1,9 @@
 package com.boojet.boot_api.services.Impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +12,10 @@ import com.boojet.boot_api.domain.IncomePlan;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.PayType;
 import com.boojet.boot_api.domain.User;
-import com.boojet.boot_api.domain.ValidationMode;
+
+import com.boojet.boot_api.dto.incomePlan.IncomePlanCreateRequest;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanPatchRequest;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanPutRequest;
 import com.boojet.boot_api.repositories.IncomePlanRepository;
 import com.boojet.boot_api.repositories.UserRepository;
 import com.boojet.boot_api.services.IncomePlanService;
@@ -44,16 +47,30 @@ public class IncomePlanServiceImpl implements IncomePlanService{
     //----------------------------------------CRUD---------------------------------------------------
     @Override
     @Transactional
-    public IncomePlan createPlan(IncomePlan plan){
-        if(plan.getUser() == null){
-            User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
-            plan.setUser(defaultUser);
-        }
+    public IncomePlan createIncomePlan(IncomePlanCreateRequest req){
+        
+        User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
 
-        applyCreateDefaults(plan);
-        IncomePlan verifiedIncomePlan = validateIncomePlan(plan, ValidationMode.CREATE);
+        String name = normalizeSourceName(req.sourceName());
+        LocalDate effectiveFrom = defaultEffectiveFrom(req.effectiveFrom());
 
-        return incomePlanRepo.save(verifiedIncomePlan);
+        //validate
+        validateEffectiveDates(effectiveFrom, req.effectiveTo());
+        validateHoursPerWeek(req.hoursPerWeek(), req.payType());
+        requirePayType(req.payType());
+        requireAmount(req.amount());
+
+        IncomePlan plan = IncomePlan.builder()
+                                    .user(defaultUser)
+                                    .sourceName(name)
+                                    .payType(req.payType())
+                                    .amount(req.amount())
+                                    .hoursPerWeek(req.hoursPerWeek())
+                                    .effectiveFrom(effectiveFrom)
+                                    .effectiveTo(req.effectiveTo())
+                                    .build();
+
+        return incomePlanRepo.save(plan);
     }
 
     @Override
@@ -71,32 +88,92 @@ public class IncomePlanServiceImpl implements IncomePlanService{
 
     @Override
     @Transactional
-    public IncomePlan updatePlanComplete(Long id, IncomePlan incomePlan){
+    public IncomePlan putIncomePlan(Long id, IncomePlanPutRequest req){
         validateIncomePlanId(id);
-        IncomePlan verifiedIncomePlan = validateIncomePlan(incomePlan, ValidationMode.PUT_FULL);
-        return updatePlan(id, verifiedIncomePlan);
+
+        IncomePlan existing = incomePlanRepo.findById(id)
+                                .orElseThrow(() -> new IncomePlanNotFoundException(id));
+        
+        //validate
+        String name = requireSourceName(req.sourceName());
+
+        requireEffectiveFrom(req.effectiveFrom());
+        validateEffectiveDates(req.effectiveFrom() , req.effectiveTo());
+        requirePayType(req.payType());
+        validateHoursPerWeek(req.hoursPerWeek(), req.payType());
+        requireAmount(req.amount());
+
+        //update
+        existing.setSourceName(name);
+        existing.setPayType(req.payType());
+        existing.setAmount(req.amount());
+        existing.setHoursPerWeek(req.hoursPerWeek());
+        existing.setEffectiveFrom(req.effectiveFrom());
+        existing.setEffectiveTo(req.effectiveTo());
+
+        return incomePlanRepo.save(existing);
     }
 
     @Override
     @Transactional
-    public IncomePlan updatePlan(Long id, IncomePlan incomePlan){
-
+    public IncomePlan patchIncomePlan(Long id, IncomePlanPatchRequest req){
         validateIncomePlanId(id);
-        IncomePlan verifiedIncomePlan = validateIncomePlan(incomePlan, ValidationMode.PATCH_PARTIAL);
 
-        //making sure the new incomePlan has the id corrected to the current incomePlan we are replacing
-        verifiedIncomePlan.setId(id);
+        IncomePlan existing = incomePlanRepo.findById(id)
+                                .orElseThrow(() -> new IncomePlanNotFoundException(id));
+        
+        
+        if (req.sourceName() != null) {
+            if (req.sourceName().isBlank()) {
+                throw new BadRequestException("Source name must not be blank");
+            }
+            existing.setSourceName(req.sourceName().trim());
+        }
 
-        return incomePlanRepo.findById(id).map(existingPlan -> {
-            Optional.ofNullable(verifiedIncomePlan.getUser()).ifPresent(existingPlan::setUser);
-            Optional.ofNullable(verifiedIncomePlan.getSourceName()).ifPresent(existingPlan::setSourceName);
-            Optional.ofNullable(verifiedIncomePlan.getPayType()).ifPresent(existingPlan::setPayType);
-            Optional.ofNullable(verifiedIncomePlan.getAmount()).ifPresent(existingPlan::setAmount);
-            Optional.ofNullable(verifiedIncomePlan.getHoursPerWeek()).ifPresent(existingPlan::setHoursPerWeek);
-            Optional.ofNullable(verifiedIncomePlan.getEffectiveFrom()).ifPresent(existingPlan::setEffectiveFrom);
-            Optional.ofNullable(verifiedIncomePlan.getEffectiveTo()).ifPresent(existingPlan::setEffectiveTo);
-            return incomePlanRepo.save(existingPlan);
-        }).orElseThrow(() -> new IncomePlanNotFoundException(id));
+        if(req.payType() != null)
+            existing.setPayType(req.payType());
+
+        if (req.amount() != null) {
+            if (!req.amount().isPositive()) {
+                throw new BadRequestException("Amount, if provided, must be a positive number");
+            }
+            existing.setAmount(req.amount());
+        }
+
+        if(req.hoursPerWeek() != null){
+            if(req.hoursPerWeek().isNull())
+                existing.setHoursPerWeek(null);
+            else if(req.hoursPerWeek().isNumber())
+                existing.setHoursPerWeek(req.hoursPerWeek().decimalValue());
+            else
+                throw new BadRequestException("hoursPerWeek must be a number or null");
+        }
+
+        if (req.effectiveFrom() != null) {
+            existing.setEffectiveFrom(req.effectiveFrom());
+        }
+
+        if(req.effectiveTo() != null){
+            if(req.effectiveTo().isNull()){
+                existing.setEffectiveTo(null);
+            }
+            else if(req.effectiveTo().isTextual()){
+                try{
+                    existing.setEffectiveTo(LocalDate.parse(req.effectiveTo().asText()));
+                }
+                catch(RuntimeException e){
+                    throw new BadRequestException("effectiveTo must be a valid ISO date (yyyy-mm-dd) or null");
+                }
+            }
+            else{
+                throw new BadRequestException("effectiveTo must be a date string or null");
+            }
+        }
+
+        validateEffectiveDates(existing.getEffectiveFrom(), existing.getEffectiveTo());
+        validateHoursPerWeek(existing.getHoursPerWeek(), existing.getPayType());
+
+        return incomePlanRepo.save(existing);
     }
 
     @Override
@@ -176,57 +253,53 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         }
     }
 
-    private IncomePlan validateIncomePlan(IncomePlan plan, ValidationMode mode){
-        if(plan == null){
-            throw new BadRequestException("Income plan must not be null");
+    private String normalizeSourceName(String name){
+        if(name == null || name.isBlank()){
+            String generated = "Income Plan " + DEFAULT_INCOMEPLAN_COUNTER;
+            DEFAULT_INCOMEPLAN_COUNTER++;
+            return generated;     
         }
-
-        final boolean requireAll = (mode != ValidationMode.PATCH_PARTIAL);
-
-
-        //if present, amount must be positive (applies to all validation modes)
-        if(plan.getAmount() != null && !plan.getAmount().isPositive()){
-            throw new BadRequestException("Income plan amount must be a positive number");
-        }
-        
-        if(plan.getEffectiveFrom() != null && plan.getEffectiveTo() != null &&
-            plan.getEffectiveFrom().isAfter(plan.getEffectiveTo())){
-            throw new BadRequestException("Income plan closing date cannot be in the future relative to effective from date");
-        }
-
-        if(plan.getPayType() == PayType.HOURLY && plan.getHoursPerWeek() == null){
-            throw new BadRequestException("Hours per week is required for Hourly Pay type");
-        }
-
-        if(requireAll){
-            if(plan.getUser() == null || plan.getUser().getId() == null){
-                throw new BadRequestException("Income plan must be associated with a valid user");
-            }
-            if(plan.getSourceName() == null || plan.getSourceName().isBlank()){
-                throw new BadRequestException("Income plan source name is required");
-            }
-            if(plan.getPayType() == null){
-                throw new BadRequestException("Income plan type is required");
-            }
-            if(plan.getAmount() == null){
-                throw new BadRequestException("Income plan amount is required");
-            }
-            if(plan.getEffectiveFrom() == null){
-                throw new BadRequestException("Income plan effective date is required");
-            }
-        }
-
-        return plan;
+        return name.trim();
     }
 
-    private void applyCreateDefaults(IncomePlan plan){
-        if(plan.getSourceName() == null || plan.getSourceName().isBlank()){
-            plan.setSourceName("Income Plan " + DEFAULT_INCOMEPLAN_COUNTER);
-            DEFAULT_INCOMEPLAN_COUNTER++;
-        }
-        if(plan.getEffectiveFrom() == null){
-            plan.setEffectiveFrom(LocalDate.now());
-        }
+    private String requireSourceName(String name){
+        if(name == null || name.isBlank())
+            throw new BadRequestException("Name cannot be empty for a PUT");
+
+        return name.trim();
+    }
+
+    private void requireEffectiveFrom(LocalDate effectiveFrom){
+        if(effectiveFrom == null)
+            throw new BadRequestException("Effective From cannot be empty for a PUT");
+    }
+
+    private LocalDate defaultEffectiveFrom (LocalDate effectiveFrom){
+        return effectiveFrom != null ? effectiveFrom : LocalDate.now();
+    }
+
+    private void validateHoursPerWeek (BigDecimal hoursPerWeek, PayType payType){
+        if(payType == PayType.HOURLY && hoursPerWeek == null)
+            throw new BadRequestException("Hours per week are required for HOURLY PayType");
+    }
+
+    private void requirePayType(PayType payType){
+        if(payType == null)
+            throw new BadRequestException("Pay Type of an Income Plan cannot be null");
+    }
+
+    private void requireAmount(Money amount) {
+    if (amount == null) {
+        throw new BadRequestException("Income plan amount is required");
+    }
+    if (!amount.isPositive()) {
+        throw new BadRequestException("Income plan amount must be positive");
+    }
+}
+
+    private void validateEffectiveDates(LocalDate effectiveFrom, LocalDate effectiveTo){
+        if(effectiveFrom.isAfter(effectiveTo))
+            throw new BadRequestException("Income plan cannot be expire before the Effective From date");
     }
 
     private YearMonth buildYearMonthOrThrow(int year, int month){

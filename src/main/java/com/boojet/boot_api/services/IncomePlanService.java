@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.boojet.boot_api.domain.IncomePlan;
 import com.boojet.boot_api.domain.Money;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanCreateRequest;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanPatchRequest;
+import com.boojet.boot_api.dto.incomePlan.IncomePlanPutRequest;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.IncomePlanNotFoundException;
 
@@ -38,18 +41,18 @@ public interface IncomePlanService {
      *  <li>If {@code plan.sourceName} is {@code null} or blank, it is set to
      *  {@code "Default Plan"}.</li>
      *  <li>If {@code plan.effectiveTo} is provided, then it must be after  
-     *  {@code plan.effectiveFrom} but before {@code LocalDate.now()}.</li>
+     *  {@code plan.effectiveFrom}.</li>
      * </ul>
      * 
      * 
      * Runs within a transactional context to ensure data integrity. On any runtime
      * exception, the income plan is rolled back (no partial writes).
      * 
-     * @param plan the candidate Income Plan to add
+     * @param req the request object containing income plan creation details
      * @return the saved Income Plan with generated ID and any defaults applied
      * @throws BadRequestException if input is {@code null} or fails validation
      */
-    IncomePlan createPlan(IncomePlan plan);
+    IncomePlan createIncomePlan(IncomePlanCreateRequest req);
 
     /**
      * Finds and returns a list of all {@code IncomePlan(s)} present in the repository.
@@ -75,20 +78,17 @@ public interface IncomePlanService {
      * <ul>
      *  <li>All fields in {@code incomePlan} are used to update the existing
      *  record.</li>
-     *  <li>The {@code id} field in {@code incomePlan} is ignored; the provided
-     *  {@code id} parameter is used to locate the existing record.</li>
      *  <li>If no existing record is found with the given {@code id}, an
      *  {@link IncomePlanNotFoundException} is thrown.</li>
      * </ul>
      * 
-     * 
      * @param id the ID of the IncomePlan to update
-     * @param incomePlan the IncomePlan data to update with (all fileds used)
+     * @param req the request object containing income plan details to update
      * @return the updated IncomePlan
      * @throws IncomePlanNotFoundException if no IncomePlan with the given ID exists
      * @throws BadRequestException if input is {@code null} or fails validation
      */
-    IncomePlan updatePlanComplete(Long id, IncomePlan incomePlan);
+    IncomePlan putIncomePlan(Long id, IncomePlanPutRequest req);
 
     /**
      * Partially updates an existing {@link IncomePlan} by replacing all non-null
@@ -97,20 +97,18 @@ public interface IncomePlanService {
      * <ul>
      *  <li>Only non-null fields in {@code incomePlan} are used to update the existing
      *  record.</li>
-     *  <li>The {@code id} field in {@code incomePlan} is ignored; the provided
-     *  {@code id} parameter is used to locate the existing record.</li>
      *  <li>If no existing record is found with the given {@code id}, an
      *  {@link IncomePlanNotFoundException} is thrown.</li>
      * </ul>
      * 
      * 
      * @param id the ID of the IncomePlan to update
-     * @param incomePlan the IncomePlan data to update with (only non-null fields used)
+     * @param req the request object containing income plan details to update
      * @return the updated IncomePlan
      * @throws IncomePlanNotFoundException if no IncomePlan with the given ID exists
      * @throws BadRequestException if input fails validation
      */
-    IncomePlan updatePlan (Long id, IncomePlan incomePlan);
+    IncomePlan patchIncomePlan(Long id, IncomePlanPatchRequest req);
 
     /**
      * Deletes the {@link IncomePlan} with the given ID.
