@@ -49,12 +49,12 @@ public class CategoryController {
     public ResponseEntity<CategoryResponse> createCategory(@RequestBody
     CategoryCreateRequest req){
 
-    Category cat = categoryService.createCategory(req);
-    CategoryResponse response = categoryMapper.mapTo(cat);
+        Category cat = categoryService.createCategory(req);
+        CategoryResponse response = categoryMapper.mapTo(cat);
 
-    //correct pattern of REST: POST create -> 201 + Location
-    URI location = URI.create("/category/" + cat.getId());
-    return ResponseEntity.created(location).body(response);
+        //correct pattern of REST: POST create -> 201 + Location
+        URI location = URI.create("/category/" + cat.getId());
+        return ResponseEntity.created(location).body(response);
     }
 
     @Operation(summary = "List all categories (admin)", description = "Returns active and inactive categories.")
