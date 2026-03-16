@@ -1,0 +1,51 @@
+/* ----------------INCOME PLANS---------------------- */
+
+.plan-to-modal {
+  width: min(420px, calc(100vw - 24px));
+  max-width: 420px;
+  min-width: 0;
+}
+
+.plan-to-body {
+  display: block;
+  text-align: left;
+}
+
+.plan-to-body form {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.plan-to-body label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+}
+
+.plan-to-body input[type="date"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.plan-to-body .muted,
+.plan-to-body .small {
+  text-align: left;
+}
+
+.plan-to-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#planToOverlay {
+  overflow: hidden;
+}

@@ -491,6 +491,36 @@
       </div>
     </div>
 
+    <!-- Income Plan End Date Overlay -->
+    <div id="planToOverlay" class="overlay" hidden>
+      <div class="modal plan-to-modal">
+        <div class="modal-head">
+          <h3>Set Plan End Date</h3>
+          <button type="button" id="planToClose" class="btn-ghost">Close</button>
+        </div>
+
+        <div class="modal-body plan-to-body" style="display:block;">
+          <form id="planToForm">
+            <input type="hidden" id="planToId">
+
+            <label class="row">
+              Effective To
+              <input id="planToDate" type="date" required>
+              <div class="muted" style="font-size:12px;margin-top:4px;">
+                This will stop the plan after the selected date.
+              </div>
+            </label>
+
+            <div class="actions plan-to-actions" style="margin-top:14px;">
+              <button type="button" id="planToClear" class="btn-ghost">Clear End Date</button>
+              <button type="button" id="planToCancel" class="btn-ghost">Cancel</button>
+              <button type="submit" class="btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
 
     <!-- JS -->
     <script type="module" src="/assets/js/main.js"></script>
