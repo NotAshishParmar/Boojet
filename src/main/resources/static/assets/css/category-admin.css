@@ -1,0 +1,145 @@
+/* ================= Category Admin List ================= */
+#catAdminList{
+  display:grid;
+  gap:8px;
+}
+
+.cat-admin-group{
+  display:grid;
+  gap:6px;
+}
+
+.cat-admin-item{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px 12px;
+  align-items:start;
+  padding:10px 12px;
+  border:1px solid #eee;
+  border-radius:12px;
+  background:#fafafa;
+}
+
+.cat-admin-item.child{
+  margin-left:14px;
+  background:#fcfcfc;
+  border-left:3px solid #e5e7eb;
+  padding-left:10px;
+}
+
+.cat-admin-main{
+  min-width:0;
+}
+
+.cat-admin-topline{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.cat-admin-title{
+  font-weight:750;
+  line-height:1.15;
+}
+
+.cat-admin-item.child .cat-admin-title{
+  font-weight:700;
+  font-size:15px;
+}
+
+.cat-admin-meta{
+  margin-top:2px;
+  margin-left:18px;
+  color:#6b7280;
+  line-height:1.2;
+  font-size:13px;
+  overflow-wrap:anywhere;
+}
+
+.cat-admin-item.child .cat-admin-meta{
+  margin-left:0;
+}
+
+.cat-admin-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.cat-admin-actions .side-btn{
+  height:32px;
+  padding:0 10px;
+  border-radius:10px;
+}
+
+/* tiny inline chevron */
+button.cat-toggle{
+  appearance:none;
+  -webkit-appearance:none;
+  width:14px;
+  min-width:14px;
+  height:14px;
+  min-height:14px;
+  padding:0;
+  margin:0;
+  border:0;
+  outline:none;
+  background:transparent;
+  box-shadow:none;
+  border-radius:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  line-height:1;
+  color:#6b7280;
+  flex:0 0 14px;
+}
+
+button.cat-toggle:hover{
+  background:transparent;
+  color:#111827;
+  transform:none;
+}
+
+button.cat-toggle:active{
+  transform:none;
+}
+
+button.cat-toggle.is-hidden{
+  visibility:hidden;
+}
+
+.cat-admin-children{
+  display:none;
+  gap:6px;
+}
+
+.cat-admin-group.is-open .cat-admin-children{
+  display:grid;
+}
+
+@media (max-width: 520px){
+  .cat-admin-item{
+    grid-template-columns:1fr;
+  }
+
+  .cat-admin-actions{
+    justify-content:flex-start;
+  }
+
+  .cat-admin-item.child{
+    margin-left:10px;
+  }
+
+  .cat-admin-meta{
+    margin-left:18px;
+  }
+
+  .cat-admin-item.child .cat-admin-meta{
+    margin-left:0;  
+  }
+}

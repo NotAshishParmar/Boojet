@@ -1,0 +1,79 @@
+/* ================= Left: Account / Plan lists ================= */
+.left .side-table{ display:none; }
+
+.block-actions{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+
+.big-money{
+  font-weight:800;
+  font-variant-numeric: tabular-nums;
+}
+
+.side-list{
+  display:grid;
+  gap:10px;
+  margin-top:10px;
+}
+
+.side-item{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:8px 12px;
+  padding:12px;
+  border:1px solid #eee;
+  border-radius:12px;
+  background:#fafafa;
+}
+
+.side-title{
+  font-weight:750;
+  line-height:1.15;
+}
+
+.side-sub{
+  margin-top:6px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  overflow-wrap:anywhere;
+}
+
+.side-meta{
+  font-weight:800;
+  font-variant-numeric: tabular-nums;
+  text-align:right;
+  white-space:nowrap;
+}
+
+.side-actions{
+  grid-column:1 / -1;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.side-btn{
+  height:34px;
+  padding:0 12px;
+  border-radius:10px;
+}
+
+.side-btn:hover{ background:#f3f4f6; }
+
+.side-btn.danger{ border-color:#f3c2c2; }
+.side-btn.danger:hover{ background:#fff5f5; }
+
+/* Left column form sizing */
+.left input,
+.left select,
+.left button{
+  height:42px;
+  border-radius:10px;
+}
+
+.left form{ grid-template-columns:1fr; }
+.left .actions{ grid-column:1 / -1; }
+.left form label{ font-size:13px; }

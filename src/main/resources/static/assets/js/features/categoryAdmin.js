@@ -66,49 +66,93 @@ function renderAdminList(all) {
   host.innerHTML = "";
 
   for (const r of roots) {
-    const wrap = document.createElement("div");
-    wrap.className = "calItem";
-    wrap.innerHTML = `
-      <div>
-        <div class="calDate">${esc(r.name)}</div>
-        <div class="calPreview muted">${esc(r.code)} • ${esc(r.type)}</div>
+    const kids = byParent.get(r.id) || [];
+    const hasKids = kids.length > 0;
+
+    const group = document.createElement("div");
+    group.className = "cat-admin-group";
+
+    const root = document.createElement("div");
+    root.className = "cat-admin-item";
+    root.innerHTML = `
+      <div class="cat-admin-main">
+        <div class="cat-admin-topline">
+          <button
+            class="cat-toggle ${hasKids ? "" : "is-hidden"}"
+            type="button"
+            data-act="toggle"
+            data-id="${r.id}"
+            aria-expanded="false"
+            title="${hasKids ? "Show subcategories" : ""}"
+          >
+            ▸
+          </button>
+          <div class="cat-admin-title">${esc(r.name)}</div>
+        </div>
+        <div class="cat-admin-meta">${esc(r.code)} • ${esc(r.type)}</div>
       </div>
-      <div class="row" style="gap:8px">
-        <button class="btn-ghost" type="button" data-act="edit" data-id="${r.id}">Edit</button>
-        <button class="btn-ghost" type="button" data-act="del" data-id="${r.id}">Delete</button>
+      <div class="cat-admin-actions">
+        <button class="side-btn btn-ghost" type="button" data-act="edit" data-id="${r.id}">Edit</button>
+        <button class="side-btn btn-ghost danger" type="button" data-act="del" data-id="${r.id}">Delete</button>
       </div>
     `;
-    wrap.classList.toggle("is-inactive", !r.active); 
-    host.appendChild(wrap);
+    root.classList.toggle("is-inactive", !r.active);
+    group.appendChild(root);
 
-    const kids = byParent.get(r.id) || [];
-    for (const c of kids) {
-      const child = document.createElement("div");
-      child.className = "calItem";
-      child.style.marginLeft = "10px";
-      child.innerHTML = `
-        <div>
-          <div class="calDate">${esc(c.name)}</div>
-          <div class="calPreview muted">${esc(c.code)} • ${esc(c.type)} • ${c.essential === true ? "Essential" : c.essential === false ? "Non-essential" : ""}</div>
-        </div>
-        <div class="row" style="gap:8px">
-          <button class="btn-ghost" type="button" data-act="edit" data-id="${c.id}">Edit</button>
-          <button class="btn-ghost" type="button" data-act="del" data-id="${c.id}">Delete</button>
-        </div>
-      `;
-      child.classList.toggle("is-inactive", !c.active);
-      host.appendChild(child);
+    if (hasKids) {
+      const childrenWrap = document.createElement("div");
+      childrenWrap.className = "cat-admin-children";
+
+      for (const c of kids) {
+        const metaParts = [
+          esc(c.code),
+          esc(c.type),
+          c.essential === true
+            ? "Essential"
+            : c.essential === false
+              ? "Non-essential"
+              : null
+        ].filter(Boolean);
+
+        const child = document.createElement("div");
+        child.className = "cat-admin-item child";
+        child.innerHTML = `
+          <div class="cat-admin-main">
+            <div class="cat-admin-title">${esc(c.name)}</div>
+            <div class="cat-admin-meta">${metaParts.join(" • ")}</div>
+          </div>
+          <div class="cat-admin-actions">
+            <button class="side-btn btn-ghost" type="button" data-act="edit" data-id="${c.id}">Edit</button>
+            <button class="side-btn btn-ghost danger" type="button" data-act="del" data-id="${c.id}">Delete</button>
+          </div>
+        `;
+        child.classList.toggle("is-inactive", !c.active);
+        childrenWrap.appendChild(child);
+      }
+
+      group.appendChild(childrenWrap);
     }
+
+    host.appendChild(group);
   }
 
-  // event delegation for edit/delete
   host.onclick = async (e) => {
     const btn = e.target.closest("button[data-act]");
     if (!btn) return;
 
     const act = btn.dataset.act;
     const id = Number(btn.dataset.id);
-    if (!Number.isFinite(id)) return;
+    if (!Number.isFinite(id) && act !== "toggle") return;
+
+    if (act === "toggle") {
+      const group = btn.closest(".cat-admin-group");
+      if (!group) return;
+
+      const isOpen = group.classList.toggle("is-open");
+      btn.textContent = isOpen ? "▾" : "▸";
+      btn.setAttribute("aria-expanded", String(isOpen));
+      return;
+    }
 
     if (act === "edit") {
       startEdit(id);

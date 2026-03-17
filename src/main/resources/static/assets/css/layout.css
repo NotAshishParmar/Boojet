@@ -1,4 +1,8 @@
-/* layout.css - page layout, topbar, shell, blocks, left column */
+/* ================= Topbar ================= */
+.container{
+  max-width:1440px;
+  margin:auto;
+}
 
 .topbar{
   display:flex;
@@ -20,10 +24,10 @@
   gap:10px;
 }
 
-/* Shell */
+/* ================= Layout / Blocks ================= */
 .app-shell{
   display:grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns:360px 1fr;
   gap:16px;
   align-items:start;
 }
@@ -36,7 +40,9 @@
   padding:14px;
 }
 
-.block + .block{ margin-top:14px; }
+.block + .block{
+  margin-top:14px;
+}
 
 .block-head{
   display:flex;
@@ -51,87 +57,25 @@
   font-size:20px;
 }
 
-/* Left / Right columns */
+/* ================= Columns ================= */
 .left{
   position:static;
   max-height:none;
   overflow:visible;
   padding-right:0;
 }
-.right{ min-width:0; }
 
-.left .block{ padding:16px; }
-
-/* Left lists */
-.left .side-table{ display:none; }
-
-.block-actions{
-  display:flex;
-  align-items:baseline;
-  gap:10px;
+.left .block{
+  padding:16px;
 }
 
-.big-money{
-  font-weight:800;
-  font-variant-numeric: tabular-nums;
+.right{
+  min-width:0;
 }
 
-.side-list{ display:grid; gap:10px; margin-top:10px; }
-
-.side-item{
-  display:grid;
-  grid-template-columns: 1fr auto;
-  gap:8px 12px;
-  padding:12px;
-  border:1px solid #eee;
-  border-radius:12px;
-  background:#fafafa;
-}
-
-.side-title{ font-weight:750; line-height:1.15; }
-
-.side-sub{
-  margin-top:6px;
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  overflow-wrap:anywhere;
-}
-
-.side-meta{
-  font-weight:800;
-  font-variant-numeric: tabular-nums;
-  text-align:right;
-  white-space:nowrap;
-}
-
-.side-actions{
-  grid-column:1 / -1;
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-}
-
-.side-btn{
-  height:34px;
-  padding:0 12px;
-  border-radius:10px;
-}
-.side-btn:hover{ background:#f3f4f6; }
-
-.side-btn.danger{ border-color:#f3c2c2; }
-.side-btn.danger:hover{ background:#fff5f5; }
-
-/* Left: taller controls + simple form */
-.left input, .left select, .left button{
-  height:42px;
-  border-radius:10px;
-}
-.left form{ grid-template-columns:1fr; }
-.left .actions{ grid-column:1 / -1; }
-.left form label{ font-size:13px; }
-
-/* Collapse to one column */
+/* ================= Responsive ================= */
 @media (max-width: 1100px){
-  .app-shell{ grid-template-columns:1fr; }
+  .app-shell{
+    grid-template-columns:1fr;
+  }
 }

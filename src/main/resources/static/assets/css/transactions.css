@@ -1,0 +1,333 @@
+/* ================= Tx Create ================= */
+details.collapse.tx-create{
+  margin-top:0;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  padding:12px 14px;
+}
+
+details.collapse.tx-create > summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:2px 0;
+  font-weight:800;
+}
+
+details.collapse.tx-create .plus{
+  font-weight:900;
+  font-size:18px;
+  line-height:1;
+  opacity:.65;
+  transition: transform .15s ease, opacity .15s ease;
+}
+
+details.collapse.tx-create[open] .plus{
+  transform: rotate(45deg);
+  opacity:.9;
+}
+
+details.collapse.tx-create[open]{
+  background:#f9fafb;
+}
+
+details.collapse.tx-create[open] > summary{
+  padding-bottom:10px;
+  margin-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+
+/* ================= Transaction Form ================= */
+.tx-form{
+  margin:0;
+  display:grid;
+  gap:12px 14px;
+  align-items:end;
+  grid-template-columns: 1.25fr 0.9fr 0.9fr;
+  grid-template-areas:
+    "desc  amt   date"
+    "cat   acct  toacct"
+    "acts  acts  acts";
+}
+
+.tx-field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:0;
+  text-align:left;
+}
+
+.tx-desc{ grid-area: desc; }
+.tx-amt{ grid-area: amt; }
+.tx-date{ grid-area: date; }
+.tx-cat{ grid-area: cat; }
+.tx-acct{ grid-area: acct; }
+.tx-toacct{ grid-area: toacct; }
+
+.tx-actions{
+  grid-area: acts;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:4px;
+}
+
+/* amount row */
+.amount-inline{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#amount{
+  flex:1;
+  min-width:0;
+  text-align:right;
+  font-variant-numeric: tabular-nums;
+}
+
+#incomeHint{
+  white-space:nowrap;
+  font-size:12px;
+  opacity:.75;
+}
+
+/* category row */
+.tx-cat .row{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:10px;
+  align-items:center;
+  width:100%;
+}
+
+#catDisplay{
+  width:100%;
+  min-width:0;
+}
+
+#pickCat{
+  height:38px;
+  padding:0 14px;
+  border-radius:10px;
+}
+
+#catSubtext{
+  margin-top:0;
+  font-size:12px;
+  line-height:1.2;
+  opacity:.7;
+}
+
+.tx-cat,
+.tx-acct{
+  align-self:start;
+}
+
+/* ================= Ledger Card ================= */
+.table-block{
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.table-block #tbl tbody tr:hover td{
+  background: rgba(0,0,0,0.03);
+}
+
+/* top filters bar */
+.table-block .ledger-toolbar{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--line);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.table-block .ledger-filters{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:end;
+  min-width:0;
+}
+
+.table-block .ledger-filters label.row{
+  display:grid;
+  gap:6px;
+  align-items:start;
+  min-width:150px;
+}
+
+.table-block .ledger-filters select{ width:180px; }
+.table-block .ledger-filters .num-sm{ width:110px; }
+.table-block .ledger-filters .num-xs{ width:80px; }
+
+.table-block .ledger-filters input,
+.table-block .ledger-filters select{
+  height:36px;
+}
+
+.table-block .ledger-filters .btn-primary,
+.table-block .ledger-filters .btn-ghost{
+  height:36px;
+  border-radius:10px;
+  padding:0 12px;
+  white-space:nowrap;
+}
+
+/* exact visible rows */
+.table-block .ledger-scroll{
+  height: calc(var(--ledger-head-h) + (var(--ledger-row-h) * var(--ledger-rows)));
+  overflow:auto;
+}
+
+#tbl th,
+#tbl td{
+  text-align:center;
+  vertical-align:middle;
+}
+
+#tbl th:nth-child(2),
+#tbl td:nth-child(2){
+  text-align:left;
+}
+
+#tbl th:nth-child(5),
+#tbl td:nth-child(5){
+  text-align:right;
+  font-variant-numeric: tabular-nums;
+}
+
+#tbl th:last-child,
+#tbl td:last-child{
+  text-align:center;
+  white-space:nowrap;
+}
+
+#tbl.table-compact tbody tr,
+#tbl.table-compact tbody td{
+  height: var(--ledger-row-h);
+  vertical-align: middle;
+}
+
+.table-block table{ margin:0; }
+
+.table-block .ledger-scroll .sticky{
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-block .ledger-scroll .sticky thead th{
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #fff;
+  height: var(--ledger-head-h);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+.table-block td button{
+  height:30px;
+  padding:0 10px;
+  border-radius:10px;
+}
+
+/* pager */
+.table-block .ledger-pager{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  padding:10px 12px;
+  border-top:1px solid var(--line);
+  background:#fff;
+  border-bottom-left-radius:14px;
+  border-bottom-right-radius:14px;
+}
+
+.table-block .ledger-pager #pages{ white-space:nowrap; }
+
+.table-block .ledger-pager .btn-ghost{
+  height:34px;
+  padding:0 12px;
+  border-radius:10px;
+}
+
+.table-block .ledger-pager label.row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-left:6px;
+  white-space:nowrap;
+}
+
+.table-block .ledger-pager select{ height:34px; }
+
+/* ================= Responsive ================= */
+@media (max-width: 900px){
+  .tx-form{
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "desc desc"
+      "amt  date"
+      "cat  cat"
+      "acct toacct"
+      "acts acts";
+  }
+}
+
+@media (max-width: 820px){
+  :root{ --ledger-rows: 6; }
+
+  .table-block .ledger-pager{
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+
+  .table-block .ledger-pager #pages{
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px){
+  .ledger-toolbar{
+    grid-template-columns:1fr;
+  }
+
+  .ledger-pager{
+    justify-content:space-between;
+  }
+}
+
+@media (max-width: 520px){
+  .tx-form{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "desc"
+      "amt"
+      "date"
+      "cat"
+      "acct"
+      "toacct"
+      "acts";
+  }
+
+  .tx-actions{
+    justify-content:stretch;
+  }
+
+  .tx-actions button{
+    width:100%;
+  }
+}

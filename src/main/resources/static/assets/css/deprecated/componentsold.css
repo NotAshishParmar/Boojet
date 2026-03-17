@@ -1,9 +1,7 @@
-/* components.css - reusable UI controls, forms, tables, collapse, autocomplete */
+/* components.css - controls, buttons, forms, tables, details, autocomplete */
 
-/* ================= Inputs / Buttons ================= */
-input,
-select,
-button{
+/* Inputs / Buttons */
+input,select,button{
   height:38px;
   padding:0 var(--pad);
   border:1px solid var(--line);
@@ -43,7 +41,7 @@ button[disabled]{ opacity:.55; cursor:not-allowed; }
 }
 .btn-sm:hover{ background:#f3f4f6; }
 
-/* ================= Chip ================= */
+/* Chip */
 .chip{
   display:inline-block;
   padding:2px 8px;
@@ -53,7 +51,7 @@ button[disabled]{ opacity:.55; cursor:not-allowed; }
   background:#fff;
 }
 
-/* ================= Forms ================= */
+/* Forms */
 form{
   display:grid;
   gap:12px;
@@ -76,12 +74,8 @@ form label{
   align-items:center;
 }
 
-/* ================= Tables ================= */
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:8px;
-}
+/* Tables */
+table{ width:100%; border-collapse:collapse; margin-top:8px; }
 
 thead th{
   font-weight:600;
@@ -96,48 +90,27 @@ td{
   vertical-align:middle;
 }
 
-td button{
-  height:30px;
-  padding:0 10px;
-}
+td button{ height:30px; padding:0 10px; }
 
-.table-compact td,
-.table-compact th{
-  padding:6px 8px;
-}
+.table-compact td, .table-compact th{ padding:6px 8px; }
 
-.sticky{
-  border-collapse:separate;
-  border-spacing:0;
-}
 
-.sticky thead th{
-  position:sticky;
-  top:0;
-  background:#fff;
-  z-index:4;
-}
 
 /* zebra striping (don’t apply to summary table) */
-table:not(.sum-table) tbody tr:nth-child(odd) td{
-  background:#fafafa;
-}
+table:not(.sum-table) tbody tr:nth-child(odd) td{ background:#fafafa; }
 
 /* Row tints for positive/negative (exclude summary table) */
 table:not(.sum-table) tbody tr.ok td{
   color:#0a7f42;
   background:rgba(10,127,66,.06);
 }
-
 table:not(.sum-table) tbody tr.bad td{
   color:#b00020;
   background:rgba(176,0,32,.06);
 }
 
-/* ================= Details / Collapse ================= */
-details.collapse{
-  margin-top:12px;
-}
+/* Details / Collapse */
+details.collapse{ margin-top:12px; }
 
 details.collapse > summary{
   cursor:pointer;
@@ -151,26 +124,21 @@ details.collapse > summary{
   background:#fff;
 }
 
-details.collapse[open] > summary{
-  margin-bottom:12px;
+details.collapse[open] > summary{ margin-bottom:12px; }
+
+/* remove default marker */
+details.collapse > summary::-webkit-details-marker{ display:none; }
+details.collapse > summary::marker{ content:""; }
+
+/* Autocomplete */
+.ac-wrap{ 
+    position:relative;
+    width: 100%; 
 }
 
-details.collapse > summary::-webkit-details-marker{
-  display:none;
-}
-
-details.collapse > summary::marker{
-  content:"";
-}
-
-/* ================= Autocomplete ================= */
-.ac-wrap{
-  position:relative;
-  width:100%;
-}
-
+/* Make the input inside autocomplete behave like normal inputs */
 .ac-wrap > input{
-  width:100%;
+  width: 100%;
 }
 
 .ac-menu{
@@ -179,10 +147,12 @@ details.collapse > summary::marker{
   left:0;
   right:0;
   z-index:50;
+
   background:#fff;
   border:1px solid rgba(0,0,0,.15);
   border-radius:10px;
   box-shadow:0 8px 24px rgba(0,0,0,.12);
+
   max-height:240px;
   overflow:auto;
   padding:6px;
@@ -197,11 +167,7 @@ details.collapse > summary::marker{
   align-items:center;
   gap:8px;
 }
-
-.ac-item:hover,
-.ac-item.active{
-  background:rgba(0,0,0,.06);
-}
+.ac-item:hover, .ac-item.active{ background:rgba(0,0,0,.06); }
 
 .ac-empty{
   padding:10px;
@@ -209,23 +175,12 @@ details.collapse > summary::marker{
   font-size:.95em;
 }
 
-/* ================= Responsive ================= */
+/* Generic responsive for forms */
 @media (max-width: 900px){
-  form{
-    grid-template-columns:repeat(2, minmax(140px,1fr));
-  }
-
-  .actions{
-    grid-column:span 2;
-  }
+  form{ grid-template-columns:repeat(2, minmax(140px,1fr)); }
+  .actions{ grid-column:span 2; }
 }
-
 @media (max-width: 520px){
-  form{
-    grid-template-columns:1fr;
-  }
-
-  .actions{
-    grid-column:1 / -1;
-  }
+  form{ grid-template-columns:1fr; }
+  .actions{ grid-column:1 / -1; }
 }
