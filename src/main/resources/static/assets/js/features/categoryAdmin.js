@@ -106,7 +106,6 @@ function renderAdminList(all) {
       for (const c of kids) {
         const metaParts = [
           esc(c.code),
-          esc(c.type),
           c.essential === true
             ? "Essential"
             : c.essential === false
@@ -170,17 +169,20 @@ function startEdit(id) {
   $("#catCode").value = c.code || "";
   $("#catName").value = c.name || "";
   $("#catParent").value = (c.parentId != null) ? String(c.parentId) : "";
-  $("#catEssential").value = (c.essential === true) ? "true" : (c.essential === false) ? "false" : "";
+  $("#catEssential").value =
+    c.essential === true ? "true" :
+      c.essential === false ? "false" :
+        "";
   $("#catSortOrder").value = (c.sortOrder != null) ? String(c.sortOrder) : "";
   $("#catActive").checked = !!c.active;
 
-  // type is read-only (derived)
   $("#catType").value = c.type || "EXPENSE";
+
+  syncEssentialEnabled();
 
   $("#catSaveBtn").textContent = "Update";
   setFormHint(`Editing: ${catLabel(c)}`);
 
-  // open the collapsible
   $("#catAdminCollapse").open = true;
 }
 
@@ -195,6 +197,7 @@ function clearForm() {
   $("#catType").value = "EXPENSE";
   $("#catSaveBtn").textContent = "Save";
   setFormHint("");
+  syncEssentialEnabled();
 }
 
 async function deleteCategory(id) {
@@ -228,8 +231,8 @@ async function saveCategoryFromForm() {
   const essentialRaw = $("#catEssential").value;
   let essential =
     essentialRaw === "true" ? true :
-    essentialRaw === "false" ? false :
-    null;
+      essentialRaw === "false" ? false :
+        null;
 
   // if root, force essential null (matches your backend semantics)
   if (!parentId) essential = null;
@@ -322,10 +325,15 @@ export function initCategoryAdmin() {
   // if parent changes, update type hint in the form
   $("#catParent")?.addEventListener("change", () => {
     const pid = $("#catParent").value ? Number($("#catParent").value) : null;
+
+    syncEssentialEnabled();
+
     if (!pid) {
+      $("#catEssential").value = "";
       setFormHint("Root category (type locked for now).");
       return;
     }
+
     const p = getCategoryById(pid);
     $("#catType").value = p?.type ?? "EXPENSE";
     setFormHint(`Subcategory under: ${p?.name ?? "?"} (inherits ${p?.type ?? "type"})`);

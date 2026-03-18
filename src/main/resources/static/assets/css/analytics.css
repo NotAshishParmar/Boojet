@@ -34,7 +34,7 @@
   color:#6b7280;
 }
 
-/* cards */
+/* ================= Cards ================= */
 .cards{
   display:grid;
   gap:12px;
@@ -68,7 +68,7 @@
   font-variant-numeric:tabular-nums;
 }
 
-/* summary table */
+/* ================= Summary table ================= */
 .sum-table{
   width:100%;
   border-collapse:separate;
@@ -101,6 +101,71 @@
 .sum-amt.ok{ color:#0f766e; }
 .sum-amt.bad{ color:#b91c1c; }
 
+/* ================= Summary by Category ================= */
+.sumcat-label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+button.sumcat-toggle{
+  appearance:none;
+  -webkit-appearance:none;
+  width:14px;
+  min-width:14px;
+  height:14px;
+  min-height:14px;
+  padding:0;
+  margin:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  border-radius:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  line-height:1;
+  color:#6b7280;
+  flex:0 0 14px;
+}
+
+button.sumcat-toggle:hover{
+  background:transparent;
+  color:#111827;
+  transform:none;
+}
+
+button.sumcat-toggle:active{
+  transform:none;
+}
+
+button.sumcat-toggle.is-hidden{
+  visibility:hidden;
+}
+
+.sumcat-root-name{
+  font-weight:700;
+}
+
+.sumcat-root td{
+  background:#fcfcfd;
+}
+
+.sumcat-child td:first-child{
+  padding-left:32px;
+}
+
+.sumcat-child-label{
+  color:#4b5563;
+}
+
+.sumcat-child td{
+  background:#fff;
+}
+
+/* ================= Responsive ================= */
 @media (max-width: 980px){
   .grid-2{
     grid-template-columns:1fr;

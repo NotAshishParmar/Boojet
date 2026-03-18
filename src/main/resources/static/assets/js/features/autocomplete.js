@@ -1,22 +1,23 @@
 /**
  * Transaction description autocomplete:
  * fetches suggestion lists + optional details, renders a suggestion menu,
- * and fills category/account/income/amount when a suggestion is selected.
+ * and fills category/account/amount when a suggestion is selected.
+ * Category type is inferred by the existing category-selection flow.
  */
 
-import { API } from '../core/config.js';
-import { j } from '../core/api.js';
-import { esc } from '../core/format.js';
+import { API } from "../core/config.js";
+import { j } from "../core/api.js";
+import { esc } from "../core/format.js";
+import { getCategoryById } from "./categories.js";
 
 export function initDescriptionAutocomplete() {
-  const input = document.getElementById('desc');
-  const menu = document.getElementById('desc-ac');
+  const input = document.getElementById("desc");
+  const menu = document.getElementById("desc-ac");
   if (!input || !menu) return;
 
-  const catEl = document.getElementById('cat');
-  const incomeEl = document.getElementById('income');
-  const accountEl = document.getElementById('account');
-  const amountEl = document.getElementById('amount');
+  const catDisplayEl = document.getElementById("catDisplay");
+  const catIdEl = document.getElementById("catId");
+  const amountEl = document.getElementById("amount");
 
   let debounceTimer = null;
   let activeIndex = -1;
@@ -26,25 +27,25 @@ export function initDescriptionAutocomplete() {
   function openMenu() {
     if (!items.length) return;
     menu.hidden = false;
-    input.setAttribute('aria-expanded', 'true');
+    input.setAttribute("aria-expanded", "true");
   }
 
   function closeMenu() {
     menu.hidden = true;
-    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute("aria-expanded", "false");
     activeIndex = -1;
   }
 
   function clearMenu() {
-    menu.innerHTML = '';
+    menu.innerHTML = "";
     items = [];
     closeMenu();
   }
 
   function setActive(idx) {
     activeIndex = idx;
-    const nodes = menu.querySelectorAll('.ac-item');
-    nodes.forEach((n, i) => n.classList.toggle('active', i === activeIndex));
+    const nodes = menu.querySelectorAll(".ac-item");
+    nodes.forEach((n, i) => n.classList.toggle("active", i === activeIndex));
   }
 
   function renderMenu(list) {
@@ -53,14 +54,14 @@ export function initDescriptionAutocomplete() {
     if (!items.length) {
       menu.innerHTML = `<div class="ac-empty">No suggestions</div>`;
       menu.hidden = false;
-      input.setAttribute('aria-expanded', 'true');
+      input.setAttribute("aria-expanded", "true");
       activeIndex = -1;
       return;
     }
 
     menu.innerHTML = items.map((t, i) => `
       <div class="ac-item" role="option" data-idx="${i}">${esc(t)}</div>
-    `).join('');
+    `).join("");
 
     activeIndex = -1;
     openMenu();
@@ -69,6 +70,7 @@ export function initDescriptionAutocomplete() {
   async function fetchSuggestions(q, limit = 15) {
     const reqId = ++lastReqId;
     const url = `${API}/suggestions?description=${encodeURIComponent(q)}&howMany=${limit}`;
+
     try {
       const list = await j(url);
       if (reqId !== lastReqId) return null;
@@ -85,10 +87,27 @@ export function initDescriptionAutocomplete() {
 
   function moneyToNumber(m) {
     if (m == null) return null;
-    if (typeof m === 'number') return m;
-    if (typeof m === 'string' && m.trim() !== '' && !Number.isNaN(Number(m))) return Number(m);
-    if (typeof m === 'object' && m.amount != null) return Number(m.amount);
+    if (typeof m === "number") return m;
+    if (typeof m === "string" && m.trim() !== "" && !Number.isNaN(Number(m))) return Number(m);
+    if (typeof m === "object" && m.amount != null) return Number(m.amount);
     return null;
+  }
+
+  function applySuggestedCategory(details) {
+    if (!details || !catDisplayEl || !catIdEl) return false;
+
+    const categoryId = details.categoryId;
+    if (categoryId == null) return false;
+
+    const cat = getCategoryById(Number(categoryId));
+    if (!cat) return false;
+
+    catIdEl.value = String(cat.id);
+    catDisplayEl.value = cat.parentCode ? `${cat.parentCode} → ${cat.name}` : cat.name;
+
+    catIdEl.dispatchEvent(new Event("change", { bubbles: true }));
+    catDisplayEl.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
   }
 
   async function applyDetailsIfFound(selectedDescription) {
@@ -96,27 +115,18 @@ export function initDescriptionAutocomplete() {
       const d = await fetchSuggestionDetails(selectedDescription);
       if (!d) return;
 
-      if (catEl && d.category) catEl.value = d.category;
-      if (incomeEl && typeof d.income === 'boolean') {
-        incomeEl.value = d.income ? 'true' : 'false';
-        incomeEl.dispatchEvent(new Event('change', { bubbles: true })); //tell UI to update
-      }
+      applySuggestedCategory(d);
 
-
-      if (accountEl && d.accountId != null) {
-        const idStr = String(d.accountId);
-        const exists = [...accountEl.options].some(o => o.value === idStr);
-        if (exists) accountEl.value = idStr;
-      }
-
-      if (amountEl && (amountEl.value == null || amountEl.value.trim() === '')) {
+      if (amountEl && (!amountEl.value || amountEl.value.trim() === "")) {
         const amt = moneyToNumber(d.amount);
         if (amt != null && Number.isFinite(amt)) {
-          amountEl.value = String(Math.abs(amt)); // set unsigned first
-          amountEl.dispatchEvent(new Event('input', { bubbles: true })); // let tx form logic adjust sign if needed
+          amountEl.value = String(Math.abs(amt));
+          amountEl.dispatchEvent(new Event("input", { bubbles: true }));
         }
       }
-    } catch { }
+    } catch (err) {
+      console.error("Autocomplete details apply failed:", err);
+    }
   }
 
   async function selectValue(v) {
@@ -125,7 +135,7 @@ export function initDescriptionAutocomplete() {
     await applyDetailsIfFound(v);
   }
 
-  input.addEventListener('input', () => {
+  input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
 
     const q = input.value.trim();
@@ -141,17 +151,17 @@ export function initDescriptionAutocomplete() {
     }, 150);
   });
 
-  input.addEventListener('keydown', (e) => {
+  input.addEventListener("keydown", (e) => {
     const isOpen = !menu.hidden;
     const max = items.length - 1;
 
-    if (e.key === 'Tab') {
+    if (e.key === "Tab") {
       clearMenu();
-      return; // let tab move focus normally
+      return;
     }
 
     if (!isOpen) {
-      if (e.key === 'ArrowDown' && items.length && input.value.trim().length >= 2) {
+      if (e.key === "ArrowDown" && items.length && input.value.trim().length >= 2) {
         openMenu();
         setActive(0);
         e.preventDefault();
@@ -159,46 +169,45 @@ export function initDescriptionAutocomplete() {
       return;
     }
 
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       setActive(activeIndex < max ? activeIndex + 1 : 0);
       e.preventDefault();
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       setActive(activeIndex > 0 ? activeIndex - 1 : max);
       e.preventDefault();
-    } else if (e.key === 'Enter') {
+    } else if (e.key === "Enter") {
       if (activeIndex >= 0 && activeIndex <= max) {
         selectValue(items[activeIndex]);
         e.preventDefault();
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       clearMenu();
       e.preventDefault();
     }
   });
 
-  input.addEventListener('blur', () => {
-    // delay so clicking a suggestion still works
+  input.addEventListener("blur", () => {
     setTimeout(() => {
-      // if focus moved outside the autocomplete wrapper, close
       const active = document.activeElement;
-      const wrap = input.closest('.ac-wrap');
+      const wrap = input.closest(".ac-wrap");
       if (!wrap || (active && !wrap.contains(active))) clearMenu();
     }, 0);
   });
 
-  menu.addEventListener('mousedown', (e) => {
-    const el = e.target.closest('.ac-item');
+  menu.addEventListener("mousedown", (e) => {
+    const el = e.target.closest(".ac-item");
     if (!el) return;
     const idx = Number(el.dataset.idx);
-    if (!Number.isNaN(idx) && items[idx] != null) selectValue(items[idx]);
+    if (!Number.isNaN(idx) && items[idx] != null) {
+      selectValue(items[idx]);
+    }
   });
 
-  document.addEventListener('mousedown', (e) => {
-    const wrap = e.target.closest('.ac-wrap');
+  document.addEventListener("mousedown", (e) => {
+    const wrap = e.target.closest(".ac-wrap");
     if (wrap) return;
     clearMenu();
   });
 
-  // expose hook for edit/reset like before
   window.__clearDescAutocomplete = clearMenu;
 }
