@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "accounts", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id","name"}))
-@Builder
+@Builder(toBuilder = true)
 public class Account {
     
     //database identifier for the account

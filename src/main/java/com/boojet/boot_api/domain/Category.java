@@ -29,7 +29,7 @@ import lombok.*;
 @Entity
 @Table(name = "categories",
         uniqueConstraints = {@UniqueConstraint(name = "uq_category_user_code", columnNames = {"user_id", "code"})})
-@Builder
+@Builder(toBuilder = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class Category {

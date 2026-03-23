@@ -43,7 +43,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 @Entity
 @Table(name = "transactions")
 public class Transaction {
