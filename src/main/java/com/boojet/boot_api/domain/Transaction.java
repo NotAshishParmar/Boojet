@@ -39,6 +39,15 @@ import java.time.LocalDate;
  * as income ({@code true})
  * or expense ({@code false}). (This is independent of the numeric sign of
  * {@link #amount}.)
+ * 
+ * <ul>
+ *  <li> Income is derived from the category associated with the transaction. </li>
+ *  <li> A transaction must have a category alloted to it. </li>
+ *  <li> Transfer category types are assigned as an Expense to the accoount 
+ *  to be transferred from. </li>
+ *  <li> Transfer type transactions must have a toAccount present to complete the transaction.</li>
+ * </ul>
+ * 
  */
 @Data
 @NoArgsConstructor
@@ -64,6 +73,7 @@ public class Transaction {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    //income flag reflects whether this transaction is an income or expense
     @JsonProperty("income")
     @Column(name = "is_income", nullable = false) // DB uses "is_income"
     private boolean income;

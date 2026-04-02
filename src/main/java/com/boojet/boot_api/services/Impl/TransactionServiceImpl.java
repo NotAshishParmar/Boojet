@@ -64,7 +64,8 @@ public class TransactionServiceImpl implements TransactionService {
         requirePositive(req.amount());
 
         Category cat = resolveCategoryId(req.categoryId());
-        Account from = resolveAccountId(req.accountId());
+        Account fromAcc = resolveAccountId(req.accountId());
+        Account toAcc = resolveToAccountId(req.toAccountId());
 
         LocalDate date = (req.date() != null) ? req.date() : LocalDate.now();
 
@@ -73,8 +74,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .amount(req.amount())
                 .date(date)
                 .category(cat)
-                .account(from)
-                .toAccount(resolveToAccountId(req.toAccountId()))
+                .account(fromAcc)
+                .toAccount(toAcc)
                 .build();
 
         applyDerivedAndTransferRules(tx);
@@ -95,11 +96,20 @@ public class TransactionServiceImpl implements TransactionService {
     public Page<Transaction> search(Long accountId, Long categoryId, Integer year, Integer month, Pageable pageable) {
         
         Long accId = null;
+        Long catId = null;
+
         if (accountId != null) {
             if (!accountRepository.existsById(accountId)) {
                 throw new AccountNotFoundException(accountId);
             }
             accId = accountId; // safe to pass down
+        }
+
+        if (categoryId != null) {
+            if (!categoryRepository.existsById(categoryId)) {
+                throw new CategoryNotFoundException(categoryId);
+            }
+            catId = categoryId; // safe to pass down
         }
 
         //try to build yearMonth, throw if invalid input
@@ -108,7 +118,7 @@ public class TransactionServiceImpl implements TransactionService {
         LocalDate from = (yearMonth != null) ? yearMonth.atDay(1) : LocalDate.of(1, 1, 1);
         LocalDate to = (yearMonth != null) ? yearMonth.atEndOfMonth() : LocalDate.of(9999, 12, 31);
 
-        return transactionRepository.search(accId, categoryId, from, to, pageable);
+        return transactionRepository.search(accId, catId, from, to, pageable);
     }
 
     // return a transaction by its ID
@@ -388,7 +398,7 @@ public class TransactionServiceImpl implements TransactionService {
             return;
         }
 
-        // non-transfer
+        // update income flag for Transaction when it is a not a Transfer
         tx.setToAccount(null);
         tx.setIncome(type == CategoryType.INCOME);
     }

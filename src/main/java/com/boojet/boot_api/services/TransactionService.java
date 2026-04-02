@@ -31,6 +31,11 @@ import com.boojet.boot_api.exceptions.BadRequestException;
  * applications constraints.</li>
  * <li>Adding a transaction, updates the related account balance and total
  * balance on the ledger</li>
+ * <li> Income is derived from the category associated with the transaction. </li>
+ * <li> A transaction must have a category alloted to it. </li>
+ * <li> Transfer category types are assigned as an Expense to the accoount 
+ * to be transferred from. </li>
+ * <li> Transfer type transactions must have a toAccount present to complete the transaction.</li>
  * </ul>
  */
 public interface TransactionService {
@@ -44,7 +49,8 @@ public interface TransactionService {
      *  <li>{@code transaction} must not be {@code null}.</li>
      *  <li>{@code transaction.account.id} is required (the account must exist in DB).</li>
      *  <li>{@code transaction.amount} must be positive.</li>
-     *  <li>{@code transaction.category} is required.</li>
+     *  <li>{@code transaction.category.id} is required (the category must exist in DB).</li>
+     *  <li>{@code transaction.date} can be in the future relative to now. </li>
      *  <li>If {@code transaction.date} is {@code null}, it is set to
      *  {@code LocalDate.now()}.</li>
      *  <li>If {@code transaction.description} is {@code null} or blank, it is set to
