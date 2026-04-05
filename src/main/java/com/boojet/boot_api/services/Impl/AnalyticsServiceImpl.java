@@ -3,15 +3,18 @@ package com.boojet.boot_api.services.Impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.boojet.boot_api.domain.Money;
+import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.analytics.EssentialVsNonEssentialResponse;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.repositories.TransactionRepository;
+import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 import com.boojet.boot_api.repositories.projections.EssentialSpendingAggregate;
 import com.boojet.boot_api.services.AnalyticsService;
 
@@ -74,6 +77,18 @@ public class AnalyticsServiceImpl implements AnalyticsService{
             
     }
 
+    @Override
+    public List<CategorySummaryDto> monthlySummaryByCategory(int year, int month) {
+        
+        YearMonth ym = buildYearMonthOrThrow(year, month);
+
+        List<CategoryTotalView> rows =  transactionRepo.sumNetByCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
+
+        return rows.stream()
+                .map(r -> new CategorySummaryDto(r.getCategory(), Money.of(r.getTotal())))
+                .toList();
+    }
+
 
 
     //----------------------------------------------HELPERS--------------------------------------------------
@@ -86,6 +101,14 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
         if(from.isAfter(to))
             throw new BadRequestException("Start date cannot be after End date");
+    }
+
+    private YearMonth buildYearMonthOrThrow(int year, int month){
+        try{
+            return YearMonth.of(year, month);
+        }catch(RuntimeException e){
+            throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month Transaction");
+        }
     }
 
     private BigDecimal percentageOf(BigDecimal amount, BigDecimal total) {

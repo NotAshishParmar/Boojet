@@ -148,7 +148,7 @@ export async function loadCategorySummary() {
     return;
   }
 
-  const url = `/transactions/summary/${yr}/${mo}`;
+  const url = `/analytics/monthly-summary/${yr}/${mo}`;
 
   try {
     const res = await fetch(url, { headers: { Accept: 'application/json' } });

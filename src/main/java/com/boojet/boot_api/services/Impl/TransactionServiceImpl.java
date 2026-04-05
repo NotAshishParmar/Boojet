@@ -19,7 +19,7 @@ import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.CategoryType;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
-import com.boojet.boot_api.dto.category.CategorySummaryDto;
+import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.transaction.TransactionCreateRequest;
 import com.boojet.boot_api.dto.transaction.TransactionPatchRequest;
 import com.boojet.boot_api.dto.transaction.TransactionPutRequest;
@@ -332,18 +332,6 @@ public class TransactionServiceImpl implements TransactionService {
         Account verifiedAccount = validateAccount(account.getId());
 
         return Money.of(transactionRepository.sumNetForAccount(verifiedAccount.getId()));
-    }
-
-    @Override
-    public List<CategorySummaryDto> monthlySummaryByCategory(int year, int month) {
-        
-        YearMonth ym = buildYearMonthOrThrow(year, month);
-
-        List<CategoryTotalView> rows =  transactionRepository.sumNetByCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
-
-        return rows.stream()
-                .map(r -> new CategorySummaryDto(r.getCategory(), Money.of(r.getTotal())))
-                .toList();
     }
 
     @Override
