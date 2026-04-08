@@ -1,10 +1,12 @@
 package com.boojet.boot_api.services;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.analytics.EssentialVsNonEssentialResponse;
+import com.boojet.boot_api.dto.analytics.MonthlyDebtResponse;
 
 public interface AnalyticsService {
     EssentialVsNonEssentialResponse essentialVsNonEssential(LocalDate fromDate, LocalDate toDate);
@@ -21,6 +23,10 @@ public interface AnalyticsService {
      * @return a list of category summaries for the month (one entry per {@link Category})
      * @throws BadRequestException if {@code month} is not in the range 1-12
      */
-    List<CategorySummaryDto> monthlySummaryByCategory(int year, int month);
+    List<CategorySummaryDto> monthlySummaryBySubCategory(int year, int month);
+
+    List<CategorySummaryDto> monthlySummaryByParentCategory(int year, int month);
+
+    List<MonthlyDebtResponse> monthlyDebtTrend(YearMonth fromMonth, YearMonth toMonth);
 
 }

@@ -1,6 +1,7 @@
 package com.boojet.boot_api.controllers;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.analytics.EssentialVsNonEssentialResponse;
+import com.boojet.boot_api.dto.analytics.MonthlyDebtResponse;
 import com.boojet.boot_api.services.AnalyticsService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,10 +35,22 @@ public class AnalyticsController {
         return analyticsService.essentialVsNonEssential(fromDate, toDate);
     }
 
-    @Operation(summary = "Get monthly summary by category", description = "Retrieve a summary of transactions for a specific month, grouped by category.")
-    @GetMapping("/monthly-summary/{year}/{month}")
-    public List<CategorySummaryDto> monthlySummary(@PathVariable int year, @PathVariable int month){
-        return analyticsService.monthlySummaryByCategory(year, month);
+    @Operation(summary = "Get monthly summary by sub-category", description = "Retrieve a summary of transactions for a specific month, grouped by sub-category.")
+    @GetMapping("/monthly-summary-all/{year}/{month}")
+    public List<CategorySummaryDto> monthlySummaryBySubCategory(@PathVariable int year, @PathVariable int month){
+        return analyticsService.monthlySummaryBySubCategory(year, month);
+    }
+
+    @Operation(summary = "Get monthly summary by parent category", description = "Retrieve a summary of transactions for a specific month, grouped by parent category.")
+    @GetMapping("/monthly-summary-parent/{year}/{month}")
+    public List<CategorySummaryDto> monthlySummaryByParentCategory(@PathVariable int year, @PathVariable int month){
+        return analyticsService.monthlySummaryByParentCategory(year, month);
+    }
+
+    @Operation(summary = "Get debt over time", description = "Retrieve a summary of debt at month end over the requested period of time")
+    @GetMapping("/debt/monthly")
+    public List<MonthlyDebtResponse> monthlyDebtTrend(@RequestParam YearMonth fromMonth, @RequestParam YearMonth toMonth){
+        return analyticsService.monthlyDebtTrend(fromMonth, toMonth);
     }
 
 

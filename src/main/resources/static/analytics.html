@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boojet Analytics</title>
+  <link rel="stylesheet" href="/assets/css/analytics/style.css" />
+</head>
+<body>
+  <div class="page">
+    <h1>Analytics</h1>
+    <p class="subtitle">View spending patterns, debt trend, and category insights.</p>
+
+    <section class="section">
+      <h2>Essential vs Non-Essential</h2>
+
+      <div class="filters">
+        <div class="field">
+          <label for="essentialFromDate">From Date</label>
+          <input type="date" id="essentialFromDate" />
+        </div>
+
+        <div class="field">
+          <label for="essentialToDate">To Date</label>
+          <input type="date" id="essentialToDate" />
+        </div>
+
+        <div class="field">
+          <button id="loadEssentialBtn">Load Breakdown</button>
+        </div>
+      </div>
+
+      <div id="essentialStatus" class="muted"></div>
+
+      <div class="section-grid">
+        <div>
+          <div id="essentialCards" class="cards"></div>
+        </div>
+
+        <div class="chart-wrap small">
+          <canvas id="essentialChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+        <h2>Monthly Spending by Category</h2>
+
+        <div class="filters">
+            <div class="field">
+            <label for="summaryYear">Year</label>
+            <input type="number" id="summaryYear" min="2000" max="2100" />
+            </div>
+
+            <div class="field">
+            <label for="summaryMonth">Month</label>
+            <input type="number" id="summaryMonth" min="1" max="12" />
+            </div>
+
+            <div class="field">
+            <label for="summaryView">View</label>
+            <select id="summaryView">
+                <option value="all">Sub-categories</option>
+                <option value="parent">Parent categories</option>
+            </select>
+            </div>
+
+            <div class="field">
+            <button id="loadSummaryBtn">Load Summary</button>
+            </div>
+        </div>
+
+        <div id="summaryStatus" class="muted"></div>
+
+        <div class="chart-wrap full-width">
+            <canvas id="summaryChart"></canvas>
+        </div>
+
+        <div id="summaryList" class="list" style="margin-top: 20px;"></div>
+    </section>
+
+    <section class="section">
+      <h2>Debt Trend</h2>
+
+      <div class="filters">
+        <div class="field">
+          <label for="debtFromMonth">From Month</label>
+          <input type="month" id="debtFromMonth" />
+        </div>
+
+        <div class="field">
+          <label for="debtToMonth">To Month</label>
+          <input type="month" id="debtToMonth" />
+        </div>
+
+        <div class="field">
+          <button id="loadDebtBtn">Load Debt Trend</button>
+        </div>
+      </div>
+
+      <div id="debtStatus" class="muted"></div>
+
+      <div class="section-grid">
+        <div id="debtList" class="list"></div>
+
+        <div class="chart-wrap">
+          <canvas id="debtChart"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="/assets/js/analytics/analytics.js"></script>
+</body>
+</html>

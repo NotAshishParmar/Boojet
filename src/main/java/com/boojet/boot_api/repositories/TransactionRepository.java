@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.boojet.boot_api.domain.Transaction;
+import com.boojet.boot_api.repositories.projections.CategorySummaryRow;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 import com.boojet.boot_api.repositories.projections.CreditCardTotalView;
 import com.boojet.boot_api.repositories.projections.EssentialSpendingAggregate;
@@ -239,20 +240,51 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       @Param("end") LocalDate end);
 
   @Query("""
-        select t.category as category,
-               coalesce(sum(
-                 case
-                   when c.type = com.boojet.boot_api.domain.CategoryType.INCOME then t.amount
-                   else -t.amount
-                 end
-               ), 0) as total
-        from Transaction t
-        join t.category c
-        where c.type <> com.boojet.boot_api.domain.CategoryType.TRANSFER
-          and t.date between :start and :end
-        group by t.category
+          select new com.boojet.boot_api.repositories.projections.CategorySummaryRow(
+              c.id,
+              c.name,
+              c.code,
+              coalesce(sum(
+                  case
+                      when c.type = com.boojet.boot_api.domain.CategoryType.INCOME then t.amount
+                      else -t.amount
+                  end
+              ), 0)
+          )
+          from Transaction t
+          join t.category c
+          where c.type <> com.boojet.boot_api.domain.CategoryType.TRANSFER
+            and t.date between :start and :end
+          group by c.id, c.name, c.code
       """)
-  List<CategoryTotalView> sumNetByCategoryBetween(@Param("start") LocalDate start,
+  List<CategorySummaryRow> sumNetBySubCategoryBetween(
+      @Param("start") LocalDate start,
+      @Param("end") LocalDate end);
+
+  @Query("""
+          select new com.boojet.boot_api.repositories.projections.CategorySummaryRow(
+              case when p.id is not null then p.id else c.id end,
+              case when p.name is not null then p.name else c.name end,
+              case when p.code is not null then p.code else c.code end,
+              coalesce(sum(
+                  case
+                      when c.type = com.boojet.boot_api.domain.CategoryType.INCOME then t.amount
+                      else -t.amount
+                  end
+              ), 0)
+          )
+          from Transaction t
+          join t.category c
+          left join c.parent p
+          where c.type <> com.boojet.boot_api.domain.CategoryType.TRANSFER
+            and t.date between :start and :end
+          group by
+              case when p.id is not null then p.id else c.id end,
+              case when p.name is not null then p.name else c.name end,
+              case when p.code is not null then p.code else c.code end
+      """)
+  List<CategorySummaryRow> sumNetByParentCategoryBetween(
+      @Param("start") LocalDate start,
       @Param("end") LocalDate end);
 
   boolean existsByCategoryId(Long categoryId);
@@ -326,6 +358,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         and c.type = com.boojet.boot_api.domain.CategoryType.EXPENSE
       group by c.essential
             """)
-  List<EssentialSpendingAggregate> aggregateExpenseByEssential(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+  List<EssentialSpendingAggregate> aggregateExpenseByEssential(@Param("fromDate") LocalDate fromDate,
+      @Param("toDate") LocalDate toDate);
 
 }

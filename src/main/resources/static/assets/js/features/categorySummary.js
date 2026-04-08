@@ -15,10 +15,9 @@ function amountNumber(v) {
 }
 
 function resolveCategory(summaryRow) {
-  const raw = summaryRow?.category;
-  const id = raw?.id;
-  if (id == null) return raw ?? null;
-  return getCategoryById(Number(id)) ?? raw;
+  const id = summaryRow?.categoryId;
+  if (id == null) return null;
+  return getCategoryById(Number(id)) ?? null;
 }
 
 function buildGroupedSummary(rows) {
@@ -29,9 +28,14 @@ function buildGroupedSummary(rows) {
     const amt = amountNumber(r.total);
     const safeAmt = Number.isFinite(amt) ? amt : 0;
 
+    // fallback to DTO fields if category lookup is missing
+    const dtoName = r?.categoryName || r?.categoryCode || 'Other';
+
     const isChild = !!cat?.parentId;
-    const rootId = isChild ? cat.parentId : cat?.id;
-    const rootName = isChild ? (cat.parentCode || 'Other') : (cat?.name || cat?.code || 'Other');
+    const rootId = isChild ? cat.parentId : (cat?.id ?? r?.categoryId);
+    const rootName = isChild
+      ? (cat.parentCode || cat.parentName || 'Other')
+      : (cat?.name || cat?.code || dtoName);
 
     const key = String(rootId ?? rootName);
 
@@ -50,7 +54,7 @@ function buildGroupedSummary(rows) {
     if (isChild) {
       g.children.push({
         id: cat.id,
-        label: cat.name || cat.code || `#${cat.id}`,
+        label: cat.name || cat.code || dtoName,
         total: safeAmt
       });
     }
@@ -148,7 +152,7 @@ export async function loadCategorySummary() {
     return;
   }
 
-  const url = `/analytics/monthly-summary/${yr}/${mo}`;
+  const url = `/analytics/monthly-summary-all/${yr}/${mo}`;
 
   try {
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
