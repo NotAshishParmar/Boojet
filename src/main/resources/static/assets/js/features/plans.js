@@ -15,24 +15,39 @@ function renderPlansSidebar(list) {
   if (!wrap) return;
 
   wrap.innerHTML = list.map(p => `
-    <div class="side-item">
-      <div>
+    <div class="side-item plan-card">
+      <div class="plan-head">
         <div class="side-title">${esc(p.sourceName ?? '')}</div>
-        <div class="side-sub">
-          <span class="chip">${esc(p.payType)}</span>
-          ${p.hoursPerWeek != null ? `<span class="chip">${esc(String(p.hoursPerWeek))} hrs/wk</span>` : ''}
-          <span class="chip">From: ${esc(fmtPlanDate(p.effectiveFrom))}</span>
-          <span class="chip">${p.effectiveTo ? `To: ${esc(fmtPlanDate(p.effectiveTo))}` : 'Ongoing'}</span>
-        </div>
+        <div class="plan-amount">${money(p.amount)}</div>
       </div>
 
-      <div class="side-meta">${money(p.amount)}</div>
+      <div class="plan-meta">
+        <span class="chip">${esc(p.payType)}</span>
+        ${p.hoursPerWeek != null ? `<span class="chip">${esc(String(p.hoursPerWeek))} hrs/wk</span>` : ''}
+        <span class="chip">${esc(deductionPercentLabel(p.estimatedDeductionRate))}</span>
+      </div>
 
-      <div class="side-actions" style="grid-column: 1 / -1;">
-        <button class="side-btn" onclick="openPlanToModal(${p.id}, '${escAttr(p.effectiveTo ?? '')}')">
-          Set End Date
+      <div class="plan-dates-text muted">
+        From ${esc(fmtPlanDate(p.effectiveFrom))}
+        ${p.effectiveTo ? ` · To ${esc(fmtPlanDate(p.effectiveTo))}` : ' · Ongoing'}
+      </div>
+
+      <div class="side-actions plan-actions">
+        <button
+          class="side-btn"
+          onclick="openPlanDeductionModal(${p.id}, '${escAttr(String(p.estimatedDeductionRate ?? '0.2200'))}')">
+          Deductions
         </button>
-        <button class="side-btn" onclick="delPlan(${p.id})">Delete</button>
+
+        <button
+          class="side-btn"
+          onclick="openPlanToModal(${p.id}, '${escAttr(p.effectiveTo ?? '')}')">
+          End Date
+        </button>
+
+        <button class="side-btn plan-delete" onclick="delPlan(${p.id})">
+          Delete
+        </button>
       </div>
     </div>
   `).join('');
@@ -43,6 +58,18 @@ function fmtPlanDate(isoDate) {
   const [yyyy, mm, dd] = String(isoDate).split('-');
   if (!yyyy || !mm || !dd) return isoDate;
   return `${dd}-${mm}-${yyyy}`;
+}
+
+function deductionPercentLabel(rate) {
+  const n = Number(rate ?? 0.22);
+  if (!Number.isFinite(n)) return '22% deductions';
+  return `${(n * 100).toFixed(2).replace(/\.00$/, '')}% deductions`;
+}
+
+function deductionPercentInputValue(rate) {
+  const n = Number(rate ?? 0.22);
+  if (!Number.isFinite(n)) return '22';
+  return (n * 100).toFixed(2).replace(/\.00$/, '');
 }
 
 function escAttr(value) {
@@ -84,6 +111,18 @@ export function closePlanToModal() {
   $('#planToId').value = '';
 }
 
+export function openPlanDeductionModal(id, rate = '0.2200') {
+  $('#planDeductionId').value = id;
+  $('#planDeductionRate').value = deductionPercentInputValue(rate);
+  $('#planDeductionOverlay').hidden = false;
+}
+
+export function closePlanDeductionModal() {
+  $('#planDeductionOverlay').hidden = true;
+  $('#planDeductionForm').reset();
+  $('#planDeductionId').value = '';
+}
+
 async function savePlanEffectiveTo(e) {
   e.preventDefault();
 
@@ -114,6 +153,43 @@ async function clearPlanEffectiveTo() {
   await loadNet();
 }
 
+async function savePlanDeductionRate(e) {
+  e.preventDefault();
+
+  const id = $('#planDeductionId').value;
+  const pct = parseFloat($('#planDeductionRate').value);
+
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+    alert('Deduction rate must be between 0 and 100.');
+    return;
+  }
+
+  const estimatedDeductionRate = +(pct / 100).toFixed(4);
+
+  await j(`${PLAN}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estimatedDeductionRate })
+  });
+
+  closePlanDeductionModal();
+  await loadPlans();
+  await loadNet();
+}
+
+async function resetPlanDeductionRateDefault() {
+  const id = $('#planDeductionId').value;
+  if (!id) return;
+
+  await j(`${PLAN}/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estimatedDeductionRate: 0.2200 })
+  });
+
+  closePlanDeductionModal();
+  await loadPlans();
+  await loadNet();
+}
+
 export function clearPlanForm() {
   $('#pform').reset();
   $('#pfrom').value = new Date().toISOString().slice(0, 10);
@@ -133,6 +209,7 @@ export function initPlans() {
       hoursPerWeek: $('#phours').disabled ? null : ($('#phours').value ? parseFloat($('#phours').value) : null),
       effectiveFrom: $('#pfrom').value,
       effectiveTo: $('#pto').value || null,
+      estimatedDeductionRate: 0.2200
     };
 
     await j(PLAN, { method: 'POST', body: JSON.stringify(payload) });
@@ -149,6 +226,12 @@ export function initPlans() {
   $('#planToCancel')?.addEventListener('click', closePlanToModal);
   $('#planToClear')?.addEventListener('click', clearPlanEffectiveTo);
 
+  $('#planDeductionForm')?.addEventListener('submit', savePlanDeductionRate);
+  $('#planDeductionClose')?.addEventListener('click', closePlanDeductionModal);
+  $('#planDeductionCancel')?.addEventListener('click', closePlanDeductionModal);
+  $('#planDeductionDefault')?.addEventListener('click', resetPlanDeductionRateDefault);
+
   window.delPlan = delPlan;
   window.openPlanToModal = openPlanToModal;
+  window.openPlanDeductionModal = openPlanDeductionModal;
 }

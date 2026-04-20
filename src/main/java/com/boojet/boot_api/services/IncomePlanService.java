@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.boojet.boot_api.domain.IncomePlan;
 import com.boojet.boot_api.domain.Money;
+import com.boojet.boot_api.dto.analytics.MonthlyNetResponse;
 import com.boojet.boot_api.dto.incomePlan.IncomePlanCreateRequest;
 import com.boojet.boot_api.dto.incomePlan.IncomePlanPatchRequest;
 import com.boojet.boot_api.dto.incomePlan.IncomePlanPutRequest;
@@ -139,7 +140,24 @@ public interface IncomePlanService {
      * @return the expected income total for the month
      * @throws BadRequestException if {@code month} is not within range (1-12)
      */
-    public Money getExpectedMonthlyIncome(int year, int month);
+    public Money getGrossExpectedMonthlyIncome(int year, int month);
+
+    /**
+     * Calculates the total expected income for the given month AFTER DEDUCTIONS.
+     * 
+     * "Expected" income is derived from the user's configured income plans
+     * (e.g., salary, hourly, bi-weekly) and projected into the requested month.
+     * 
+     * Deductions default to 22% and include tax cuts, CPP payments, RRSP
+     * contributions, etc. unless the user specified otherwise. This method is to
+     * accurately estimate the take home pay for this income plan.
+     * 
+     * @param year the calendar year
+     * @param month the calendar month
+     * @return the expected income total for the month
+     * @throws BadRequestException if {@code month} is not within range (1-12)
+     */
+    public Money getNetExpectedMonthlyIncome(int year, int month);
 
     /**
      * Calculates the total actual income for the given month.
@@ -166,35 +184,6 @@ public interface IncomePlanService {
      * @throws BadRequestException if {@code month} is not within range (1-12)
      */
     public Money getActualMonthlyExpenses(int year, int month);
-
-    /**
-     * Builds a consolidated net report for the given month, combining expected income,
-     * actual income, expenses, and net values.
-     *
-     * @param year the calendar year
-     * @param month the calendar month
-     * @return a net report containing expected/actual totals and net calculations
-     * @throws BadRequestException if {@code month} is not in the range (1-12)
-     */
-    public NetReport netReport(int year, int month);
-
-     /**
-     * Summary report for a given month.
-     *
-     * @param month human-readable label for the month (e.g., "2026-01" or "Jan 2026")
-     * @param expectedIncome total projected income from income plans
-     * @param actualIncome total recorded income from transactions
-     * @param expenses total recorded expenses from transactions
-     * @param netExpected expectedIncome minus expenses
-     * @param netActual actualIncome minus expenses
-     */
-    public record NetReport(
-        String month, 
-        Money expectedIncome, 
-        Money actualIncome,
-        Money expenses, 
-        Money netExpected, 
-        Money netActual
-    ){}
+    
 
 }

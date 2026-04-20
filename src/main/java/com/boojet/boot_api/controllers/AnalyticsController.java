@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.analytics.EssentialVsNonEssentialResponse;
 import com.boojet.boot_api.dto.analytics.MonthlyDebtResponse;
+import com.boojet.boot_api.dto.analytics.MonthlyNetResponse;
 import com.boojet.boot_api.services.AnalyticsService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,13 @@ public class AnalyticsController {
     @GetMapping("/debt/monthly")
     public List<MonthlyDebtResponse> monthlyDebtTrend(@RequestParam YearMonth fromMonth, @RequestParam YearMonth toMonth){
         return analyticsService.monthlyDebtTrend(fromMonth, toMonth);
+    }
+
+    //net report
+    @Operation(summary = "Get net report for a month", description = "Generate a net report for a specified month and year, detailing expectesd vs actual income and expenses. Also includes net expected and actual gain or loss calculations.")
+    @GetMapping("/net/{year}/{month}")
+    public MonthlyNetResponse net(@PathVariable int year, @PathVariable int month){
+        return analyticsService.monthlyNetReport(year, month);
     }
 
 

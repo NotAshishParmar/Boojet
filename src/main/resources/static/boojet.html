@@ -365,7 +365,7 @@
         <section class="block">
 
           <div class="block-head">
-            <h2>Analytics</h2>
+            <h2>Quick Insights</h2>
           </div>
 
           <div class="grid-2 section">
@@ -409,11 +409,15 @@
 
               <div class="cards cards-wrap" id="netCards">
                 <div class="card">
-                  <div class="label">Expected income</div>
-                  <div id="n_exp" class="value">$0.00</div>
+                  <div class="label">Expected Gross Income</div>
+                  <div id="n_expg" class="value">$0.00</div>
                 </div>
                 <div class="card">
-                  <div class="label">Actual income</div>
+                  <div class="label">Expected Net Income</div>
+                  <div id="n_expn" class="value">$0.00</div>
+                </div>
+                <div class="card">
+                  <div class="label">Actual Income</div>
                   <div id="n_act" class="value">$0.00</div>
                 </div>
                 <div class="card">
@@ -519,6 +523,36 @@
             <div class="actions plan-to-actions" style="margin-top:14px;">
               <button type="button" id="planToClear" class="btn-ghost">Clear End Date</button>
               <button type="button" id="planToCancel" class="btn-ghost">Cancel</button>
+              <button type="submit" class="btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income Plan Deduction Rate Overlay -->
+    <div id="planDeductionOverlay" class="overlay" hidden>
+      <div class="modal plan-to-modal">
+        <div class="modal-head">
+          <h3>Set Estimated Deductions</h3>
+          <button type="button" id="planDeductionClose" class="btn-ghost">Close</button>
+        </div>
+
+        <div class="modal-body plan-to-body" style="display:block;">
+          <form id="planDeductionForm">
+            <input type="hidden" id="planDeductionId">
+
+            <label class="row">
+              Deduction Rate (%)
+              <input id="planDeductionRate" type="number" min="0" max="100" step="0.01" required>
+              <div class="muted" style="font-size:12px;margin-top:4px;">
+                Example: enter 22 for 22% estimated deductions.
+              </div>
+            </label>
+
+            <div class="actions plan-to-actions" style="margin-top:14px;">
+              <button type="button" id="planDeductionDefault" class="btn-ghost">Reset to 22%</button>
+              <button type="button" id="planDeductionCancel" class="btn-ghost">Cancel</button>
               <button type="submit" class="btn-primary">Save</button>
             </div>
           </form>

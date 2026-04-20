@@ -49,3 +49,86 @@
 #planToOverlay {
   overflow: hidden;
 }
+
+/* ---------------- INCOME PLAN CARDS ---------------- */
+
+.plan-card{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+}
+
+.plan-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.plan-card .side-title{
+  margin:0;
+  line-height:1.2;
+  min-width:0;
+  flex:1;
+}
+
+.plan-amount{
+  font-weight:700;
+  line-height:1.2;
+  text-align:right;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
+.plan-amount .muted{
+  font-weight:400;
+  margin-left:4px;
+}
+
+.plan-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.plan-dates-text{
+  font-size:13px;
+  line-height:1.35;
+}
+
+.plan-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:2px;
+}
+
+.plan-actions .side-btn{
+  min-width:0;
+  padding:0 12px;
+}
+
+.plan-delete{
+  color:#b00020;
+}
+
+.plan-delete:hover{
+  background:rgba(176,0,32,.06);
+}
+
+@media (max-width: 700px){
+  .plan-head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .plan-amount{
+    text-align:left;
+    white-space:normal;
+  }
+
+  .plan-actions .side-btn{
+    flex:1 1 auto;
+  }
+}

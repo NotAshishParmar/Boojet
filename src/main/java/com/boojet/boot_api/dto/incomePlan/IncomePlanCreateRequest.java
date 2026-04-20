@@ -10,6 +10,7 @@ public record IncomePlanCreateRequest(
     String sourceName,
     PayType payType,
     Money amount,
+    BigDecimal estimatedDeductionRate,
     BigDecimal hoursPerWeek,
     LocalDate effectiveFrom,
     LocalDate effectiveTo

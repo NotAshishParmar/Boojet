@@ -12,7 +12,6 @@ import com.boojet.boot_api.domain.IncomePlan;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.PayType;
 import com.boojet.boot_api.domain.User;
-
 import com.boojet.boot_api.dto.incomePlan.IncomePlanCreateRequest;
 import com.boojet.boot_api.dto.incomePlan.IncomePlanPatchRequest;
 import com.boojet.boot_api.dto.incomePlan.IncomePlanPutRequest;
@@ -36,6 +35,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
     private static final Long DEFAULT_USER_ID = 1L; //temporary until user management is implemented
 
     private static int DEFAULT_INCOMEPLAN_COUNTER = 1;
+    private static final BigDecimal DEFAULT_ESTIMATED_DEDUCTION_RATE = new BigDecimal("0.2200");
 
 
     public IncomePlanServiceImpl(IncomePlanRepository incomePlanRepo, TransactionService transactionService, UserRepository userRepo){
@@ -53,6 +53,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
 
         String name = normalizeSourceName(req.sourceName());
         LocalDate effectiveFrom = defaultEffectiveFrom(req.effectiveFrom());
+        BigDecimal estimatedDeductionRate = normalizeEstimatedDeductionRate(req.estimatedDeductionRate());
 
         //validate
         validateEffectiveDates(effectiveFrom, req.effectiveTo());
@@ -65,6 +66,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
                                     .sourceName(name)
                                     .payType(req.payType())
                                     .amount(req.amount())
+                                    .estimatedDeductionRate(estimatedDeductionRate)
                                     .hoursPerWeek(req.hoursPerWeek())
                                     .effectiveFrom(effectiveFrom)
                                     .effectiveTo(req.effectiveTo())
@@ -86,95 +88,105 @@ public class IncomePlanServiceImpl implements IncomePlanService{
             orElseThrow(() -> new IncomePlanNotFoundException(id));
     }
 
-    @Override
-    @Transactional
-    public IncomePlan putIncomePlan(Long id, IncomePlanPutRequest req){
-        validateIncomePlanId(id);
+        @Override
+        @Transactional
+        public IncomePlan putIncomePlan(Long id, IncomePlanPutRequest req){
+            validateIncomePlanId(id);
 
-        IncomePlan existing = incomePlanRepo.findById(id)
-                                .orElseThrow(() -> new IncomePlanNotFoundException(id));
-        
-        //validate
-        String name = requireSourceName(req.sourceName());
+            IncomePlan existing = incomePlanRepo.findById(id)
+                                    .orElseThrow(() -> new IncomePlanNotFoundException(id));
 
-        requireEffectiveFrom(req.effectiveFrom());
-        validateEffectiveDates(req.effectiveFrom() , req.effectiveTo());
-        requirePayType(req.payType());
-        validateHoursPerWeek(req.hoursPerWeek(), req.payType());
-        requireAmount(req.amount());
+            String name = requireSourceName(req.sourceName());
+            BigDecimal estimatedDeductionRate = normalizeEstimatedDeductionRate(req.estimatedDeductionRate());
 
-        //update
-        existing.setSourceName(name);
-        existing.setPayType(req.payType());
-        existing.setAmount(req.amount());
-        existing.setHoursPerWeek(req.hoursPerWeek());
-        existing.setEffectiveFrom(req.effectiveFrom());
-        existing.setEffectiveTo(req.effectiveTo());
+            requireEffectiveFrom(req.effectiveFrom());
+            requirePayType(req.payType());
+            requireAmount(req.amount());
+            validateHoursPerWeek(req.hoursPerWeek(), req.payType());
+            validateEffectiveDates(req.effectiveFrom(), req.effectiveTo());
 
-        return incomePlanRepo.save(existing);
-    }
-
-    @Override
-    @Transactional
-    public IncomePlan patchIncomePlan(Long id, IncomePlanPatchRequest req){
-        validateIncomePlanId(id);
-
-        IncomePlan existing = incomePlanRepo.findById(id)
-                                .orElseThrow(() -> new IncomePlanNotFoundException(id));
-        
-        
-        if (req.sourceName() != null) {
-            if (req.sourceName().isBlank()) {
-                throw new BadRequestException("Source name must not be blank");
-            }
-            existing.setSourceName(req.sourceName().trim());
-        }
-
-        if(req.payType() != null)
+            existing.setSourceName(name);
             existing.setPayType(req.payType());
-
-        if (req.amount() != null) {
-            if (!req.amount().isPositive()) {
-                throw new BadRequestException("Amount, if provided, must be a positive number");
-            }
             existing.setAmount(req.amount());
-        }
-
-        if(req.hoursPerWeek() != null){
-            if(req.hoursPerWeek().isNull())
-                existing.setHoursPerWeek(null);
-            else if(req.hoursPerWeek().isNumber())
-                existing.setHoursPerWeek(req.hoursPerWeek().decimalValue());
-            else
-                throw new BadRequestException("hoursPerWeek must be a number or null");
-        }
-
-        if (req.effectiveFrom() != null) {
+            existing.setEstimatedDeductionRate(estimatedDeductionRate);
+            existing.setHoursPerWeek(req.hoursPerWeek());
             existing.setEffectiveFrom(req.effectiveFrom());
+            existing.setEffectiveTo(req.effectiveTo());
+
+            return incomePlanRepo.save(existing);
         }
 
-        if(req.effectiveTo() != null){
-            if(req.effectiveTo().isNull()){
-                existing.setEffectiveTo(null);
-            }
-            else if(req.effectiveTo().isTextual()){
-                try{
-                    existing.setEffectiveTo(LocalDate.parse(req.effectiveTo().asText()));
+        @Override
+        @Transactional
+        public IncomePlan patchIncomePlan(Long id, IncomePlanPatchRequest req){
+            validateIncomePlanId(id);
+
+            IncomePlan existing = incomePlanRepo.findById(id)
+                                    .orElseThrow(() -> new IncomePlanNotFoundException(id));
+
+            if (req.sourceName() != null) {
+                if (req.sourceName().isBlank()) {
+                    throw new BadRequestException("Source name must not be blank");
                 }
-                catch(RuntimeException e){
-                    throw new BadRequestException("effectiveTo must be a valid ISO date (yyyy-mm-dd) or null");
+                existing.setSourceName(req.sourceName().trim());
+            }
+
+            if (req.payType() != null) {
+                existing.setPayType(req.payType());
+            }
+
+            if (req.amount() != null) {
+                if (!req.amount().isPositive()) {
+                    throw new BadRequestException("Amount, if provided, must be a positive number");
+                }
+                existing.setAmount(req.amount());
+            }
+
+            if (req.estimatedDeductionRate() != null) {
+                if (req.estimatedDeductionRate().isNull()) {
+                    existing.setEstimatedDeductionRate(DEFAULT_ESTIMATED_DEDUCTION_RATE);
+                } else if (req.estimatedDeductionRate().isNumber()) {
+                    existing.setEstimatedDeductionRate(
+                        normalizeEstimatedDeductionRate(req.estimatedDeductionRate().decimalValue())
+                    );
+                } else {
+                    throw new BadRequestException("estimatedDeductionRate must be a number or null");
                 }
             }
-            else{
-                throw new BadRequestException("effectiveTo must be a date string or null");
+
+            if (req.hoursPerWeek() != null) {
+                if (req.hoursPerWeek().isNull()) {
+                    existing.setHoursPerWeek(null);
+                } else if (req.hoursPerWeek().isNumber()) {
+                    existing.setHoursPerWeek(req.hoursPerWeek().decimalValue());
+                } else {
+                    throw new BadRequestException("hoursPerWeek must be a number or null");
+                }
             }
+
+            if (req.effectiveFrom() != null) {
+                existing.setEffectiveFrom(req.effectiveFrom());
+            }
+
+            if (req.effectiveTo() != null) {
+                if (req.effectiveTo().isNull()) {
+                    existing.setEffectiveTo(null);
+                } else if (req.effectiveTo().isTextual()) {
+                    try {
+                        existing.setEffectiveTo(LocalDate.parse(req.effectiveTo().asText()));
+                    } catch (RuntimeException e) {
+                        throw new BadRequestException("effectiveTo must be a valid ISO date (yyyy-mm-dd) or null");
+                    }
+                } else {
+                    throw new BadRequestException("effectiveTo must be a date string or null");
+                }
+            }
+
+            validateEffectiveDates(existing.getEffectiveFrom(), existing.getEffectiveTo());
+            validateHoursPerWeek(existing.getHoursPerWeek(), existing.getPayType());
+
+            return incomePlanRepo.save(existing);
         }
-
-        validateEffectiveDates(existing.getEffectiveFrom(), existing.getEffectiveTo());
-        validateHoursPerWeek(existing.getHoursPerWeek(), existing.getPayType());
-
-        return incomePlanRepo.save(existing);
-    }
 
     @Override
     @Transactional
@@ -197,7 +209,7 @@ public class IncomePlanServiceImpl implements IncomePlanService{
 
     
     //combined expected monthly income from all plans
-    public Money getExpectedMonthlyIncome(int year, int month){
+    public Money getGrossExpectedMonthlyIncome(int year, int month){
         //TODO: scope by User once Boojet allows multiple users
         List<IncomePlan> plans = incomePlanRepo.findAll();
         Money total = Money.zero();
@@ -205,7 +217,21 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         YearMonth ym = buildYearMonthOrThrow(year, month);
 
         for(IncomePlan plan : plans){
-            total = total.add(plan.calculateMonthlyAmount(ym));
+            total = total.add(plan.calculateGrossMonthlyAmount(ym));
+        }
+
+        return total;
+    }
+
+    public Money getNetExpectedMonthlyIncome(int year, int month){
+        //TODO: scope by User once Boojet allows multiple users
+        List<IncomePlan> plans = incomePlanRepo.findAll();
+        Money total = Money.zero();
+
+        YearMonth ym = buildYearMonthOrThrow(year, month);
+
+        for(IncomePlan plan : plans){
+            total = total.add(plan.calculateNetMonthlyAmount(ym));
         }
 
         return total;
@@ -234,17 +260,6 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         return transactionService.calculateExpensesBetween(start, end);
     }
 
-    public NetReport netReport(int year, int month){
-        Money expenses = getActualMonthlyExpenses(year, month);
-        Money expectedIncome = getExpectedMonthlyIncome(year, month);
-        Money actualIncome = getActualMonthlyIncome(year, month);
-
-        YearMonth ym = buildYearMonthOrThrow(year, month);
-
-        return new NetReport(ym.toString(), expectedIncome, actualIncome, expenses, 
-            expectedIncome.subtract(expenses), actualIncome.subtract(expenses));
-    }
-
     //-----------------------------------------------helpers----------------------------------------------------
 
     private void validateIncomePlanId(Long id){
@@ -261,6 +276,16 @@ public class IncomePlanServiceImpl implements IncomePlanService{
         }
         return name.trim();
     }
+
+    private BigDecimal normalizeEstimatedDeductionRate(BigDecimal rate) {
+            BigDecimal normalized = rate != null ? rate : DEFAULT_ESTIMATED_DEDUCTION_RATE;
+
+            if (normalized.compareTo(BigDecimal.ZERO) < 0 || normalized.compareTo(BigDecimal.ONE) > 0) {
+                throw new BadRequestException("Estimated deduction rate must be between 0 and 1");
+            }
+
+            return normalized;
+        }
 
     private String requireSourceName(String name){
         if(name == null || name.isBlank())
@@ -298,8 +323,12 @@ public class IncomePlanServiceImpl implements IncomePlanService{
 }
 
     private void validateEffectiveDates(LocalDate effectiveFrom, LocalDate effectiveTo){
-        if(effectiveFrom.isAfter(effectiveTo))
-            throw new BadRequestException("Income plan cannot be expire before the Effective From date");
+        if (effectiveFrom == null) return;
+        if (effectiveTo == null) return;
+
+        if (effectiveFrom.isAfter(effectiveTo)) {
+            throw new BadRequestException("Income plan cannot expire before the Effective From date");
+        }
     }
 
     private YearMonth buildYearMonthOrThrow(int year, int month){

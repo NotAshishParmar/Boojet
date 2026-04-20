@@ -20,31 +20,36 @@ import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.analytics.EssentialVsNonEssentialResponse;
 import com.boojet.boot_api.dto.analytics.MonthlyDebtResponse;
+import com.boojet.boot_api.dto.analytics.MonthlyNetResponse;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.repositories.AccountBalanceSnapshotRepository;
 import com.boojet.boot_api.repositories.AccountRepository;
+import com.boojet.boot_api.repositories.IncomePlanRepository;
 import com.boojet.boot_api.repositories.TransactionRepository;
 import com.boojet.boot_api.repositories.projections.CategorySummaryRow;
 import com.boojet.boot_api.repositories.projections.CategoryTotalView;
 import com.boojet.boot_api.repositories.projections.EssentialSpendingAggregate;
 import com.boojet.boot_api.services.AnalyticsService;
-
+import com.boojet.boot_api.services.IncomePlanService;
 
 @Service
 @Transactional(readOnly = true)
-public class AnalyticsServiceImpl implements AnalyticsService{
+public class AnalyticsServiceImpl implements AnalyticsService {
 
-    private static final Set<AccountType> DEBT_ACCOUNT_TYPES =
-        EnumSet.of(AccountType.CREDIT_CARD, AccountType.MASTER_CARD, AccountType.LOAN);
+    private static final Set<AccountType> DEBT_ACCOUNT_TYPES = EnumSet.of(AccountType.CREDIT_CARD,
+            AccountType.MASTER_CARD, AccountType.LOAN);
 
     private final TransactionRepository transactionRepo;
     private final AccountRepository accountRepo;
     private final AccountBalanceSnapshotRepository accountBalanceSnapshotRepo;
+    private final IncomePlanService incomePlanService;
 
-    public AnalyticsServiceImpl(TransactionRepository transactionRepo, AccountRepository accountRepo, AccountBalanceSnapshotRepository accountBalanceSnapshotRepo){
+    public AnalyticsServiceImpl(TransactionRepository transactionRepo, AccountRepository accountRepo,
+            AccountBalanceSnapshotRepository accountBalanceSnapshotRepo, IncomePlanService incomePlanService) {
         this.transactionRepo = transactionRepo;
         this.accountRepo = accountRepo;
         this.accountBalanceSnapshotRepo = accountBalanceSnapshotRepo;
+        this.incomePlanService = incomePlanService;
     }
 
     @Override
@@ -54,14 +59,14 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         List<EssentialSpendingAggregate> aggregates = transactionRepo.aggregateExpenseByEssential(fromDate, toDate);
 
         EssentialSpendingAggregate essentialAggregate = aggregates.stream()
-                                                        .filter(a -> Boolean.TRUE.equals(a.essential()))
-                                                        .findFirst()
-                                                        .orElse(new EssentialSpendingAggregate(true, BigDecimal.ZERO, 0L));
-                        
+                .filter(a -> Boolean.TRUE.equals(a.essential()))
+                .findFirst()
+                .orElse(new EssentialSpendingAggregate(true, BigDecimal.ZERO, 0L));
+
         EssentialSpendingAggregate nonEssentialAggregate = aggregates.stream()
-                                                        .filter(a -> Boolean.FALSE.equals(a.essential()))
-                                                        .findFirst()
-                                                        .orElse(new EssentialSpendingAggregate(false, BigDecimal.ZERO, 0L));
+                .filter(a -> Boolean.FALSE.equals(a.essential()))
+                .findFirst()
+                .orElse(new EssentialSpendingAggregate(false, BigDecimal.ZERO, 0L));
 
         BigDecimal essentialAmount = essentialAggregate.totalAmount();
         BigDecimal nonEssentialAmount = nonEssentialAggregate.totalAmount();
@@ -77,38 +82,33 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         BigDecimal nonEssentialPercentage = percentageOf(nonEssentialAmount, totalAmount);
 
         return new EssentialVsNonEssentialResponse(
-            fromDate,
-            toDate,
-            Money.of(totalAmount),
-            Math.toIntExact(totalCount),
-            new EssentialVsNonEssentialResponse.SpendingBucketDto(
-                Money.of(essentialAmount),
-                Math.toIntExact(essentialCount),
-                essentialPercentage
-            ),
-            new EssentialVsNonEssentialResponse.SpendingBucketDto(
-                Money.of(nonEssentialAmount),
-                Math.toIntExact(nonEssentialCount),
-                nonEssentialPercentage
-            )
-        );
-            
+                fromDate,
+                toDate,
+                Money.of(totalAmount),
+                Math.toIntExact(totalCount),
+                new EssentialVsNonEssentialResponse.SpendingBucketDto(
+                        Money.of(essentialAmount),
+                        Math.toIntExact(essentialCount),
+                        essentialPercentage),
+                new EssentialVsNonEssentialResponse.SpendingBucketDto(
+                        Money.of(nonEssentialAmount),
+                        Math.toIntExact(nonEssentialCount),
+                        nonEssentialPercentage));
+
     }
 
     @Override
     public List<CategorySummaryDto> monthlySummaryBySubCategory(int year, int month) {
         YearMonth ym = buildYearMonthOrThrow(year, month);
 
-        List<CategorySummaryRow> rows =
-                transactionRepo.sumNetBySubCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
+        List<CategorySummaryRow> rows = transactionRepo.sumNetBySubCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
 
         return rows.stream()
                 .map(r -> new CategorySummaryDto(
                         r.categoryId(),
                         r.categoryName(),
                         r.categoryCode(),
-                        Money.of(r.total())
-                ))
+                        Money.of(r.total())))
                 .toList();
     }
 
@@ -116,16 +116,14 @@ public class AnalyticsServiceImpl implements AnalyticsService{
     public List<CategorySummaryDto> monthlySummaryByParentCategory(int year, int month) {
         YearMonth ym = buildYearMonthOrThrow(year, month);
 
-        List<CategorySummaryRow> rows =
-                transactionRepo.sumNetByParentCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
+        List<CategorySummaryRow> rows = transactionRepo.sumNetByParentCategoryBetween(ym.atDay(1), ym.atEndOfMonth());
 
         return rows.stream()
                 .map(r -> new CategorySummaryDto(
                         r.categoryId(),
                         r.categoryName(),
                         r.categoryCode(),
-                        Money.of(r.total())
-                ))
+                        Money.of(r.total())))
                 .toList();
     }
 
@@ -139,14 +137,15 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         List<MonthlyDebtResponse> response = new ArrayList<>();
         YearMonth current = fromMonth;
 
-        //for each month starting at fromMonth, calculate the total debt at month end for each debt Account and add it the the response list
-        while(!current.isAfter(toMonth)){
+        // for each month starting at fromMonth, calculate the total debt at month end
+        // for each debt Account and add it the the response list
+        while (!current.isAfter(toMonth)) {
             final YearMonth month = current;
 
             Money totalDebtAtMonthEnd = debtAccounts.stream()
-                                                .map(account -> calculateDebtForAccountAtMonthEnd(account, month))
-                                                .reduce(Money.zero(), Money::add);
-                            
+                    .map(account -> calculateDebtForAccountAtMonthEnd(account, month))
+                    .reduce(Money.zero(), Money::add);
+
             response.add(new MonthlyDebtResponse(month, totalDebtAtMonthEnd));
             current = current.plusMonths(1);
         }
@@ -154,12 +153,13 @@ public class AnalyticsServiceImpl implements AnalyticsService{
         return response;
     }
 
+    // ---------------------------------------------BUSINESS LOGIC
+    // HELPERS-----------------------------------------------------
 
-    //---------------------------------------------BUSINESS LOGIC HELPERS-----------------------------------------------------
-    
-
-    //to estimate account balance at month end, get the most recent account balance snapshot for that account for that month
-    //and add to it the transactions on that account between balance snapshot date and month end
+    // to estimate account balance at month end, get the most recent account balance
+    // snapshot for that account for that month
+    // and add to it the transactions on that account between balance snapshot date
+    // and month end
     private Money calculateDebtForAccountAtMonthEnd(Account account, YearMonth month) {
 
         Money balance = Money.zero();
@@ -168,61 +168,72 @@ public class AnalyticsServiceImpl implements AnalyticsService{
 
         Optional<AccountBalanceSnapshot> snapshot = accountBalanceSnapshotRepo
                 .findTopByAccount_IdAndAsOfDateLessThanEqualOrderByAsOfDateDesc(account.getId(), monthEnd);
-        
-        //if snapshot exists then move up the start date and update balance to match snapshot
-        if(snapshot.isPresent()){
+
+        // if snapshot exists then move up the start date and update balance to match
+        // snapshot
+        if (snapshot.isPresent()) {
             balance = snapshot.get().getBalanceAmount();
-            startDate = snapshot.get().getAsOfDate().plusDays(1);       //possible site for ERROR???? what if asOfDate is for the last day of month
+            startDate = snapshot.get().getAsOfDate().plusDays(1); // possible site for ERROR???? what if asOfDate is for
+                                                                  // the last day of month
         }
 
-        //get a net of transactions between snapshot start and month end
+        // get a net of transactions between snapshot start and month end
         BigDecimal balanceDiff = transactionRepo.sumNetForAccountBetween(account.getId(), startDate, monthEnd);
 
         Money balanceAfterSnap = Money.of(balanceDiff);
 
         balance = balance.add(balanceAfterSnap);
-        
-        //negation since total debt is represented as positive but debt on balance account is negative
+
+        // negation since total debt is represented as positive but debt on balance
+        // account is negative
         Money debt = balance.negate();
 
-        //negative debt implies wealth therefore no debt 
-        if(debt.isNegative())
+        // negative debt implies wealth therefore no debt
+        if (debt.isNegative())
             return Money.zero();
 
         return debt;
     }
 
-    
+    public MonthlyNetResponse monthlyNetReport(int year, int month) {
+        Money expenses = incomePlanService.getActualMonthlyExpenses(year, month);
+        Money expectedGrossIncome = incomePlanService.getGrossExpectedMonthlyIncome(year, month);
+        Money expectedNetIncome = incomePlanService.getNetExpectedMonthlyIncome(year, month);
+        Money actualIncome = incomePlanService.getActualMonthlyIncome(year, month);
 
+        YearMonth ym = buildYearMonthOrThrow(year, month);
 
+        return new MonthlyNetResponse(ym.toString(), expectedGrossIncome, expectedNetIncome, actualIncome, expenses,
+                expectedNetIncome.subtract(expenses), actualIncome.subtract(expenses));
+    }
 
-    //----------------------------------------------HELPERS--------------------------------------------------
+    // ----------------------------------------------HELPERS--------------------------------------------------
 
-    private void validateDateRange(LocalDate from, LocalDate to){
-        if(from == null)
+    private void validateDateRange(LocalDate from, LocalDate to) {
+        if (from == null)
             throw new BadRequestException("Start date cannot be null");
-        if(to == null)
+        if (to == null)
             throw new BadRequestException("End date cannot be null");
 
-        if(from.isAfter(to))
+        if (from.isAfter(to))
             throw new BadRequestException("Start date cannot be after End date");
     }
 
-    private void validateDateRange(YearMonth from, YearMonth to){
-        if(from == null)
+    private void validateDateRange(YearMonth from, YearMonth to) {
+        if (from == null)
             throw new BadRequestException("Starting YearMonth value cannot be null");
-        if(to == null)
+        if (to == null)
             throw new BadRequestException("Ending YearMonth value cannot be null");
 
-        if(from.isAfter(to))
+        if (from.isAfter(to))
             throw new BadRequestException("Starting YearMonth cannot be after Ending YearMonth");
     }
 
-    private YearMonth buildYearMonthOrThrow(int year, int month){
-        try{
+    private YearMonth buildYearMonthOrThrow(int year, int month) {
+        try {
             return YearMonth.of(year, month);
-        }catch(RuntimeException e){
-            throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month Transaction");
+        } catch (RuntimeException e) {
+            throw new BadRequestException("Cannot build YearMonth. Invalid Year/Month.");
         }
     }
 
@@ -235,5 +246,5 @@ public class AnalyticsServiceImpl implements AnalyticsService{
                 .multiply(BigDecimal.valueOf(100))
                 .divide(total, 2, RoundingMode.HALF_UP);
     }
-    
+
 }
