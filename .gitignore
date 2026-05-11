@@ -1,33 +1,43 @@
-HELP.md
+# Maven / Java build output
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+*.class
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Logs
+*.log
+logs/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
 *.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
 .vscode/
+.settings/
+.project
+.classpath
+
+# Environment / local config
+.env
+.env.*
+application-local.properties
+application-local.yml
+
+# Temporary files
+temp/
+tmp/
+
+# Node/frontend dependencies if added later
+node_modules/
+dist/
+build/
+
+# Docker/local database artifacts
+*.pid
+*.seed
+*.dump
+
+# Test reports generated locally
+surefire-reports/
+failsafe-reports/

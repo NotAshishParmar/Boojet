@@ -60,6 +60,42 @@ Boojet is a personal budgeting backend built with Java and Spring Boot. It expos
 - JUnit 5
 - Flyway (migrations)
 
+## Project Structure
+
+Boojet is currently maintained as a single Spring Boot application.
+
+```text
+Boojet/
+├── pom.xml                     # Maven project configuration
+├── mvnw / mvnw.cmd             # Maven wrapper scripts
+├── docker-compose.yml          # Local PostgreSQL container setup
+├── src/
+│   ├── main/
+│   │   ├── java/               # Spring Boot backend source code
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       ├── db/migration/   # Flyway database migrations
+│   │       └── static/         # Vanilla HTML/CSS/JS frontend
+│   └── test/
+│       ├── java/               # Unit and integration tests
+│       └── resources/          # Test configuration/resources
+├── docs/                       # Architecture, API, and testing documentation
+└── README.md
+```
+
+The frontend is currently served by Spring Boot from src/main/resources/static.
+
+The backend uses:
+
+Java 21
+Spring Boot
+Maven
+PostgreSQL
+Flyway
+JPA/Hibernate
+
+For database schema changes, use Flyway migrations instead of relying on Hibernate auto-update.
+
 ## How To Run
 
 Prerequisites:
