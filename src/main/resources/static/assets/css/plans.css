@@ -117,6 +117,44 @@
   background:rgba(176,0,32,.06);
 }
 
+.is-inactive-plan{
+  background:#fafafa;
+  border:1px dashed #d6d9df;
+}
+
+.is-inactive-plan .side-title,
+.is-inactive-plan .plan-amount,
+.is-inactive-plan .plan-dates-text{
+  color:#7a7a7a;
+}
+
+.is-inactive-plan .chip{
+  background:#f8f8f8;
+  color:#777;
+  border-color:#dddddd;
+}
+
+.is-inactive-plan .side-btn{
+  background:#fcfcfc;
+  border-color:#e3e3e3;
+  color:#666;
+}
+
+.is-inactive-plan .side-btn:hover{
+  background:#f5f5f5;
+}
+
+.is-inactive-plan .plan-delete{
+  color:#b26b6b;
+}
+
+.plan-status-chip{
+  background:#f3f4f6;
+  color:#6b7280;
+  border-color:#d1d5db;
+  font-weight:600;
+}
+
 @media (max-width: 700px){
   .plan-head{
     flex-direction:column;

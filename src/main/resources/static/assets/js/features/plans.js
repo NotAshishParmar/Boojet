@@ -14,8 +14,14 @@ function renderPlansSidebar(list) {
   const wrap = document.getElementById('planList');
   if (!wrap) return;
 
-  wrap.innerHTML = list.map(p => `
-    <div class="side-item plan-card">
+  const sorted = [...list].sort((a, b) => {
+    const aActive = isPlanActive(a) ? 1 : 0;
+    const bActive = isPlanActive(b) ? 1 : 0;
+    return bActive - aActive;
+  });
+
+  wrap.innerHTML = sorted.map(p => `
+    <div class="side-item plan-card ${isPlanActive(p) ? '' : 'is-inactive-plan'}">
       <div class="plan-head">
         <div class="side-title">${esc(p.sourceName ?? '')}</div>
         <div class="plan-amount">${money(p.amount)}</div>
@@ -25,6 +31,7 @@ function renderPlansSidebar(list) {
         <span class="chip">${esc(p.payType)}</span>
         ${p.hoursPerWeek != null ? `<span class="chip">${esc(String(p.hoursPerWeek))} hrs/wk</span>` : ''}
         <span class="chip">${esc(deductionPercentLabel(p.estimatedDeductionRate))}</span>
+        ${isPlanActive(p) ? '' : '<span class="chip plan-status-chip">Inactive</span>'}
       </div>
 
       <div class="plan-dates-text muted">
@@ -58,6 +65,19 @@ function fmtPlanDate(isoDate) {
   const [yyyy, mm, dd] = String(isoDate).split('-');
   if (!yyyy || !mm || !dd) return isoDate;
   return `${dd}-${mm}-${yyyy}`;
+}
+
+function isPlanActive(plan) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const from = plan.effectiveFrom ? new Date(`${plan.effectiveFrom}T00:00:00`) : null;
+  const to = plan.effectiveTo ? new Date(`${plan.effectiveTo}T00:00:00`) : null;
+
+  if (from && from > today) return false;
+  if (to && to < today) return false;
+
+  return true;
 }
 
 function deductionPercentLabel(rate) {
