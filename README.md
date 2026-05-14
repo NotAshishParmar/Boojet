@@ -96,6 +96,35 @@ JPA/Hibernate
 
 For database schema changes, use Flyway migrations instead of relying on Hibernate auto-update.
 
+## Branch Strategy
+
+Boojet uses a simple stable-development branching model:
+
+main
+  Stable, runnable version of the app.
+
+develop
+  Integration branch for completed features before they are promoted to main.
+
+feature/*
+  Active feature work.
+
+feat/*
+  Smaller feature branches.
+
+refactor/*
+  Code cleanup or restructuring branches.
+
+test/*
+  Test-related branches.
+
+ui/*
+  Frontend/UI-focused branches.
+
+Recommended flow:
+
+feature branch → develop → main
+
 ## How To Run
 
 Prerequisites:
