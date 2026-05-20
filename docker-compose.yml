@@ -1,11 +1,25 @@
-version: '3.1'
-
 services:
-
   db:
-    image: postgres
+    image: postgres:18
+    container_name: boojet-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changemeinprod!
+
     ports:
       - "5432:5432"
-    restart: always
-    environment:
-      POSTGRES_PASSWORD: changemeinprod!
+
+    volumes:
+      - boojet_postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  boojet_postgres_data:
