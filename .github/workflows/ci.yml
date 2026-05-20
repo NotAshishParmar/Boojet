@@ -17,8 +17,32 @@ on:
 
 jobs:
   backend-tests:
-    name: Backend tests
+    name: Backend tests with PostgreSQL
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: boojet_ci
+          POSTGRES_USER: boojet
+          POSTGRES_PASSWORD: boojet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U boojet -d boojet_ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/boojet_ci
+      SPRING_DATASOURCE_USERNAME: boojet
+      SPRING_DATASOURCE_PASSWORD: boojet
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
 
     steps:
       - name: Checkout repository
