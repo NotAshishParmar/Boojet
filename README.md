@@ -53,7 +53,7 @@ Boojet is a personal budgeting backend built with Java and Spring Boot. It expos
 
 ## Tech Stack
 
-- Java 17, Maven
+- Java 21, Maven
 - Spring Boot 3.5.x (Web, Data JPA, Validation)
 - PostgreSQL (Docker Compose for local dev)
 - Lombok, Jackson
@@ -125,38 +125,72 @@ Recommended flow:
 
 feature branch → develop → main
 
-## How To Run
+## Running Boojet with Docker
 
-Prerequisites:
+Boojet can be run in two local modes.
 
-- Java 17+
-- Maven 3.9+
-- Docker (optional, for local PostgreSQL)
+### Option 1: Run only PostgreSQL in Docker
 
-1) Start PostgreSQL (optional but recommended)
+Start the database:
 
-```
-docker compose up -d
+```bash
+docker compose up -d db
 ```
 
-The default configuration (`src/main/resources/application.properties`):
+Run the Spring Boot app locally:
 
-- `spring.datasource.url=jdbc:postgresql://localhost:5432/postgres`
-- `spring.datasource.username=postgres`
-- `spring.datasource.password=changemeinprod!`
-- `spring.jpa.hibernate.ddl-auto=update`
-
-2) Start the API
-
-```
-mvn spring-boot:run
+```bash
+./mvnw spring-boot:run
 ```
 
-3) Open the simple UI
+On Windows PowerShell:
 
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
+
+The app should be available at:
+
+```text
 http://localhost:8080/boojet.html
 ```
+
+### Option 2: Run PostgreSQL and Spring Boot with Docker
+
+Build and start the full stack:
+
+```bash
+docker compose up --build -d
+```
+
+Check containers:
+
+```bash
+docker ps
+```
+
+View backend logs:
+
+```bash
+docker compose logs app
+```
+
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Reset the local database volume:
+
+```bash
+docker compose down -v
+```
+
+Only reset the volume if you are okay losing local development database data.
+
+
+
 
 ## Screenshots
 
