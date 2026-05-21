@@ -1,0 +1,14 @@
+.git
+.github
+target
+*.log
+.idea
+.vscode
+temp
+tmp
+docs/res
+node_modules
+.env
+.env.*
+*.sql
+*.tgz
