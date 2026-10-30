@@ -25,5 +25,4 @@ public class CreditInsightsController {
     public CreditMonthlySummaryResponse monthly(@RequestParam int year, @RequestParam int month) {
         return insightsService.creditMonthly(year, month);
     }
-    
 }

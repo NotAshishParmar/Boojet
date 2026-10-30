@@ -10,7 +10,7 @@ import com.boojet.boot_api.dto.incomePlan.IncomePlanPutRequest;
 import com.boojet.boot_api.dto.incomePlan.IncomePlanResponse;
 import com.boojet.boot_api.mappers.Impl.IncomePlanMapper;
 import com.boojet.boot_api.services.IncomePlanService;
-import com.boojet.boot_api.services.IncomePlanService.NetReport;
+import com.boojet.boot_api.dto.analytics.MonthlyNetResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -100,14 +100,7 @@ public class IncomePlanController {
     @Operation(summary = "Get expected income for a month", description = "Calculate and retrieve the expected income for a specified month and year.")
     @GetMapping("/expected/{year}/{month}")
     public Money expected(@PathVariable int year, @PathVariable int month){
-        return incomePlanService.getExpectedMonthlyIncome(year, month);
-    }
-
-    //net report
-    @Operation(summary = "Get net report for a month", description = "Generate a net report for a specified month and year, detailing expectesd vs actual income and expenses. Also includes net expected and actual gain or loss calculations.")
-    @GetMapping("/net/{year}/{month}")
-    public NetReport net(@PathVariable int year, @PathVariable int month){
-        return incomePlanService.netReport(year, month);
+        return incomePlanService.getGrossExpectedMonthlyIncome(year, month);
     }
     
 }

@@ -10,7 +10,7 @@ import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
-import com.boojet.boot_api.dto.category.CategorySummaryDto;
+import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.transaction.TransactionCreateRequest;
 import com.boojet.boot_api.dto.transaction.TransactionPatchRequest;
 import com.boojet.boot_api.dto.transaction.TransactionPutRequest;
@@ -242,20 +242,6 @@ public interface TransactionService {
      * @throws AccountNotFoundException if the provided account does not exist in the repository
      */
     Money calculateTotalByAccount(Account account);
-
-    /**
-     * Returns a monthly summary of transaction totals grouped by category.
-     * <p>
-     * The summary covers the full calendar month specified by {@code year} and {@code month}
-     * (from the first day to the last day, inclusive). Categories with no transactions in the
-     * month are still included with a total of {@code 0}.
-     *
-     * @param year the calendar year (e.g., 2026)
-     * @param month the calendar month (1-12)
-     * @return a list of category summaries for the month (one entry per {@link Category})
-     * @throws BadRequestException if {@code month} is not in the range 1-12
-     */
-    List<CategorySummaryDto> monthlySummaryByCategory(int year, int month);
 
     /**
      * Calculates the total income from the ledger between the a given date range.

@@ -49,3 +49,124 @@
 #planToOverlay {
   overflow: hidden;
 }
+
+/* ---------------- INCOME PLAN CARDS ---------------- */
+
+.plan-card{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+}
+
+.plan-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.plan-card .side-title{
+  margin:0;
+  line-height:1.2;
+  min-width:0;
+  flex:1;
+}
+
+.plan-amount{
+  font-weight:700;
+  line-height:1.2;
+  text-align:right;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
+.plan-amount .muted{
+  font-weight:400;
+  margin-left:4px;
+}
+
+.plan-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.plan-dates-text{
+  font-size:13px;
+  line-height:1.35;
+}
+
+.plan-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:2px;
+}
+
+.plan-actions .side-btn{
+  min-width:0;
+  padding:0 12px;
+}
+
+.plan-delete{
+  color:#b00020;
+}
+
+.plan-delete:hover{
+  background:rgba(176,0,32,.06);
+}
+
+.is-inactive-plan{
+  background:#fafafa;
+  border:1px dashed #d6d9df;
+}
+
+.is-inactive-plan .side-title,
+.is-inactive-plan .plan-amount,
+.is-inactive-plan .plan-dates-text{
+  color:#7a7a7a;
+}
+
+.is-inactive-plan .chip{
+  background:#f8f8f8;
+  color:#777;
+  border-color:#dddddd;
+}
+
+.is-inactive-plan .side-btn{
+  background:#fcfcfc;
+  border-color:#e3e3e3;
+  color:#666;
+}
+
+.is-inactive-plan .side-btn:hover{
+  background:#f5f5f5;
+}
+
+.is-inactive-plan .plan-delete{
+  color:#b26b6b;
+}
+
+.plan-status-chip{
+  background:#f3f4f6;
+  color:#6b7280;
+  border-color:#d1d5db;
+  font-weight:600;
+}
+
+@media (max-width: 700px){
+  .plan-head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .plan-amount{
+    text-align:left;
+    white-space:normal;
+  }
+
+  .plan-actions .side-btn{
+    flex:1 1 auto;
+  }
+}

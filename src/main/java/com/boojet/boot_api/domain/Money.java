@@ -107,6 +107,22 @@ public class Money implements Comparable<Money>{
     }
 
     /**
+     * Returns a new {@code Money} representing {@code this x other}.
+     *
+     * @param other the other amount to multiply
+     * @return multiple as a new {@code Money}
+     * @throws NullPointerException if {@code other} is {@code null}
+     */
+    public Money multiply(Money other){
+        BigDecimal mult = amount.multiply(other.asBigDecimal());
+        return new Money(mult);
+    }
+
+    public Money multiply(BigDecimal other){
+        return multiply(of(other));
+    }
+
+    /**
      * Returns a new {@code Money} with the sign flipped.
      *
      * @return negated amount

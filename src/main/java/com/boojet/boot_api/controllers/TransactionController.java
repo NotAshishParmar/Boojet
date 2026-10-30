@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.boojet.boot_api.domain.Category;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
-import com.boojet.boot_api.dto.category.CategorySummaryDto;
+import com.boojet.boot_api.dto.analytics.CategorySummaryDto;
 import com.boojet.boot_api.dto.transaction.TransactionCreateRequest;
 import com.boojet.boot_api.dto.transaction.TransactionPatchRequest;
 import com.boojet.boot_api.dto.transaction.TransactionPutRequest;
@@ -135,12 +135,6 @@ public class TransactionController {
     @GetMapping("/balance")
     public Money balance(){
         return transactionService.calculateTotalBalance();
-    }
-
-    @Operation(summary = "Get monthly summary by category", description = "Retrieve a summary of transactions for a specific month, grouped by category.")
-    @GetMapping("/summary/{year}/{month}")
-    public List<CategorySummaryDto> monthlySummary(@PathVariable int year, @PathVariable int month){
-        return transactionService.monthlySummaryByCategory(year, month);
     }
 
     //TODO: add userId to this endpoint once Auth has been implemented

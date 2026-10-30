@@ -6,11 +6,12 @@ import java.time.LocalDate;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.PayType;
 
-public record IncomePlanPutRequest (
+public record IncomePlanPutRequest(
     String sourceName,
     PayType payType,
     Money amount,
+    BigDecimal estimatedDeductionRate,
     BigDecimal hoursPerWeek,
     LocalDate effectiveFrom,
     LocalDate effectiveTo
-){}
+) {}

@@ -17,6 +17,7 @@ public class IncomePlanMapper implements Mapper<IncomePlan, IncomePlanResponse>{
             plan.getSourceName(),
             plan.getPayType(),
             plan.getAmount(),
+            plan.getEstimatedDeductionRate(),
             plan.getHoursPerWeek(),
             plan.getEffectiveFrom(),
             plan.getEffectiveTo()

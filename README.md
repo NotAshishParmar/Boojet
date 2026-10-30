@@ -53,45 +53,144 @@ Boojet is a personal budgeting backend built with Java and Spring Boot. It expos
 
 ## Tech Stack
 
-- Java 17, Maven
+- Java 21, Maven
 - Spring Boot 3.5.x (Web, Data JPA, Validation)
 - PostgreSQL (Docker Compose for local dev)
 - Lombok, Jackson
 - JUnit 5
 - Flyway (migrations)
 
-## How To Run
+## Project Structure
 
-Prerequisites:
+Boojet is currently maintained as a single Spring Boot application.
 
-- Java 17+
-- Maven 3.9+
-- Docker (optional, for local PostgreSQL)
-
-1) Start PostgreSQL (optional but recommended)
-
-```
-docker compose up -d
-```
-
-The default configuration (`src/main/resources/application.properties`):
-
-- `spring.datasource.url=jdbc:postgresql://localhost:5432/postgres`
-- `spring.datasource.username=postgres`
-- `spring.datasource.password=changemeinprod!`
-- `spring.jpa.hibernate.ddl-auto=update`
-
-2) Start the API
-
-```
-mvn spring-boot:run
+```text
+Boojet/
+├── pom.xml                     # Maven project configuration
+├── mvnw / mvnw.cmd             # Maven wrapper scripts
+├── docker-compose.yml          # Local PostgreSQL container setup
+├── src/
+│   ├── main/
+│   │   ├── java/               # Spring Boot backend source code
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       ├── db/migration/   # Flyway database migrations
+│   │       └── static/         # Vanilla HTML/CSS/JS frontend
+│   └── test/
+│       ├── java/               # Unit and integration tests
+│       └── resources/          # Test configuration/resources
+├── docs/                       # Architecture, API, and testing documentation
+└── README.md
 ```
 
-3) Open the simple UI
+The frontend is currently served by Spring Boot from src/main/resources/static.
 
+The backend uses:
+
+Java 21
+Spring Boot
+Maven
+PostgreSQL
+Flyway
+JPA/Hibernate
+
+For database schema changes, use Flyway migrations instead of relying on Hibernate auto-update.
+
+## Branch Strategy
+
+Boojet uses a simple stable-development branching model:
+
+main
+  Stable, runnable version of the app.
+
+develop
+  Integration branch for completed features before they are promoted to main.
+
+feature/*
+  Active feature work.
+
+feat/*
+  Smaller feature branches.
+
+refactor/*
+  Code cleanup or restructuring branches.
+
+test/*
+  Test-related branches.
+
+ui/*
+  Frontend/UI-focused branches.
+
+Recommended flow:
+
+feature branch → develop → main
+
+## Running Boojet with Docker
+
+Boojet can be run in two local modes.
+
+### Option 1: Run only PostgreSQL in Docker
+
+Start the database:
+
+```bash
+docker compose up -d db
 ```
+
+Run the Spring Boot app locally:
+
+```bash
+./mvnw spring-boot:run
+```
+
+On Windows PowerShell:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+The app should be available at:
+
+```text
 http://localhost:8080/boojet.html
 ```
+
+### Option 2: Run PostgreSQL and Spring Boot with Docker
+
+Build and start the full stack:
+
+```bash
+docker compose up --build -d
+```
+
+Check containers:
+
+```bash
+docker ps
+```
+
+View backend logs:
+
+```bash
+docker compose logs app
+```
+
+Stop containers:
+
+```bash
+docker compose down
+```
+
+Reset the local database volume:
+
+```bash
+docker compose down -v
+```
+
+Only reset the volume if you are okay losing local development database data.
+
+
+
 
 ## Screenshots
 

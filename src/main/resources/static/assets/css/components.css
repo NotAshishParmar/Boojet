@@ -43,6 +43,106 @@ button[disabled]{ opacity:.55; cursor:not-allowed; }
 }
 .btn-sm:hover{ background:#f3f4f6; }
 
+
+/* links that should look like buttons */
+a.btn-ghost,
+a.btn-primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  font:inherit;
+}
+
+/* specifically for top nav buttons */
+.topbar-actions a.btn-ghost{
+  color:#111827;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  height:38px;
+  padding:0 12px;
+  line-height:1;
+}
+
+.topbar-actions a.btn-ghost:visited{
+  color:#111827;
+}
+
+.topbar-actions a.btn-ghost:hover{
+  background:#f3f4f6;
+  text-decoration:none;
+}
+
+.topbar-actions a.btn-ghost:active{
+  transform:translateY(1px);
+}
+
+.topbar-actions a.btn-ghost:focus-visible{
+  outline:2px solid #cbd5e1;
+  outline-offset:2px;
+}
+
+.topbar-actions a.nav-link{
+  gap:8px;
+  font-weight:500;
+  color:#374151;
+}
+
+.topbar-actions a.nav-link:hover{
+  color:#111827;
+}
+
+/* ================= Top nav ================= */
+.topnav{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f8fafc;
+}
+
+.topnav-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:92px;
+  height:30px;
+  padding:0 12px;
+  border-radius:8px;
+  text-decoration:none;
+  color:#4b5563;
+  font-size:14px;
+  font-weight:500;
+  line-height:1;
+  transition:background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.topnav-link:visited{
+  color:#4b5563;
+}
+
+.topnav-link:hover{
+  background:#eef2f7;
+  color:#111827;
+  text-decoration:none;
+}
+
+.topnav-link.is-active,
+.topnav-link[aria-current="page"]{
+  background:#fff;
+  color:#111827;
+  box-shadow:0 1px 2px rgba(0,0,0,0.06);
+}
+
+.topnav-link:focus-visible{
+  outline:2px solid #cbd5e1;
+  outline-offset:2px;
+}
+
+
 /* ================= Chip ================= */
 .chip{
   display:inline-block;

@@ -38,7 +38,7 @@ import lombok.NoArgsConstructor;
  * </ul>
  *
  * <p><b>Projection rules:</b>
- * This entity provides {@link #calculateMonthlyAmount(YearMonth)} to estimate the expected income
+ * This entity provides {@link #calculateGrossMonthlyAmount(YearMonth)} to estimate the expected income
  * contributed by this plan in a specific month.
  */
 @Entity
@@ -63,6 +63,10 @@ public class IncomePlan {
 
     @Column(precision = 19, scale = 2)          // Define precision and scale for Money
     private Money amount;                       // Represnts the payment amount, money received per hour/check/anually/etc
+
+    @Column(precision = 5, scale = 4)
+    @Builder.Default
+    private BigDecimal estimatedDeductionRate = new BigDecimal("0.2200");
 
     @Column(precision = 9, scale = 2)
     private BigDecimal hoursPerWeek;            // Relevant for HOURLY pay type
@@ -115,44 +119,59 @@ public class IncomePlan {
      * @return expected income for the month
      * @throws BadRequestException if {@link #payType} is {@link PayType#HOURLY} and {@link #hoursPerWeek} is {@code null}
      */
-    public Money calculateMonthlyAmount(YearMonth ym) {
+    public Money calculateGrossMonthlyAmount(YearMonth ym) {
 
-    if (!activeIn(ym)) return Money.zero();
+        if (!activeIn(ym)) return Money.zero();
 
-    if (payType == null) return Money.zero();
-    if (amount == null) return Money.zero();
+        if (payType == null) return Money.zero();
+        if (amount == null) return Money.zero();
 
-    switch (payType) {
-        case HOURLY -> {
-            if (hoursPerWeek == null) {
-                throw new BadRequestException("hoursPerWeek is required for HOURLY payType");
+        switch (payType) {
+            case HOURLY -> {
+                if (hoursPerWeek == null) {
+                    throw new BadRequestException("hoursPerWeek is required for HOURLY payType");
+                }
+
+                BigDecimal hoursPerMonth = hoursPerWeek.multiply(WEEKS_PER_MONTH);
+                BigDecimal monthlyPay = hoursPerMonth.multiply(amount.asBigDecimal());
+                return Money.of(monthlyPay);
             }
-
-            BigDecimal hoursPerMonth = hoursPerWeek.multiply(WEEKS_PER_MONTH);
-            BigDecimal monthlyPay = hoursPerMonth.multiply(amount.asBigDecimal());
-            return Money.of(monthlyPay);
-        }
-        case WEEKLY -> {
-            BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(WEEKS_PER_MONTH);
-            return Money.of(expectedMonthlyPay);
-        }
-        case BIWEEKLY -> {
-            BigDecimal paychecksPerMonth =
-                new BigDecimal("26").divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
-            BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(paychecksPerMonth);
-            return Money.of(expectedMonthlyPay);
-        }
-        case MONTHLY -> {
-            return amount;
-        }
-        case ANNUAL -> {
-            BigDecimal expectedMonthlyPay =
-                amount.asBigDecimal().divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
-            return Money.of(expectedMonthlyPay);
-        }
-        default -> {
-            return Money.zero();
+            case WEEKLY -> {
+                BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(WEEKS_PER_MONTH);
+                return Money.of(expectedMonthlyPay);
+            }
+            case BIWEEKLY -> {
+                BigDecimal paychecksPerMonth =
+                    new BigDecimal("26").divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
+                BigDecimal expectedMonthlyPay = amount.asBigDecimal().multiply(paychecksPerMonth);
+                return Money.of(expectedMonthlyPay);
+            }
+            case MONTHLY -> {
+                return amount;
+            }
+            case ANNUAL -> {
+                BigDecimal expectedMonthlyPay =
+                    amount.asBigDecimal().divide(MONTHS_PER_YEAR, 10, RoundingMode.HALF_UP);
+                return Money.of(expectedMonthlyPay);
+            }
+            default -> {
+                return Money.zero();
+            }
         }
     }
-}
+
+
+    public Money calculateNetMonthlyAmount(YearMonth ym) {
+
+        if (!activeIn(ym)) return Money.zero();
+
+        if (payType == null) return Money.zero();
+        if (amount == null) return Money.zero();
+
+        Money grosspay = calculateGrossMonthlyAmount(ym);
+        Money estimatedDeductions = grosspay.multiply(estimatedDeductionRate);
+        Money netPay = grosspay.subtract(estimatedDeductions);
+
+        return netPay;
+    }
 }
