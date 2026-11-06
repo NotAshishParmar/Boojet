@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.boojet.boot_api.domain.AccountType;
 import com.boojet.boot_api.domain.LoanDetails;
+import com.boojet.boot_api.dto.account.LoanCreateRequest;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.LoanNotFoundException;
 import com.boojet.boot_api.repositories.LoanRepository;
@@ -23,11 +24,7 @@ public class LoanServiceImpl implements LoanService{
     @Override
     @Transactional 
     public LoanDetails createLoan(LoanDetails loanDetails) {
-
-        AccountType requestAccountType = loanDetails.getLinkedAccount().getType();
-        if(requestAccountType != AccountType.LOAN)
-            throw new BadRequestException("Loan details can only be set for Accounts of type Loan");
-
+        
         LoanDetails saved = loanRepo.save(loanDetails);
         return saved;
     }

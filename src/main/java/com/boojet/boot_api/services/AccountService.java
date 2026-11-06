@@ -9,6 +9,7 @@ import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.User;
+import com.boojet.boot_api.dto.account.AccountCreateRequest;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
 
@@ -55,7 +56,7 @@ public interface AccountService {
      * @return the saved account with a generated ID and any defaults applied
      * @throws BadRequestException if input fails validation
      */
-    Account createAccount(Account account);
+    Account createAccount(AccountCreateRequest req);
 
     /**
      * Finds and returns a list of all {@code Account(s)} present in the repository.

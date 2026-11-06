@@ -1,6 +1,7 @@
 package com.boojet.boot_api.services;
 
 import com.boojet.boot_api.domain.LoanDetails;
+import com.boojet.boot_api.dto.account.LoanCreateRequest;
 
 public interface LoanService {
     
