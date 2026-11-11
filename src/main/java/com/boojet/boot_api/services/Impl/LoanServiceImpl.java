@@ -1,7 +1,10 @@
 package com.boojet.boot_api.services.Impl;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
+import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.AccountType;
 import com.boojet.boot_api.domain.LoanDetails;
 import com.boojet.boot_api.dto.account.LoanCreateRequest;
@@ -55,6 +58,16 @@ public class LoanServiceImpl implements LoanService{
             throw new LoanNotFoundException(id);
 
         loanRepo.deleteById(id);
+    }
+
+    @Override 
+    @Transactional 
+    public void deleteLoan(Account account){
+        Optional<LoanDetails> loan = loanRepo.findByLinkedAccount(account);
+
+        if(loan.isPresent()){
+            loanRepo.delete(loan.get());
+        }
     }
     
 }

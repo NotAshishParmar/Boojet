@@ -19,6 +19,8 @@ import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.domain.ValidationMode;
 import com.boojet.boot_api.dto.account.AccountCreateRequest;
+import com.boojet.boot_api.dto.account.AccountPatchRequest;
+import com.boojet.boot_api.dto.account.AccountPutRequest;
 import com.boojet.boot_api.dto.account.LoanCreateRequest;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
@@ -93,48 +95,60 @@ public class AccountServiceImpl implements AccountService{
                 .orElseThrow(() -> new AccountNotFoundException(id));
     }
 
-
-    //TODO: changing account type to Loan type will allow a Loan account with no loanDetails. 
-    //TODO: Conversely, changing a loan account to any other account type allows them to exist with loanDetails. Solution: Immutable account types??
-
-
     @Override
     @Transactional
-    public Account updateAccountComplete(Long id, Account account){
+    public Account putAccount(Long id, AccountPutRequest req){
         validateAccountId(id);
-        Account verifiedAccount = validateAccount(account, ValidationMode.PUT_FULL);
-        return updateAccount(id, verifiedAccount);
+
+        if(req == null)
+                throw new BadRequestException("Account Put request should not be null");
+
+        Account existing = accountRepo.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException(id));
+
+        String name = req.name();
+
+        if(name == null || name.isBlank())
+            throw new BadRequestException("Must provide a name for account");
+
+        LocalDate closedAt = req.closedAt();    //closedAt can be null as that means that the account is still active
+        if(closedAt != null){
+            validateClosingDate(closedAt, existing.getCreatedAt());
+        }
+
+        existing.setName(name.trim());
+        existing.setClosedAt(closedAt);
+
+
+        return accountRepo.save(existing);
     }
 
     @Override
     @Transactional
-    public Account updateAccount(Long id, Account account) {
+    public Account patchAccount(Long id, AccountPatchRequest req) {
 
         validateAccountId(id);
-        Account verifiedAccount = validateAccount(account, ValidationMode.PATCH_PARTIAL);
-        verifiedAccount.setId(id);
 
-        return accountRepo.findById(id).map(existingAccount -> {
+        if(req == null)
+            throw new BadRequestException("Account Patch request cannot be null");
 
-            LocalDate effectiveCreatedAt = 
-                verifiedAccount.getCreatedAt() != null 
-                    ? verifiedAccount.getCreatedAt() 
-                    : existingAccount.getCreatedAt();
+        Account existing = accountRepo.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException(id));
 
-            if (verifiedAccount.getClosedAt() != null 
-                    && effectiveCreatedAt != null 
-                    && verifiedAccount.getClosedAt().isBefore(effectiveCreatedAt)) {
-                throw new BadRequestException("Account cannot be closed prior to creation");
-            }
+        String name = req.name();
+        if(name != null){
+            if(name.isBlank())
+                throw new BadRequestException("Cannot update account name to blank");
+            existing.setName(name.trim());
+        }
 
-            Optional.ofNullable(verifiedAccount.getUser()).ifPresent(existingAccount::setUser);
-            Optional.ofNullable(verifiedAccount.getName()).ifPresent(existingAccount::setName);
-            Optional.ofNullable(verifiedAccount.getType()).ifPresent(existingAccount::setType);
-            Optional.ofNullable(verifiedAccount.getOpeningBalance()).ifPresent(existingAccount::setOpeningBalance);
-            Optional.ofNullable(verifiedAccount.getCreatedAt()).ifPresent(existingAccount::setCreatedAt);
-            Optional.ofNullable(verifiedAccount.getClosedAt()).ifPresent(existingAccount::setClosedAt);
-            return accountRepo.save(existingAccount);
-        }).orElseThrow(() -> new AccountNotFoundException(id));
+        LocalDate closedAt = req.closedAt();
+        if(closedAt != null){
+            validateClosingDate(closedAt, existing.getCreatedAt());
+            existing.setClosedAt(closedAt);
+        }
+
+        return accountRepo.save(existing);
     }
 
     @Override
@@ -142,9 +156,15 @@ public class AccountServiceImpl implements AccountService{
     public void delete(Long id) {
         validateAccountId(id);
 
-        if(!accountRepo.existsById(id)){
-            throw new AccountNotFoundException(id);
+        Account toBeDeleted = accountRepo.findById(id)
+                                .orElseThrow(() -> new AccountNotFoundException(id));
+
+
+        if(toBeDeleted.getType() == AccountType.LOAN) {
+            loanService.deleteLoan(toBeDeleted);
         }
+
+
         accountRepo.deleteById(id);
     }
 
@@ -275,6 +295,13 @@ public class AccountServiceImpl implements AccountService{
 
         return account;
 
+    }
+
+    private void validateClosingDate(LocalDate closedAt, LocalDate createdAt){
+        if(closedAt.isBefore(createdAt))
+                throw new BadRequestException("Account cannot be closed before creation");
+        if(closedAt.isAfter(LocalDate.now()))
+            throw new BadRequestException("Cannot having closing date in the future");
     }
 
     private Account prepareAccountForCreation(AccountCreateRequest req){

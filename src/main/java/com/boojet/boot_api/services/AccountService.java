@@ -10,9 +10,13 @@ import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.dto.account.AccountCreateRequest;
+import com.boojet.boot_api.dto.account.AccountPatchRequest;
+import com.boojet.boot_api.dto.account.AccountPutRequest;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
 
+
+//TODO: update docs to reflect new DTO changes
 /**
  * Service contract for managing {@link Account} records.
  * This service defines the business-level operations for creating and managing
@@ -95,7 +99,7 @@ public interface AccountService {
      * @throws AccountNotFoundException if no account with the given ID exists
      * @throws BadRequestException if input is {@code null} or fails validation
      */
-    Account updateAccountComplete(Long id, Account account);
+    Account putAccount(Long id, AccountPutRequest req);
 
     /**
      * Partially updates an existing {@link Account} with the non-null fields
@@ -117,7 +121,7 @@ public interface AccountService {
      * @throws AccountNotFoundException if no account with the given ID exists
      * @throws BadRequestException if input fails validation
      */
-    Account updateAccount(Long id, Account account);
+    Account patchAccount(Long id, AccountPatchRequest request);
 
     /**
      * Deletes the {@link Account} with the given ID.
