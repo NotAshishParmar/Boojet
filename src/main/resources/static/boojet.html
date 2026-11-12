@@ -70,6 +70,27 @@
             </div>
           </div>
 
+          <dialog id="acctEditDialog" class="account-dialog" aria-labelledby="acctEditTitle">
+            <div class="modal">
+              <div class="modal-head">
+                <h3 id="acctEditTitle">Edit Account</h3>
+              </div>
+              <div class="modal-body">
+                <form id="acctEditForm">
+                  <label class="row">Name <input id="editAccountName" required></label>
+                  <label class="row">Closing date
+                    <input id="editAccountClosedAt" type="date">
+                    <small class="muted">Leave blank to keep the account open or reopen it.</small>
+                  </label>
+                  <div class="tx-actions">
+                    <button type="button" id="acctEditCancel" class="btn-ghost">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </dialog>
+
           <!-- Rarely used: keep collapsed -->
           <details class="collapse" id="acctCollapse">
             <summary>
@@ -85,12 +106,22 @@
                   <option>CHEQUING</option>
                   <option>SAVINGS</option>
                   <option>CREDIT_CARD</option>
+                  <option>MASTER_CARD</option>
+                  <option>LOAN</option>
                   <option>CASH</option>
                   <option>OTHER</option>
                 </select>
               </label>
 
               <label>Opening Balance <input id="aopen" type="number" step="0.01" value="0"></label>
+              <label>Creation date <input id="acreated" type="date" required></label>
+
+              <fieldset id="loanFields" class="account-loan-fields" hidden disabled>
+                <legend class="muted">Loan details</legend>
+                <label>Original principal <input id="loanPrincipal" type="number" step="0.01" required></label>
+                <label>Annual interest rate <input id="loanRate" type="number" min="0" step="any" required></label>
+                <label>Term in months <input id="loanTerm" type="number" min="1" max="2147483647" step="1" required></label>
+              </fieldset>
 
               <div class="actions">
                 <button type="submit">Add Account</button>

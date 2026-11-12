@@ -1,5 +1,6 @@
 package com.boojet.boot_api.controllers;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.boojet.boot_api.dto.account.AccountCreateRequest;
+import com.boojet.boot_api.dto.account.AccountPatchRequest;
+import com.boojet.boot_api.dto.account.AccountPutRequest;
+import com.boojet.boot_api.dto.account.AccountResponse;
 import com.boojet.boot_api.dto.account.BalanceSnapshotRequest;
+import com.boojet.boot_api.mappers.Impl.AccountMapper;
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.AccountBalanceSnapshot;
 import com.boojet.boot_api.domain.Transaction;
@@ -42,53 +48,68 @@ public class AccountController {
     private TransactionService transactionService;
     private BalanceService balanceService;
     private AccountBalanceSnapshotService snapshotService;
+    private AccountMapper accountMapper;
 
-    public AccountController(AccountService accountService, TransactionService transactionService, BalanceService balanceService, AccountBalanceSnapshotService snapshotService){
+    public AccountController(AccountService accountService, TransactionService transactionService, BalanceService balanceService, 
+        AccountBalanceSnapshotService snapshotService, AccountMapper accountMapper){
         this.accountService = accountService;
         this.transactionService = transactionService;
         this.balanceService = balanceService;
         this.snapshotService = snapshotService;
+        this.accountMapper = accountMapper;
     }
 
     //-------------------------------------------------CRUD-------------------------------------------------------
 
     @Operation(summary = "Create a new account", description = "Creates a new account with the provided details.")
     @PostMapping
-    public Account createAccount(@RequestBody Account account) {          
-        return accountService.createAccount(account);
+    public ResponseEntity<AccountResponse> createAccount(@RequestBody AccountCreateRequest req) {          
+        Account account = accountService.createAccount(req);
+        AccountResponse response = accountMapper.mapTo(account);
+
+        URI location = URI.create("/account/" + account.getId());
+        return ResponseEntity.created(location).body(response);
     }
 
     @Operation(summary = "Get all accounts", description = "Retrieve a list of all accounts.")
     @GetMapping
-    public List<Account> getAllAccounts(){
-        return accountService.findAllAccounts();
+    public List<AccountResponse> getAllAccounts(){
+        return accountService.findAllAccounts()
+                .stream()
+                .map(accountMapper::mapTo)
+                .toList();
     }
 
     @Operation(summary = "Get an account by ID", description = "Retrieve the details of an account by its ID.")
     @GetMapping("/{id}")
-    public Account getOne(@PathVariable Long id){
+    public AccountResponse getOne(@PathVariable Long id){
         Account account = accountService.findAccount(id);
-        return account;
+        return accountMapper.mapTo(account);
     }
-
+    
     @Operation(summary = "Update an account by ID", description = "Update the details of an existing account by its ID.")
     @PutMapping("/{id}")
-    public Account updateAccount(@PathVariable Long id, @RequestBody Account account){
-        Account updatedAccount = accountService.updateAccountComplete(id, account);
-        return updatedAccount;
+    public ResponseEntity<AccountResponse> updateAccount(@PathVariable Long id, @RequestBody AccountPutRequest req){
+        Account updatedAccount = accountService.putAccount(id, req);
+        AccountResponse response = accountMapper.mapTo(updatedAccount);
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Partially update an account by ID", description = "Partially update the details of an existing account by its ID.")
     @PatchMapping("/{id}")
-    public Account patchAccount(@PathVariable Long id, @RequestBody Account account){
-        Account patchedAccount = accountService.updateAccount(id, account);
-        return patchedAccount;
+    public ResponseEntity<AccountResponse> patchAccount(@PathVariable Long id, @RequestBody AccountPatchRequest req){
+        Account patchedAccount = accountService.patchAccount(id, req);
+        AccountResponse response = accountMapper.mapTo(patchedAccount);
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Delete an account by ID", description = "Delete an existing account by its ID.")
     @DeleteMapping("/{id}")
-    public void deleteAccount(@PathVariable Long id){
+    public ResponseEntity<Void> deleteAccount(@PathVariable Long id){
         accountService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     //---------------------------------------------Reports / Calculations---------------------------------------------

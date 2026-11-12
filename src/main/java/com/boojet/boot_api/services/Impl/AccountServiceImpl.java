@@ -1,5 +1,7 @@
 package com.boojet.boot_api.services.Impl;
 
+import com.boojet.boot_api.repositories.LoanRepository;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -11,10 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.boojet.boot_api.domain.Account;
 import com.boojet.boot_api.domain.AccountType;
+import com.boojet.boot_api.domain.LoanDetails;
 import com.boojet.boot_api.domain.Money;
 import com.boojet.boot_api.domain.Transaction;
 import com.boojet.boot_api.domain.User;
 import com.boojet.boot_api.domain.ValidationMode;
+import com.boojet.boot_api.dto.account.AccountCreateRequest;
+import com.boojet.boot_api.dto.account.AccountPatchRequest;
+import com.boojet.boot_api.dto.account.AccountPutRequest;
+import com.boojet.boot_api.dto.account.LoanCreateRequest;
 import com.boojet.boot_api.exceptions.AccountNotFoundException;
 import com.boojet.boot_api.exceptions.BadRequestException;
 import com.boojet.boot_api.repositories.AccountRepository;
@@ -22,44 +29,49 @@ import com.boojet.boot_api.repositories.UserRepository;
 import com.boojet.boot_api.services.AccountBalanceSnapshotService;
 import com.boojet.boot_api.services.AccountService;
 import com.boojet.boot_api.services.BalanceService;
+import com.boojet.boot_api.services.LoanService;
 import com.boojet.boot_api.services.TransactionService;
 
 
 @Service
 public class AccountServiceImpl implements AccountService{
 
+
     private final AccountRepository accountRepo;
     private final UserRepository userRepo;
     private final BalanceService balanceService;
     private final AccountBalanceSnapshotService snapshotService;
     private final TransactionService transactionService;
+    private final LoanService loanService;
 
     private static final Long DEFAULT_USER_ID = 1L; //temporary until user management is implemented
     private static int DEFAULT_COUNTER = 1;
 
 
     public AccountServiceImpl(AccountRepository accountRepo, UserRepository userRepo, BalanceService balanceService,
-                                 AccountBalanceSnapshotService snapshotService, TransactionService transactionService){
+                                 AccountBalanceSnapshotService snapshotService, TransactionService transactionService,
+                                    LoanService loanService){
         this.accountRepo = accountRepo;
         this.userRepo = userRepo;
         this.balanceService = balanceService;
         this.snapshotService = snapshotService;
         this.transactionService = transactionService;
+        this.loanService = loanService;
     }
 
     //----------------------CRUD----------------------------
     @Override
     @Transactional
-    public Account createAccount(Account account) {
-        if(account.getUser() == null){
-            User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
-            account.setUser(defaultUser);
-        }
+    public Account createAccount(AccountCreateRequest req) {
+        
+        if(req == null) throw new BadRequestException ("Request must not be null");
 
-        applyCreateDefaults(account);
-        Account verifiedAccount = validateAccount(account, ValidationMode.CREATE);
+        Account verifiedAccount = prepareAccountForCreation(req);
 
         Account saved = accountRepo.save(verifiedAccount);
+
+        if(saved.getType() == AccountType.LOAN)
+            applyLoanRules(req , saved);
 
         //seed initial snapshot at account creation date
         snapshotService.upsert(saved.getId(), saved.getCreatedAt(), saved.getOpeningBalance());
@@ -85,41 +97,58 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     @Transactional
-    public Account updateAccountComplete(Long id, Account account){
+    public Account putAccount(Long id, AccountPutRequest req){
         validateAccountId(id);
-        Account verifiedAccount = validateAccount(account, ValidationMode.PUT_FULL);
-        return updateAccount(id, verifiedAccount);
+
+        if(req == null)
+                throw new BadRequestException("Account Put request should not be null");
+
+        Account existing = accountRepo.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException(id));
+
+        String name = req.name();
+
+        if(name == null || name.isBlank())
+            throw new BadRequestException("Must provide a name for account");
+
+        LocalDate closedAt = req.closedAt();    //closedAt can be null as that means that the account is still active
+        if(closedAt != null){
+            validateClosingDate(closedAt, existing.getCreatedAt());
+        }
+
+        existing.setName(name.trim());
+        existing.setClosedAt(closedAt);
+
+
+        return accountRepo.save(existing);
     }
 
     @Override
     @Transactional
-    public Account updateAccount(Long id, Account account) {
+    public Account patchAccount(Long id, AccountPatchRequest req) {
 
         validateAccountId(id);
-        Account verifiedAccount = validateAccount(account, ValidationMode.PATCH_PARTIAL);
-        verifiedAccount.setId(id);
 
-        return accountRepo.findById(id).map(existingAccount -> {
+        if(req == null)
+            throw new BadRequestException("Account Patch request cannot be null");
 
-            LocalDate effectiveCreatedAt = 
-                verifiedAccount.getCreatedAt() != null 
-                    ? verifiedAccount.getCreatedAt() 
-                    : existingAccount.getCreatedAt();
+        Account existing = accountRepo.findById(id)
+                .orElseThrow(() -> new AccountNotFoundException(id));
 
-            if (verifiedAccount.getClosedAt() != null 
-                    && effectiveCreatedAt != null 
-                    && verifiedAccount.getClosedAt().isBefore(effectiveCreatedAt)) {
-                throw new BadRequestException("Account cannot be closed prior to creation");
-            }
+        String name = req.name();
+        if(name != null){
+            if(name.isBlank())
+                throw new BadRequestException("Cannot update account name to blank");
+            existing.setName(name.trim());
+        }
 
-            Optional.ofNullable(verifiedAccount.getUser()).ifPresent(existingAccount::setUser);
-            Optional.ofNullable(verifiedAccount.getName()).ifPresent(existingAccount::setName);
-            Optional.ofNullable(verifiedAccount.getType()).ifPresent(existingAccount::setType);
-            Optional.ofNullable(verifiedAccount.getOpeningBalance()).ifPresent(existingAccount::setOpeningBalance);
-            Optional.ofNullable(verifiedAccount.getCreatedAt()).ifPresent(existingAccount::setCreatedAt);
-            Optional.ofNullable(verifiedAccount.getClosedAt()).ifPresent(existingAccount::setClosedAt);
-            return accountRepo.save(existingAccount);
-        }).orElseThrow(() -> new AccountNotFoundException(id));
+        LocalDate closedAt = req.closedAt();
+        if(closedAt != null){
+            validateClosingDate(closedAt, existing.getCreatedAt());
+            existing.setClosedAt(closedAt);
+        }
+
+        return accountRepo.save(existing);
     }
 
     @Override
@@ -127,9 +156,15 @@ public class AccountServiceImpl implements AccountService{
     public void delete(Long id) {
         validateAccountId(id);
 
-        if(!accountRepo.existsById(id)){
-            throw new AccountNotFoundException(id);
+        Account toBeDeleted = accountRepo.findById(id)
+                                .orElseThrow(() -> new AccountNotFoundException(id));
+
+
+        if(toBeDeleted.getType() == AccountType.LOAN) {
+            loanService.deleteLoan(toBeDeleted);
         }
+
+
         accountRepo.deleteById(id);
     }
 
@@ -172,6 +207,39 @@ public class AccountServiceImpl implements AccountService{
 
     //-------------------------------------------------helpers------------------------------------------------------------
     
+    private void applyLoanRules(AccountCreateRequest req, Account savedAccount){
+        LoanCreateRequest loanReq = req.loanDetails();
+
+        if (loanReq == null)
+            throw new BadRequestException("Cannot create Account Type of Loan without LoanDetails");
+
+        Money originalPrincipal = loanReq.originalPrincipal();
+        if(originalPrincipal == null)
+            throw new BadRequestException("Loan Original Principal cannot be null!");
+
+        BigDecimal annualInterestRate = loanReq.annualInterestRate();
+
+        if (annualInterestRate == null)
+            throw new BadRequestException("Interest Rate cannot be null");
+        if(annualInterestRate.compareTo(BigDecimal.ZERO) < 0)
+            throw new BadRequestException("Interest rate cannot be Negative");
+
+        Integer termMonths = loanReq.termMonths();
+        if(termMonths == null)
+            throw new BadRequestException("Term Months cannot be null");
+        if(termMonths <= 0)
+            throw new BadRequestException("Loan term cannot be Zero or Negative");
+
+        LoanDetails loanDetails = LoanDetails.builder()
+                                    .linkedAccount(savedAccount)
+                                    .originalPrincipal(originalPrincipal)
+                                    .annualInterestRate(annualInterestRate)
+                                    .termMonths(termMonths)
+                                    .build();
+
+        loanService.createLoan(loanDetails);
+    }
+
     private void validateAccountId(Long id){
         if(id == null || id <= 0){
             throw new BadRequestException("Account must have a valid positive Id");
@@ -229,23 +297,56 @@ public class AccountServiceImpl implements AccountService{
 
     }
 
-    private void applyCreateDefaults(Account account){
-        if(account.getName() == null || account.getName().isBlank()){
-            account.setName("Default Account " + DEFAULT_COUNTER);
-            DEFAULT_COUNTER++;
-        }
+    private void validateClosingDate(LocalDate closedAt, LocalDate createdAt){
+        if(closedAt.isBefore(createdAt))
+                throw new BadRequestException("Account cannot be closed before creation");
+        if(closedAt.isAfter(LocalDate.now()))
+            throw new BadRequestException("Cannot having closing date in the future");
+    }
 
-        if(account.getType() == null){
-            account.setType(AccountType.CHEQUING);
-        }
+    private Account prepareAccountForCreation(AccountCreateRequest req){
 
-        if(account.getOpeningBalance() == null){
-            account.setOpeningBalance(Money.zero());
-        }
+        User defaultUser = userRepo.getReferenceById(DEFAULT_USER_ID);
 
-        if(account.getCreatedAt() == null){
-            account.setCreatedAt(LocalDate.now());
-        }
+        String name = normalizeName(req.name());
+
+        LocalDate createdAt = req.createdAt();
+
+        if(createdAt == null)
+            throw new BadRequestException("Account must have a creation date");
+        if (createdAt != null && createdAt.isAfter(LocalDate.now())) 
+            throw new BadRequestException("Account cannot be created in the future");
+        
+
+        AccountType type = req.type();
+
+        if(type == null)
+            throw new BadRequestException("Account Type cannot be null!");
+        if(type == AccountType.LOAN && req.loanDetails() == null)
+            throw new BadRequestException("Loan accounts must have Loan Details provided at creation");
+        if(type != AccountType.LOAN && req.loanDetails() != null)
+            throw new BadRequestException("Non-loan accounts should not have loan details provided at creation");
+
+
+        Money openingBalance = req.openingBalance();
+        if(openingBalance == null)
+            throw new BadRequestException("Account opening balance cannot be null!");
+
+        Account account = Account.builder()
+                            .user(defaultUser)
+                            .name(name)
+                            .type(type)
+                            .openingBalance(openingBalance)
+                            .createdAt(createdAt)
+                            .build();
+
+        return account;
+    }
+
+    private String normalizeName(String name){
+        if(name == null || name.isBlank())
+            return "Unnamed Account";
+        return name.trim();
     }
 
 }
