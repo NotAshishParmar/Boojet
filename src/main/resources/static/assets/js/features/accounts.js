@@ -39,18 +39,26 @@ export async function renderAccountsSidebar(list) {
     <div class="side-item">
       <div>
         <div class="side-title">${esc(a.name)}</div>
-        <div class="side-sub"><span class="chip">${esc(a.type)}</span></div>
+        <div class="side-sub">
+          <span class="chip">${esc(a.type)}</span>
+          ${a.closedAt ? `<span class="chip">Closed ${esc(a.closedAt)}</span>` : ''}
+        </div>
       </div>
 
       <div class="side-meta" id="accbal-${a.id}">${money(0)}</div>
 
       <div class="side-actions">
-        <button class="side-btn" onclick="openBalanceDialog(${a.id}, '${esc(a.name)}')">Set Balance</button>
+        <button class="side-btn" onclick="openBalanceDialog(${a.id})">Set Balance</button>
         <button class="side-btn" onclick="viewAccount(${a.id})">View Tx</button>
+        <button class="side-btn" type="button" data-edit-account="${a.id}">Edit</button>
         <button class="side-btn danger" onclick="delAccount(${a.id})">Delete</button>
       </div>
     </div>
   `).join('');
+
+  list.forEach(a => {
+    wrap.querySelector(`[data-edit-account="${a.id}"]`).addEventListener('click', () => openAccountEditor(a));
+  });
 
   let net = 0;
 
@@ -86,6 +94,11 @@ export async function loadAccounts() {
     fSel.insertAdjacentHTML('beforeend', `<option value="${a.id}">${esc(a.name)}</option>`);
   });
 
+  fSel.value = state.acc || '';
+  if (fSel.selectedIndex === -1) {
+    fSel.value = '';
+    state.acc = '';
+  }
   ensureDefaultAccount();
   await renderAccountsSidebar(list);
 }
@@ -101,12 +114,9 @@ export async function delAccount(id) {
   if (!confirm('Delete this account? (Any transactions linked to it may block deletion)')) return;
 
   try {
-    await fetch(`${ACCOUNT}/${id}`, { method: 'DELETE' });
+    await j(`${ACCOUNT}/${id}`, { method: 'DELETE' });
 
-    if ($('#faccount')?.value === String(id)) {
-      $('#faccount').value = '';
-      state.acc = '';
-    }
+    if (state.acc === String(id)) state.acc = '';
 
     await loadAccounts();
     await refreshTxPage(0);
@@ -118,23 +128,85 @@ export async function delAccount(id) {
 }
 
 export function initAccountForm() {
-  $('#acctForm').addEventListener('submit', async (e) => {
+  const form = $('#acctForm');
+  const type = $('#atype');
+  const createdAt = $('#acreated');
+  const loanFields = $('#loanFields');
+  const syncLoanFields = () => {
+    loanFields.disabled = type.value !== 'LOAN';
+    loanFields.hidden = loanFields.disabled;
+  };
+  const resetForm = () => {
+    form.reset();
+    createdAt.value = fmtDate(new Date());
+    createdAt.max = createdAt.value;
+    syncLoanFields();
+  };
+
+  type.addEventListener('change', syncLoanFields);
+  $('#aclear').addEventListener('click', resetForm);
+  resetForm();
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const payload = {
-      user: { id: 1 },
       name: $('#aname').value.trim(),
-      type: $('#atype').value,
-      openingBalance: parseFloat($('#aopen').value || 0),
+      type: type.value,
+      openingBalance: Number($('#aopen').value || 0),
+      createdAt: createdAt.value,
     };
 
-    await j(ACCOUNT, { method: 'POST', body: JSON.stringify(payload) });
-    document.getElementById('acctCollapse')?.removeAttribute('open');
-    $('#acctForm').reset();
-    await loadAccounts();
+    if (payload.type === 'LOAN') {
+      payload.loanDetails = {
+        originalPrincipal: $('#loanPrincipal').valueAsNumber,
+        annualInterestRate: $('#loanRate').valueAsNumber,
+        termMonths: $('#loanTerm').valueAsNumber,
+      };
+    }
+
+    try {
+      await j(ACCOUNT, { method: 'POST', body: JSON.stringify(payload) });
+      $('#acctCollapse').removeAttribute('open');
+      resetForm();
+      await loadAccounts();
+    } catch (err) {
+      alert(`Could not add account.\n\n${err.message}`);
+    }
   });
 
-  $('#aclear').addEventListener('click', () => $('#acctForm').reset());
+  const editDialog = $('#acctEditDialog');
+  const editForm = $('#acctEditForm');
+  $('#acctEditCancel').addEventListener('click', () => editDialog.close());
+  editForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: $('#editAccountName').value.trim(),
+      closedAt: $('#editAccountClosedAt').value || null,
+    };
+
+    try {
+      await j(`${ACCOUNT}/${editForm.dataset.accountId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      editDialog.close();
+      await loadAccounts();
+      await refreshTxPage(state.page);
+    } catch (err) {
+      alert(`Could not update account.\n\n${err.message}`);
+    }
+  });
+}
+
+function openAccountEditor(account) {
+  $('#acctEditForm').dataset.accountId = account.id;
+  $('#editAccountName').value = account.name;
+  const closedAt = $('#editAccountClosedAt');
+  closedAt.value = account.closedAt ?? '';
+  closedAt.min = account.createdAt ?? '';
+  closedAt.max = fmtDate(new Date());
+  $('#acctEditDialog').showModal();
 }
 
 function fmtDate(d) {
@@ -194,7 +266,7 @@ export function initBalanceSnapshotUI() {
 }
 
 // Make it accessible for inline onclick
-window.openBalanceDialog = (accountId, accountName) => {
+window.openBalanceDialog = (accountId) => {
   document.getElementById('balAccountId').value = String(accountId);
 
   // default to tomorrow
