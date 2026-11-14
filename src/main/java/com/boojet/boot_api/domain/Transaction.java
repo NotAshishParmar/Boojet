@@ -60,8 +60,8 @@ public class Transaction {
     @JsonProperty
     private LocalDate date;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
     private Category category;
 
     @JsonProperty("income")
@@ -70,6 +70,10 @@ public class Transaction {
 
     @ManyToOne(optional = false)
     private Account account; // The account associated with this transaction
+
+    @JsonProperty("transfer")
+    @Column(name = "is_transfer", nullable = false)
+    private boolean isTransfer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "to_account_id")
